@@ -1,4 +1,4 @@
-/* KeySuite V4.28.02 — Customer-owned Brand settings with central Supabase Price Preference and strict Role Brand scope.
+/* KeySuite V4.28.03 — Customer-owned Brand settings with central Supabase Price Preference and strict Role Brand scope.
  * - Brand Margin belongs to Customer + selling Brand only. No global Brand fallback.
  * - Dashboard Brand / Series Settings Save belongs to the currently selected Customer.
  * - Opening/switching a Customer restores that Customer's Brand / Series preference.
@@ -13,7 +13,7 @@
   if(window.top!==window.self||window.__KEYSUITE_V40001_CUSTOMER_BRAND_SETTINGS__)return;
   window.__KEYSUITE_V40001_CUSTOMER_BRAND_SETTINGS__=true;
 
-  const VERSION='4.28.02';
+  const VERSION='4.28.03';
   const $=id=>document.getElementById(id);
   const norm=v=>String(v??'').trim();
   const low=v=>norm(v).toLowerCase();
