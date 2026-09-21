@@ -1,0 +1,19 @@
+{
+  "version": "4.28.02",
+  "baseline": "4.28.01 FULL CLEAN",
+  "upgrade_supported_from": "4.28.01",
+  "changes": [
+    "Adds direct KeyBot recognition for TESK Chemical Pump requests",
+    "Keeps TESK Metering Pump and Dosing Pump as supported aliases",
+    "Shows TESK Chemical Pump in the guided Product list when assigned to the selected Customer",
+    "Routes chemical-pump requests through medium, concentration, temperature, L/hr and bar collection",
+    "Uses the V4.28.01 TESK catalogue material rules and pump-series envelopes",
+    "Keeps unsupported chemical conditions under Engineering Review Required",
+    "Keeps chemical transfer/circulation duties on the normal pump-selection path",
+    "No new database migration is required"
+  ],
+  "new_database_migration_required": false,
+  "edge_function_deploy_required": true,
+  "edge_function": "telegram-webhook",
+  "notes": "Upgrade from V4.28.01. Upload the V4.28.02 web assets to GitHub and redeploy the telegram-webhook Supabase Edge Function. No database migration is required."
+}
