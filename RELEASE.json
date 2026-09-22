@@ -1,17 +1,17 @@
 {
-  "version": "4.28.03",
-  "baseline": "4.28.02 FULL CLEAN",
-  "upgrade_supported_from": "4.28.02",
+  "version": "4.28.04",
+  "baseline": "4.28.03 FULL CLEAN",
+  "upgrade_supported_from": "4.28.03",
   "changes": [
-    "Synchronizes Product BFI curve model names with the selected motor phase",
-    "Changes BFI 2-3T to BFI 2-3 immediately when 1-phase is selected",
-    "Restores the T suffix when the Product BFI curve returns to 3-phase",
-    "Applies the same phase suffix behavior to BFIN SS316 models",
-    "Keeps the popup title, presentation context and curve frame aligned",
+    "Restores KeyBot Brand, Series, Model and Duty searches ahead of legacy Customer lookup",
+    "Recognizes CHC, BFI, ES, VMS and HMS entered alone as scoped pump searches",
+    "Recognizes brand-first two-line exact model input such as OK followed by VMS 32-4",
+    "Allows an exact model to replace an active Brand or Series duty prompt",
+    "Retains ES 2P or 4P scope when the duty point is entered afterward",
     "No new database migration is required"
   ],
   "new_database_migration_required": false,
-  "edge_function_deploy_required": false,
-  "edge_function": null,
-  "notes": "Upgrade from V4.28.02. Upload the V4.28.03 web assets to GitHub. No Supabase Edge Function redeploy or database migration is required."
+  "edge_function_deploy_required": true,
+  "edge_function": "telegram-webhook",
+  "notes": "Upgrade from V4.28.03. Upload the V4.28.04 web assets to GitHub and redeploy the telegram-webhook Supabase Edge Function. No database migration is required."
 }

@@ -1,4 +1,4 @@
-# KeySuite V4.28.03 FULL CLEAN
+# KeySuite V4.28.04 FULL CLEAN
 
 Baseline: V4.27.15.
 
@@ -18,8 +18,15 @@ BFI Product Curve phase synchronization:
 - Example: `BFI 2-3T` becomes `BFI 2-3`; changing back to 3-phase restores `BFI 2-3T`.
 - The same rule applies to SS316 models: `BFIN 2-3T` becomes `BFIN 2-3`.
 
+KeyBot routing restoration:
+- Brand, series, model and duty searches take priority over the legacy Customer-search fallback.
+- `CHC`, `BFI`, `ES`, `VMS` and `HMS` entered alone start a scoped pump search.
+- Brand-first two-line input such as `OK` followed by `VMS 32-4` is recognized as an O.K.Pump model request.
+- Brand or series can be followed by either an exact model or a duty point.
+- `ES 2P` and `ES 4P` retain the selected pole when the duty is entered next.
+
 Deployment:
-1. Upload/deploy the V4.28.03 web files to GitHub.
-2. No Supabase Edge Function redeploy is required for V4.28.03.
+1. Upload/deploy the V4.28.04 web files to GitHub.
+2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.
