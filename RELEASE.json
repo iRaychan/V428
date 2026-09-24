@@ -1,19 +1,18 @@
 {
-  "version": "4.28.08",
-  "baseline": "4.28.07 FULL CLEAN",
-  "upgrade_supported_from": "4.28.07",
+  "version": "4.28.09",
+  "baseline": "4.28.08 FULL CLEAN",
+  "upgrade_supported_from": "4.28.08",
   "changes": [
-    "ES exact-model motor HP now trims impeller diameter first; the complete selected-impeller curve is retained and is never clipped by motor power",
-    "Motor-only ES requests rate the selected trimmed impeller at BEP and add a system curve intersecting the pump curve at BEP",
-    "Flow-only and head-only ES motor requests keep the user-constrained operating coordinate and use the largest motor-safe impeller",
-    "If the requested motor HP is insufficient even at minimum impeller diameter, KeyBot reports that condition instead of fabricating a shortened curve",
-    "Fast Search protects motor HP, kW, pole and c/w technical continuation lines from Customer parsing",
-    "Unbranded exact ES + motor HP requests prefer assigned B.G.Reich instead of prompting across multiple assigned brands",
-    "Preserves V4.28.07 undersized fallback, series filtering and exact-model out-of-curve plotting",
+    "Fast Search exact ES model detection now preserves one-letter model suffixes such as ES 80-32H and ES 80-32G",
+    "Motor HP, kW, 2P/4P, 2Pole/4Pole and c/w tokens are stripped from Customer-name inference and cannot be treated as a company name",
+    "Unbranded exact ES requests no longer auto-collapse to B.G.Reich when several assigned brands match; KeyBot shows the Brand / Model choice first",
+    "If only one assigned brand matches the exact ES model and pole, KeyBot continues automatically",
+    "Explicitly typed brands remain hard-scoped and bypass the brand-choice prompt when exactly one matching assigned product remains",
+    "Preserves V4.28.08 motor-safe impeller trimming, full trimmed curve, BEP default rated point and flow/head-only operating-point behavior",
     "No database migration is required"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": true,
   "edge_function": "telegram-webhook",
-  "notes": "Upgrade from V4.28.07. Upload the V4.28.08 web files to GitHub and redeploy telegram-webhook. No database migration is required."
+  "notes": "Upgrade from V4.28.08. Upload the V4.28.09 web files to GitHub and redeploy telegram-webhook. No database migration is required."
 }

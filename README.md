@@ -1,6 +1,17 @@
-# KeySuite V4.28.08 FULL CLEAN
+# KeySuite V4.28.09 FULL CLEAN
 
-Baseline: V4.28.07 FULL CLEAN.
+Baseline: V4.28.08 FULL CLEAN.
+
+
+## V4.28.09 - ES suffix + assigned-brand routing correction
+
+- Exact ES Fast Search now recognises one-letter hydraulic model suffixes, including `ES 80-32H` and `ES 80-32G`.
+- `HP`, `kW`, `2P`, `4P`, `2Pole`, `4Pole`, `cw` and `c/w` technical tokens are removed before Customer-name inference.
+- Unbranded exact ES searches no longer default to B.G.Reich when several assigned brands match. KeyBot shows the matching **Brand / Model** choices first.
+- If only one assigned brand matches the exact ES model and pole, KeyBot continues automatically.
+- Explicit Brand + ES Model remains strictly scoped to that assigned brand.
+- Preserves V4.28.08 motor-safe impeller trimming, complete selected-impeller curve, BEP default rated point, and flow-only/head-only behavior.
+
 
 
 ## V4.28.08 - ES motor trim + BEP rated point correction
@@ -74,7 +85,7 @@ TESK KeyBot selection corrections:
 - Brand Series labels without an active OEM Family Map cannot create a searchable hydraulic family.
 
 Deployment:
-1. Upload/deploy the V4.28.08 web files to GitHub.
+1. Upload/deploy the V4.28.09 web files to GitHub.
 2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.
