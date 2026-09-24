@@ -1295,8 +1295,9 @@ async function guidedOpenSelection(service:any,telegramToken:string,companyId:st
 }
 
 
-function keybotFastLines(text:any){const lines=String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);return lines.length>=2?{customer:lines[0],product:lines.slice(1).join(' ')}:null}
-function keybotFastProductCustomerRows(text:any){const raw=String(text||'').replace(/\r/g,'').trim(),parts=raw.split(/\n[ \t]*\n/);if(parts.length<2)return null;const product=String(parts.shift()||'').split('\n').map(x=>x.trim()).filter(Boolean).join(' '),customer=parts.join(' ').split('\n').map(x=>x.trim()).filter(Boolean).join(' ');return product&&customer?{product,customer}:null}
+function keybotFastTechnicalContinuation(text:any){const parsed=smartQuoteRequest(text),raw=String(text||'');return Number(parsed.motor_hp||0)>0||Number(parsed.es_pole||0)>0||Number(parsed.flow_m3h||0)>0||Number(parsed.head_m||0)>0||/\b(?:c\/?w|cw)\b/i.test(raw)}
+function keybotFastLines(text:any){const lines=String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(lines.length>=2&&keybotFastLooksLikeExactPumpModel(lines[0])&&keybotFastTechnicalContinuation(lines.slice(1).join(' ')))return null;return lines.length>=2?{customer:lines[0],product:lines.slice(1).join(' ')}:null}
+function keybotFastProductCustomerRows(text:any){const raw=String(text||'').replace(/\r/g,'').trim(),parts=raw.split(/\n[ \t]*\n/);if(parts.length<2)return null;const product=String(parts.shift()||'').split('\n').map(x=>x.trim()).filter(Boolean).join(' '),customer=parts.join(' ').split('\n').map(x=>x.trim()).filter(Boolean).join(' ');if(product&&customer&&keybotFastLooksLikeExactPumpModel(product)&&keybotFastTechnicalContinuation(customer))return null;return product&&customer?{product,customer}:null}
 function keybotFastLooksLikePump(text:any){return /\b(?:CHC|VMS|SVM|BFI|HMS|ES)\b/i.test(String(text||''))}
 function keybotFastLooksLikeExactPumpModel(text:any){const raw=String(text||'');return /\b(?:BFI|HMS)\s+\d{1,3}\s*-\s*\d{1,3}(?:\s*-\s*\d{1,2})?\s*[TE]?\b/i.test(raw)||/\b(?:CHC|VMS|SVM|ES)\s+\d{1,3}\s*-\s*\d{1,3}(?:\s*-\s*\d{1,2})?(?:\s*-\s*\d{1,2})?(?:\s+[24]\s*P(?:OLE)?)?\b/i.test(raw)}
 function keybotFastRequestedDuty(text:any){const parsed=smartQuoteRequest(text),q=Number(parsed.flow_m3h||0),h=Number(parsed.head_m||0);return q>0&&h>0?{flow_m3h:q,head_m:h,duty_text:dutyDisplay(String(text||''),q,h).duty_text}:null}
@@ -1331,7 +1332,9 @@ function keybotFastExactMayOverrideSession(session:any){
   return !(protectedSteps.has(step)||step.startsWith('pump_option_'));
 }
 function keybotFastRequestedPole(text:any){const m=String(text||'').match(/\b([24])\s*P(?:OLE)?\b/i);return Number(m?.[1]||0)}
+function keybotFastPreferDefaultExactBrand(matches:any[],input:any){const rows=Array.isArray(matches)?matches:[],parsed=smartQuoteRequest(input);if(!(Number(parsed.motor_hp||0)>0))return rows;const products=rows.map((x:any)=>x?.product).filter(Boolean),explicit=keybotFastStripBrand(input,products).brand;if(explicit)return rows;const preferred=rows.filter((x:any)=>keybotFastBrandKey(x?.product?.brand_name)==='bgreich');return preferred.length?preferred:rows}
 function keybotFastPrepareMatches(matches:any[],input:any){
+  matches=keybotFastPreferDefaultExactBrand(matches,input);
   if(keybotFastRequestedPole(input))return matches||[];
   const groups=new Map<string,any[]>(),plain:any[]=[];
   for(const x of matches||[]){const group=String(x?.product?.price_group||'').toUpperCase();if(group!=='ES'){plain.push(x);continue}const master=String(x?.selected?.meta?.master_model||x?.selected?.label||'').trim(),key=[String(x?.product?.key||x?.product?.brand_id||x?.product?.brand_name||''),cleanSearch(master)].join('|');const arr=groups.get(key)||[];arr.push(x);groups.set(key,arr)}
@@ -1401,7 +1404,7 @@ async function keybotFastOpenMatch(service:any,telegramToken:string,companyId:st
     if(product?.has_curve===true&&((group==='CHC_G1'||group==='CHC_G2'||group==='BFI')||(group==='ES'&&[2,4].includes(pole)))){
       const brand=String(product?.brand_name||'').trim()||'Brand',display=String(exact?.display_model||exact?.master_model||'').trim(),lines=[`${brand} - ${display}${group==='ES'&&!new RegExp(`(?:^|\\s)${pole}P$`,'i').test(display)?` ${pole}P`:''}`];
       if(group==='ES'){
-        const rated=exactEsRatedPoint(exact?.master_model,pole);if(!rated)throw new Error('Rated point could not be resolved for this ES model.');let item:any=selectPumpSummary('ES',Number(rated.flow_m3h),Number(rated.head_m),pole,String(exact?.master_model||''));item=guidedApplyProductIdentity({...item,display_model:display},product);lines.push('Type: End Suction Pump',`Speed: ${pole}P · ${inputNumber(item.rpm||0)} rpm`,Number(item.motor_kw)>0?`Motor: ${inputNumber(item.motor_kw)} kW / ${inputNumber(item.motor_hp)} HP`:null,item.suction?`Suction: ${item.suction}`:null,item.discharge?`Discharge: ${item.discharge}`:null,Number(item.impeller_mm)>0?`Full Size Impeller: Ø${inputNumber(item.impeller_mm)} mm`:null,Number(rated.min_impeller_mm)>0?`Min Size Impeller: Ø${inputNumber(rated.min_impeller_mm)} mm`:null);saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'guided',step:'guided_exact_model_action',flow_m3h:Number(rated.flow_m3h),head_m:Number(rated.head_m),selected_customer_id:String(customer?.id||'')||null,context:{...c,pending_item:item,guided_exact_rated:rated}})||saved;
+        const reqPoint:any=c?.keybot_fast_requested_point||null,requestedHp=Number(reqPoint?.motor_hp||0),optimized=requestedHp>0?exactEsMotorOptimizedPoint(exact?.master_model,pole,requestedHp,Number(reqPoint?.flow_m3h||0),Number(reqPoint?.head_m||0)):null;if(requestedHp>0&&!optimized){const range=exactEsImpellerRange(exact?.master_model,pole);throw new Error(`${inputNumber(requestedHp)} HP is insufficient even at the minimum allowable impeller size${range?.min?` Ø${inputNumber(range.min)} mm`:''}.`)}const rated=optimized||exactEsRatedPoint(exact?.master_model,pole);if(!rated)throw new Error('Rated point could not be resolved for this ES model.');let item:any=selectPumpSummary('ES',Number(rated.flow_m3h),Number(rated.head_m),pole,String(exact?.master_model||''));if(optimized)item={...item,motor_hp:requestedHp,motor_kw:requestedHp*0.745699872,impeller_mm:Number(optimized.impeller_mm),requested_flow_m3h:Number(rated.flow_m3h),requested_head_m:Number(rated.head_m)};item=guidedApplyProductIdentity({...item,display_model:display},product);lines.push('Type: End Suction Pump',`Speed: ${pole}P · ${inputNumber(item.rpm||0)} rpm`,requestedHp>0?`Motor: ${inputNumber(requestedHp)} HP ${pole}P (selected limit)`:Number(item.motor_kw)>0?`Motor: ${inputNumber(item.motor_kw)} kW / ${inputNumber(item.motor_hp)} HP`:null,item.suction?`Suction: ${item.suction}`:null,item.discharge?`Discharge: ${item.discharge}`:null,optimized?`Selected Impeller: Ø${inputNumber(optimized.impeller_mm)} mm`:Number(item.impeller_mm)>0?`Full Size Impeller: Ø${inputNumber(item.impeller_mm)} mm`:null,Number(rated.min_impeller_mm)>0?`Min Size Impeller: Ø${inputNumber(rated.min_impeller_mm)} mm`:null);saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'guided',step:'guided_exact_model_action',flow_m3h:Number(rated.flow_m3h),head_m:Number(rated.head_m),selected_customer_id:String(customer?.id||'')||null,context:{...c,pending_item:item,guided_exact_rated:rated}})||saved;
       }else{
         const info=group==='BFI'?directBfiModelInfo(exact?.master_model):directChcModelInfo(exact?.master_model,group);
         const pumpType=group==='BFI'?'HMS Pump':keybotFastBrandKey(product?.brand_name)==='tesk'||/\bSVM\b/i.test(display)?'SVM Pump':'VMS Pump';
@@ -1813,21 +1816,41 @@ function exactEsRatedPoint(model:any,pole:any){
   const pump=(db.pumps||[]).find((x:any)=>String(x.model||'').toUpperCase()===wanted&&Number(x.rpm||0)===rpm);if(!pump)return null;
   try{const maxD=Number(core.dmax(pump)),pts=(core.curvePoints(pump,maxD,1,180)||[]).filter((x:any)=>Number(x.flowM3h)>0&&Number.isFinite(Number(x.headM)));if(!pts.length)return null;let best=pts[0];for(const x of pts)if(Number(x.efficiencyPct||0)>Number(best.efficiencyPct||0))best=x;return {flow_m3h:Number(best.flowM3h),head_m:Number(best.headM),efficiency:Number(best.efficiencyPct||0),impeller_mm:maxD,min_impeller_mm:Number(core.dmin(pump)||0)};}catch(_){return null}
 }
+function exactEsImpellerRange(model:any,pole:any){
+  const core:any=(globalThis as any).ESCore,db:any=(globalThis as any).ES_SELECTOR_DB,p=Number(pole),rpm=p===2?2900:p===4?1450:0,wanted=String(model||'').replace(/^ES\s+/i,'').trim().toUpperCase();if(!core||!db||!rpm)return null;
+  const pump=(db.pumps||[]).find((x:any)=>String(x.model||'').toUpperCase()===wanted&&Number(x.rpm||0)===rpm);return pump?{min:Number(core.dmin(pump)||0),max:Number(core.dmax(pump)||0),pump}:null;
+}
 function exactEsMotorOptimizedPoint(model:any,pole:any,motorHp:any,flowM3h:any=0,headM:any=0){
   const core:any=(globalThis as any).ESCore,db:any=(globalThis as any).ES_SELECTOR_DB,p=Number(pole),rpm=p===2?2900:p===4?1450:0,hp=Number(motorHp),limitKw=hp*0.745699872,wanted=String(model||'').replace(/^ES\s+/i,'').trim().toUpperCase();if(!core||!db||!rpm||!(hp>0))return null;
   const pump=(db.pumps||[]).find((x:any)=>String(x.model||'').toUpperCase()===wanted&&Number(x.rpm||0)===rpm);if(!pump)return null;
   const maxD=Number(core.dmax(pump)),minD=Number(core.dmin(pump)),diameters:number[]=[];const add=(d:number)=>{if(d>=minD-1e-9&&d<=maxD+1e-9&&!diameters.some(x=>Math.abs(x-d)<.01))diameters.push(d)};add(maxD);for(let d=Math.floor(maxD/5)*5;d>=Math.ceil(minD/5)*5;d-=5)add(d);add(minD);diameters.sort((a,b)=>b-a);
   const allowed=(d:number,perf:any)=>{if(!perf||!Number.isFinite(Number(perf.shaftKw)))return null;const m=core.sizeMotor(pump,d,1,perf);return m&&Number(m.requiredKw)<=limitKw+1e-9?m:null};
+  const result=(d:number,perf:any,m:any,mode:string,requestedHead=0)=>({flow_m3h:Number(perf.flowM3h),head_m:requestedHead>0?Number(requestedHead):Number(perf.headM),curve_head_m:Number(perf.headM),efficiency:Number(perf.efficiencyPct||0),npshr_m:Number(perf.npshrM||0),impeller_mm:d,required_kw:Number(m?.requiredKw||0),motor_hp:hp,motor_kw:limitKw,pump,mode,min_impeller_mm:minD,max_impeller_mm:maxD});
   const q=Number(flowM3h),h=Number(headM);
-  if(q>0){for(const d of diameters){const perf=core.performance(pump,d,q/3.6,1),m=allowed(d,perf);if(m)return {flow_m3h:q,head_m:Number(perf.headM),impeller_mm:d,required_kw:Number(m.requiredKw),motor_hp:hp,motor_kw:limitKw,pump};}return null;}
-  if(h>0){for(const d of diameters){const pts=(core.curvePoints(pump,d,1,361)||[]).filter((x:any)=>Number.isFinite(Number(x.headM))&&Number(x.flowM3h)>0).filter((x:any)=>allowed(d,x));const feasible=pts.filter((x:any)=>Number(x.headM)>=h-1e-6).sort((a:any,b:any)=>Number(b.flowM3h)-Number(a.flowM3h));if(feasible.length){const perf=feasible[0],m=allowed(d,perf);return {flow_m3h:Number(perf.flowM3h),head_m:h,curve_head_m:Number(perf.headM),impeller_mm:d,required_kw:Number(m?.requiredKw||0),motor_hp:hp,motor_kw:limitKw,pump};}}return null;}
-  // No duty coordinate: use full-size impeller and end the displayed curve at the last point allowed by the existing KeySuite motor safety-factor rule.
-  const d=maxD,pts=(core.curvePoints(pump,d,1,361)||[]).filter((x:any)=>Number(x.flowM3h)>0&&allowed(d,x)).sort((a:any,b:any)=>Number(a.flowM3h)-Number(b.flowM3h));if(!pts.length)return null;const perf=pts[pts.length-1],m=allowed(d,perf);return {flow_m3h:Number(perf.flowM3h),head_m:Number(perf.headM),impeller_mm:d,required_kw:Number(m?.requiredKw||0),motor_hp:hp,motor_kw:limitKw,pump};
+  if(q>0&&h>0){
+    let safeFallback:any=null;
+    for(const d of diameters){const perf=core.performance(pump,d,q/3.6,1),m=allowed(d,perf);if(!m)continue;const row=result(d,perf,m,'duty',h);if(!safeFallback)safeFallback=row;if(Number(perf.headM)>=h-1e-6)return row;}
+    return safeFallback?{...safeFallback,requested_outside_curve:true}:null;
+  }
+  if(q>0){for(const d of diameters){const perf=core.performance(pump,d,q/3.6,1),m=allowed(d,perf);if(m)return result(d,perf,m,'flow');}return null;}
+  if(h>0){
+    for(const d of diameters){
+      const pts=(core.curvePoints(pump,d,1,721)||[]).filter((x:any)=>Number.isFinite(Number(x.headM))&&Number(x.flowM3h)>=0).sort((a:any,b:any)=>Number(a.flowM3h)-Number(b.flowM3h));const crossings:any[]=[];
+      for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],ha=Number(a.headM)-h,hb=Number(b.headM)-h;if(Math.abs(ha)<1e-7)crossings.push(a);if(ha*hb<=0&&Math.abs(Number(b.headM)-Number(a.headM))>1e-9){const r=(h-Number(a.headM))/(Number(b.headM)-Number(a.headM)),flow=Number(a.flowM3h)+r*(Number(b.flowM3h)-Number(a.flowM3h)),perf=core.performance(pump,d,flow/3.6,1);if(perf)crossings.push(perf)}}
+      if(pts.length&&Math.abs(Number(pts[pts.length-1].headM)-h)<1e-7)crossings.push(pts[pts.length-1]);
+      crossings.sort((a:any,b:any)=>Number(b.flowM3h)-Number(a.flowM3h));for(const perf of crossings){const m=allowed(d,perf);if(m)return result(d,perf,m,'head',h);}
+    }
+    return null;
+  }
+  // No flow/head supplied: trim to the largest impeller whose BEP satisfies the existing KeySuite motor safety-factor rule, then rate the pump at that BEP.
+  for(const d of diameters){const bep=core.bepData(pump,d,1)?.bep,m=allowed(d,bep);if(m)return result(d,bep,m,'bep');}
+  return null;
 }
 async function guidedSendExactRatedCurve(service:any,telegramToken:string,companyId:string,chatId:string,senderId:string,session:any,customer:any,product:any,exact:any,pole:any=0){
-  const group=String(product?.price_group||'').toUpperCase(),family=guidedSelectorFamily(group),esPole=family==='ES'?Number(pole||exact?.pole||0):0,c=sessionContext(session),requested:any=c?.keybot_fast_requested_duty||null,requestedPoint:any=c?.keybot_fast_requested_point||null,hasRequested=Number(requested?.flow_m3h)>0&&Number(requested?.head_m)>0;
-  const motorOptimized:any=family==='ES'&&Number(requestedPoint?.motor_hp)>0&&!hasRequested?exactEsMotorOptimizedPoint(exact?.master_model,esPole,Number(requestedPoint.motor_hp),Number(requestedPoint.flow_m3h||0),Number(requestedPoint.head_m||0)):null;
-  const rated:any=hasRequested?null:motorOptimized|| (family==='ES'?exactEsRatedPoint(exact?.master_model,esPole):family==='BFI'?exactBfiRatedPoint(exact?.master_model):exactChcRatedPoint(exact?.master_model,group));
+  const group=String(product?.price_group||'').toUpperCase(),family=guidedSelectorFamily(group),esPole=family==='ES'?Number(pole||exact?.pole||0):0,c=sessionContext(session),requested:any=c?.keybot_fast_requested_duty||null,requestedPoint:any=c?.keybot_fast_requested_point||null,hasRequested=Number(requested?.flow_m3h)>0&&Number(requested?.head_m)>0,requestedHp=Number(requestedPoint?.motor_hp||0);
+  const motorOptimized:any=family==='ES'&&requestedHp>0?exactEsMotorOptimizedPoint(exact?.master_model,esPole,requestedHp,Number(requestedPoint?.flow_m3h||0),Number(requestedPoint?.head_m||0)):null;
+  if(family==='ES'&&requestedHp>0&&!motorOptimized){const range=exactEsImpellerRange(exact?.master_model,esPole);throw new Error(`${inputNumber(requestedHp)} HP is insufficient even at the minimum allowable impeller size${range?.min?` Ø${inputNumber(range.min)} mm`:''}.`)}
+  const rated:any=hasRequested?null:motorOptimized||(family==='ES'?exactEsRatedPoint(exact?.master_model,esPole):family==='BFI'?exactBfiRatedPoint(exact?.master_model):exactChcRatedPoint(exact?.master_model,group));
   if(!hasRequested&&!rated){
     if(family==='ES')throw new Error(`Rated Full Size point could not be resolved for ${exact?.display_model||exact?.master_model||'this ES model'}${esPole?` · ${esPole} Pole`:''}.`);
     if(family==='BFI')throw new Error(`Rated point could not be resolved for ${exact?.display_model||exact?.master_model||'this BFI model'}.`);
@@ -1835,15 +1858,14 @@ async function guidedSendExactRatedCurve(service:any,telegramToken:string,compan
   }
   const q=hasRequested?Number(requested.flow_m3h):Number(rated.flow_m3h),h=hasRequested?Number(requested.head_m):Number(rated.head_m),duty=hasRequested?String(requested.duty_text||`${oneDecimal(q)} m3/hr @ ${oneDecimal(h)} mtr`):`${oneDecimal(q)} m3/hr @ ${oneDecimal(h)} mtr`;
   const curveIdentity:any=await guidedCurveDisplayIdentity(service,companyId,product,String(exact?.master_model||''),String(exact?.display_model||''));
-  if(motorOptimized){curveIdentity.es_motor_limit_hp=Number(requestedPoint.motor_hp);curveIdentity.es_impeller_mm=Number(motorOptimized.impeller_mm);curveIdentity.es_motor_safety_limit=true;}
+  if(motorOptimized){curveIdentity.es_motor_limit_hp=requestedHp;curveIdentity.es_impeller_mm=Number(motorOptimized.impeller_mm);curveIdentity.es_motor_trimmed=true;curveIdentity.es_rated_is_bep=motorOptimized.mode==='bep';curveIdentity.es_motor_mode=String(motorOptimized.mode||'');}
   const pdf=await generateCurvePdf(family,q,h,duty,env('KEYSUITE_PUBLIC_URL'),family==='ES'?esPole:0,String(exact?.master_model||''),curveIdentity);
-  const label=String(exact?.display_model||exact?.master_model||pdf.model||family),motorLine=motorOptimized?`\nMotor limit: ${inputNumber(requestedPoint.motor_hp)} HP · Impeller Ø${inputNumber(motorOptimized.impeller_mm)} mm`:'' ,caption=family==='ES'?`${label} curve ready\n${motorOptimized?'Motor-limited curve':'Full Size + Min Size'}\nRated: ${duty}${motorLine}${pdf.warning?`\n⚠ ${pdf.warning}`:''}`:`${label} curve ready\n${hasRequested?'Duty':'Rated'}: ${duty}${pdf.warning?`\n⚠ ${pdf.warning}`:''}`;
+  const label=String(exact?.display_model||exact?.master_model||pdf.model||family),modeLabel=motorOptimized?.mode==='bep'?'Rated (BEP)':motorOptimized?.mode==='flow'?'Rated (Flow)':motorOptimized?.mode==='head'?'Rated (Head)':motorOptimized?.mode==='duty'?'Requested Duty':hasRequested?'Duty':'Rated',motorLine=motorOptimized?`\nMotor: ${inputNumber(requestedHp)} HP ${esPole}P · Selected Impeller Ø${inputNumber(motorOptimized.impeller_mm)} mm`:'' ,caption=family==='ES'?`${label} curve ready\n${motorOptimized?'Motor-safe trimmed impeller':'Full Size + Min Size'}\n${modeLabel}: ${duty}${motorLine}${motorOptimized?.requested_outside_curve?'\n⚠ Requested duty is outside the selected motor-safe impeller curve.':''}${pdf.warning?`\n⚠ ${pdf.warning}`:''}`:`${label} curve ready\n${hasRequested?'Duty':'Rated'}: ${duty}${pdf.warning?`\n⚠ ${pdf.warning}`:''}`;
   await telegramSendDocument(telegramToken,chatId,pdf.bytes,pdf.filename,caption);
-  const curvePoint={flow_m3h:q,head_m:h,efficiency:Number(rated?.efficiency||0),impeller_mm:Number(rated?.impeller_mm||0)},saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'guided',step:'guided_exact_model_action',flow_m3h:q,head_m:h,selected_customer_id:String(customer?.id||'')||null,context:{...c,...(family==='ES'?{guided_exact_pole:esPole}:{}),...(hasRequested?{guided_exact_curve_duty:curvePoint}:{guided_exact_rated:curvePoint})}});
+  const curvePoint={flow_m3h:q,head_m:h,efficiency:Number((motorOptimized||rated)?.efficiency||0),impeller_mm:Number((motorOptimized||rated)?.impeller_mm||0)},saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'guided',step:'guided_exact_model_action',flow_m3h:q,head_m:h,selected_customer_id:String(customer?.id||'')||null,context:{...c,...(family==='ES'?{guided_exact_pole:esPole}:{}),...(hasRequested?{guided_exact_curve_duty:curvePoint}:{guided_exact_rated:curvePoint})}});
   await telegramSend(telegramToken,chatId,'Choose the next action:',guidedExactActionMenu(true,family==='ES',c.company_curve_only===true));
   return saved||session;
 }
-
 function directBfiModelInfo(model:any){
   const input=String(model||'').trim(),explicitEnhanced=/E$/i.test(input),explicit3=explicitEnhanced||/T$/i.test(input),wanted=input.replace(/[TE]$/i,'').toUpperCase(),db:any=(globalThis as any).KeySuiteBFIData,row=(db?.models||[]).find((x:any)=>String(x.model||'').toUpperCase()===wanted);if(!row)return null;
   const phases=Array.isArray(row.phases)&&row.phases.length?row.phases:['3Ph'];let phase=explicit3?'3Ph':'1Ph';if(!phases.includes(phase))phase=phases.includes('3Ph')?'3Ph':String(phases[0]||'1Ph');
@@ -2486,10 +2508,10 @@ Deno.serve(async(req)=>{
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
       if(isCompanyCurveOnlyUser(navigationUser)){
         await telegramSend(telegramToken,chatId,`Hi 👋\n\n${companyCurveOnlyPrompt()}`,companyCurveOnlyMenu());
-        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.07'});
+        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.08'});
       }
       await telegramSend(telegramToken,chatId,`Hi 👋\n\n${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.07'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.08'});
     }
     if(newRequestButton){
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
@@ -2673,7 +2695,7 @@ Deno.serve(async(req)=>{
       await telegramSend(telegramToken,chatId,`Hi 👋
 
 ${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.07'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.08'});
     }
 
     if(newRequestButton){

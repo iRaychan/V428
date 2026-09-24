@@ -707,8 +707,8 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     model=`ES ${s.pump.model}`;motorKw=motorLimitHp>0?motorLimitKw:Number(s.motor.motorKw||0);motorHp=motorLimitHp>0?motorLimitHp:Number(s.motor.motorHp||0);eff=Number(s.perf.efficiencyPct||0);npsh=Number(s.perf.npshrM||0);
     selectionShaft=Number(s.perf.shaftKw||0);dutyBrakeHp=Number(s.perf.bhp||selectionShaft*1.34102209);rpm=Number(s.perf.rpm||s.pump.rpm||0);hz=Number(s.perf.frequencyHz||50);
     suction=String(s.pump.dimensions?.suction||'-');discharge=String(s.pump.dimensions?.discharge||'-');impellerMm=Number(s.result.impellerMm||0);maxPressure=Number(s.pump.dimensions?.casing_pressure_bar||0);dim=s.pump.dimensions||{};
-    let pts=(s.points||[]).filter((p:any)=>finite(p.flowM3h));
-    if(motorLimitHp>0&&displayIdentity?.es_motor_safety_limit===true){pts=pts.filter((p:any)=>{try{const mc=core.sizeMotor(s.pump,impellerMm,1,p);return mc&&Number(mc.requiredKw)<=motorLimitKw+1e-9}catch(_){return false}});}
+    // V4.28.08: motor HP selects/forces an impeller diameter upstream. Never clip the hydraulic curve by power; show the complete curve for the selected trimmed impeller.
+    const pts=(s.points||[]).filter((p:any)=>finite(p.flowM3h));
     const rawHead=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.headM)})),rawEff=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.efficiencyPct)})),rawPowerKw=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.shaftKw)})),rawNpsh=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.npshrM)}));
     headPoints=sampleEsFit(rawHead,2,1);effPoints=sampleEsFit(rawEff,6,1);powerPoints=sampleEsFit(rawPowerKw,6,1/0.746);npsPoints=sampleEsFit(rawNpsh,3,1);esPs=esPumpset(s.pump.model,motorHp,motorKw,pole);
     if(String(forcedModel||'').trim()){const minQ=headPoints.length?Math.min(...headPoints.map(p=>p.x)):0,maxQ=headPoints.length?Math.max(...headPoints.map(p=>p.x)):0,pred=(q>=minQ&&q<=maxQ)?interpolate(headPoints,q):NaN;if(s.out_of_curve||q<minQ-1e-9||q>maxQ+1e-9||!finite(pred)||h>pred*1.01)warning='Requested duty is outside this model\'s curve.';}
@@ -716,7 +716,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
 
   // Frozen KeySelector PDF displays Brake HP at the REQUIRED duty head.
   const requiredBrakeKw=9.81*q*h/3600/(Math.max(1,eff)/100), brakeHp=fam==='ES'&&dutyBrakeHp>0?dutyBrakeHp:requiredBrakeKw*1.34102209;
-  const bep=bepFromEff(headPoints,effPoints);
+  const fittedBep=bepFromEff(headPoints,effPoints),bep=fam==='ES'&&displayIdentity?.es_rated_is_bep===true?{x:q,y:h}:fittedBep;
   let headEnvelope:any=null;
   if(fam==='ES'){
     const core=(globalThis as any).ESCore,selected=esSelect(q,h,pole,forcedModel),pump=selected?.pump,ratio=Number(selected?.result?.speedRatio||1);
@@ -734,7 +734,10 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
       });
     }
   }
-  if(fam==='ES'&&Number(displayIdentity?.es_motor_limit_hp||0)>0&&headPoints.length){headEnvelope=[{points:headPoints,label:`Ø${fmt(impellerMm,impellerMm%1?1:0)} · Motor Limited`,color:BLUE,width:2.5}];}
+  if(fam==='ES'&&Number(displayIdentity?.es_motor_limit_hp||0)>0&&headPoints.length){
+    const maxPumpFlow=Math.max(...headPoints.map(p=>Number(p.x)||0)),systemMaxFlow=Math.min(maxPumpFlow,Math.max(q*1.25,q+1)),system=systemPoints(q,h,systemMaxFlow);
+    headEnvelope=[{points:headPoints,label:`Selected Ø${fmt(impellerMm,impellerMm%1?1:0)}`,color:BLUE,width:2.5},{points:system,label:'System Curve',color:rgb(.46,.50,.53),width:1.35}];
+  }
   const xLabel='Flow (m³/hr)';
   const charts:ChartSpec[]=[
     {yLabel:'Head (m)',points:headPoints,series:headEnvelope,duty:{x:q,y:h},bep,bepLabel:'BEP',xLabel,dutyLabel:''},

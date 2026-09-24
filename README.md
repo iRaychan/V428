@@ -1,6 +1,17 @@
-# KeySuite V4.28.07 FULL CLEAN
+# KeySuite V4.28.08 FULL CLEAN
 
-Baseline: V4.28.05 FULL CLEAN.
+Baseline: V4.28.07 FULL CLEAN.
+
+
+## V4.28.08 - ES motor trim + BEP rated point correction
+
+- ES exact model + motor HP now **trims impeller diameter first** until the largest diameter that satisfies the existing KeySuite motor safety-factor rule is found.
+- The selected impeller's **full hydraulic curve** is retained; motor HP no longer truncates the curve at an arbitrary end point.
+- With motor HP only, the rated point is the **BEP of the selected trimmed impeller**, and the system curve is drawn through that BEP.
+- With flow-only or head-only input, the user-specified coordinate remains the operating constraint and the system curve passes through the derived operating point.
+- If the motor is insufficient even at minimum impeller size, KeyBot reports that explicitly.
+- Fast Search protects HP/kW/pole/cw technical continuation lines from Customer parsing.
+- Unbranded exact ES + motor HP requests prefer assigned **B.G.Reich**.
 
 
 ## V4.28.07 - KeyBot hydraulic selection + exact-model curve control
@@ -63,7 +74,7 @@ TESK KeyBot selection corrections:
 - Brand Series labels without an active OEM Family Map cannot create a searchable hydraulic family.
 
 Deployment:
-1. Upload/deploy the V4.28.07 web files to GitHub.
+1. Upload/deploy the V4.28.08 web files to GitHub.
 2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.
