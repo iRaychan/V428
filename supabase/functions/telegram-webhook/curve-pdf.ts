@@ -204,7 +204,15 @@ function sampleEsFit(points:XY[],order:number,yScale=1,count=180){
 function selectChc(q:number,h:number,forcedModel:string='',family:string='CHC'){
   const engine=chcEngine(family),db=engine.db,core=engine.core;
   const wanted=String(forcedModel||'').replace(/^VMS\b/i,'CHC').replace(/^CHCS\b/i,'CHC').replace(/^CHCN\b/i,'CHC').trim().toUpperCase();
-  if(wanted){const row=(db?.models||[]).find((m:any)=>String(m.model||'').toUpperCase()===wanted);if(!row)return null;return core.evaluateModel(db,row,q,h,50)}
+  if(wanted){
+    const row=(db?.models||[]).find((m:any)=>String(m.model||'').toUpperCase()===wanted);if(!row)return null;
+    const normal=core.evaluateModel(db,row,q,h,50);if(normal)return normal;
+    // Exact-model visualisation fallback: preserve the real curve even when the requested point is beyond the curve's flow domain.
+    const curve=db?.curves?.[row.series];if(!curve)return null;const mix=core.parseImpellerMix(row),headFit=core.fitMixedHeadCurve(curve,mix,1),effFit=core.fitMixedEfficiencyCurve(curve,mix,1);if(!headFit||!effFit)return null;
+    const npshFit=core.fitCurve(curve,'npshr',3,1,1),nearestQ=Math.max(Number(headFit.min),Math.min(Number(headFit.max),Number(q))),predHead=Number(core.fitValue(headFit,nearestQ)),eff=Math.max(1,Math.min(100,Number(core.fitValue(effFit,nearestQ)))),npsh=Math.max(0,Number(core.fitValue(npshFit,nearestQ))),shaft=9.81*nearestQ*Math.max(0,predHead)/3600/(eff/100);
+    const powerPts=(headFit.pts||[]).map((p:any)=>{const e=Math.max(1,Math.min(100,Number(core.fitValue(effFit,p.x))));return {x:p.x,y:9.81*p.x*p.y/3600/(e/100)}}),powerOrder=Math.min(6,Math.max(1,powerPts.length-1)),powerFit=powerPts.length>1?{pts:powerPts,c:core.polyfit(powerPts.map((p:any)=>p.x),powerPts.map((p:any)=>p.y),powerOrder),order:powerOrder,min:headFit.min,max:headFit.max}:null;
+    return {...row,impellerMix:mix,predHead,margin:predHead-h,eff,npsh,shaft,headFit,effFit,npshFit,powerFit,rpm:Number(curve.speed_rpm||2900),out_of_curve:true,requested_flow_outside:true};
+  }
   return core.select(db,q,h,50).selected;
 }
 
@@ -256,15 +264,12 @@ function selectBfiEnhanced(q:number,h:number,forcedModel:string=''){
 function esSelect(q:number,h:number,pole:number,forcedModel:string=''){
   const core=(globalThis as any).ESCore,db=(globalThis as any).ES_SELECTOR_DB;
   if(!core||!db)throw new Error('ES selector engine is unavailable in the Telegram function.');
-  const rpm=Number(pole)===2?2900:Number(pole)===4?1450:0;
-  if(!rpm)throw new Error('ES selection requires 2 Pole or 4 Pole.');
-  const wanted=String(forcedModel||'').replace(/^ES\s+/i,'').trim().toUpperCase();let r:any=null;
-  if(wanted){const pump=(db.pumps||[]).find((x:any)=>String(x.model||'').toUpperCase()===wanted&&Number(x.rpm||0)===rpm);if(!pump)return null;r=core.buildResult(pump,'trim',q/3.6,h,{});}
+  const rpm=Number(pole)===2?2900:Number(pole)===4?1450:0;if(!rpm)throw new Error('ES selection requires 2 Pole or 4 Pole.');
+  const wanted=String(forcedModel||'').replace(/^ES\s+/i,'').trim().toUpperCase();let r:any=null,pump:any=null;
+  if(wanted){pump=(db.pumps||[]).find((x:any)=>String(x.model||'').toUpperCase()===wanted&&Number(x.rpm||0)===rpm);if(!pump)return null;r=core.buildResult(pump,'trim',q/3.6,h,{});}
   else{const results=core.selectPumpsMulti(db,{dutyPoints:[{label:'D1',totalFlowLps:q/3.6,headM:h,pumps:1}],mode:'trim',rpm});r=Array.isArray(results)?results[0]:null;}
-  if(!r)return null;
-  const p=r.pump,d=r.dutyPoints?.[0]||{},perf=d.performance||r.performance||{},motor=d.motor||r.motor||{};
-  const points=core.curvePoints(p,Number(r.impellerMm),Number(r.speedRatio||1),120)||[];
-  return {result:r,pump:p,duty:d,perf,motor,points,pole:Number(pole),rpm};
+  if(!r&&wanted&&pump){const d=Number(core.dmax(pump)),perf=core.performance(pump,d,q/3.6,1)||{},motor=perf?.shaftKw!=null?core.sizeMotor(pump,d,1,perf)||{}:{},points=core.curvePoints(pump,d,1,120)||[];return {result:{impellerMm:d,speedRatio:1},pump,duty:{performance:perf,motor},perf,motor,points,pole:Number(pole),rpm,out_of_curve:true};}
+  if(!r)return null;const p=r.pump,d=r.dutyPoints?.[0]||{},perf=d.performance||r.performance||{},motor=d.motor||r.motor||{},points=core.curvePoints(p,Number(r.impellerMm),Number(r.speedRatio||1),120)||[];return {result:r,pump:p,duty:d,perf,motor,points,pole:Number(pole),rpm};
 }
 function motorTech(hp:number,pole:number,efficiencyClass:string='IE3',phase:string='3Ph'){
   const ph=String(phase||'3Ph')==='1Ph'?'1Ph':'3Ph',lookupClass=String(efficiencyClass||'IE3').toUpperCase()==='IE1'?'IE':String(efficiencyClass||'IE3').toUpperCase(),voltage=ph==='1Ph'?240:415;
@@ -647,21 +652,25 @@ export function selectPumpSummary(family:string,q:number,h:number,esPole=0,force
   throw new Error('Unsupported pump family.');
 }
 
-export function selectPumpCandidates(family:string,q:number,h:number,esPole=0,limit=6){
-  const fam=String(family||'').toUpperCase(),max=Math.max(1,Math.min(240,Math.trunc(Number(limit)||6)));
+export function selectPumpCandidates(family:string,q:number,h:number,esPole=0,limit=6,seriesFilter:string=''){
+  const fam=String(family||'').toUpperCase(),max=Math.max(1,Math.min(240,Math.trunc(Number(limit)||6))),filter=String(seriesFilter||'').trim().toUpperCase();
   if(!(Number(q)>0&&Number(h)>0))return [];
+  const filterModel=(model:any)=>{if(!filter)return true;const n=(filter.match(/\b(?:CHC|ES)\s*(\d{1,3})\b/i)||[])[1];if(!n)return true;return new RegExp(`^(?:CHC|ES)\\s*${Number(n)}-`,'i').test(String(model||''));};
   if(isChcFamily(fam)){
-    const engine=chcEngine(fam),result=engine.core.select(engine.db,Number(q),Number(h),50),rows=Array.isArray(result?.candidates)?result.candidates:[];
-    return rows.slice(0,max).map((x:any,rank:number)=>({brand:'B.G.Reich',family:'CHC',series:engine.label,generation_code:engine.generation,keysuite_generation_code:engine.generation,model:String(x.model||''),motor_kw:Number(x.motor_kw||0),motor_hp:Number(x.motor_hp||0),motor_efficiency_class:Number(x.motor_hp||0)>0&&Number(x.motor_hp)<=0.75+1e-9?'IE1':String(engine.motorEff||'IE3'),efficiency:Number(x.eff||0),npshr:Number(x.npsh||0),rpm:Number(x.rpm||engine.db?.curves?.[x.series]?.speed_rpm||2900),pole:2,stages:Number(x.stages||0),connection:String(x.connection||'-'),requested_flow_m3h:Number(q),requested_head_m:Number(h),selector_core_version:engine.core.VERSION,selector_rank:rank+1}));
+    const engine=chcEngine(fam),all=(engine.db?.models||[]).filter((m:any)=>filterModel(m.model)).map((m:any)=>engine.core.evaluateModel(engine.db,m,Number(q),Number(h),50)).filter(Boolean),headSuitable=all.filter((x:any)=>Number(x.margin)>=-.01),suitable=headSuitable.filter((x:any)=>Number(x.motor_kw)+1e-9>=Number(x.shaft));
+    let rows=suitable.length?suitable:headSuitable.length?headSuitable:all.filter((x:any)=>Number(x.margin)<-.01&&Number(x.predHead)>=Number(h)*.95-1e-9).sort((a:any,b:any)=>Number(b.predHead)-Number(a.predHead));
+    rows.forEach((x:any)=>x._keysuiteDutyFlow=Number(q));if(suitable.length)rows.sort((a:any,b:any)=>engine.core.mostSuitableCompare(a,b,Number(q)));
+    return rows.slice(0,max).map((x:any,rank:number)=>({brand:'B.G.Reich',family:'CHC',series:engine.label,generation_code:engine.generation,keysuite_generation_code:engine.generation,model:String(x.model||''),motor_kw:Number(x.motor_kw||0),motor_hp:Number(x.motor_hp||0),motor_efficiency_class:Number(x.motor_hp||0)>0&&Number(x.motor_hp)<=0.75+1e-9?'IE1':String(engine.motorEff||'IE3'),efficiency:Number(x.eff||0),npshr:Number(x.npsh||0),rpm:Number(x.rpm||engine.db?.curves?.[x.series]?.speed_rpm||2900),pole:2,stages:Number(x.stages||0),connection:String(x.connection||'-'),requested_flow_m3h:Number(q),requested_head_m:Number(h),available_head_m:Number(x.predHead||0),undersized:Number(x.margin)<-.01,head_shortfall_pct:Number(x.margin)<-.01?Math.max(0,(Number(h)-Number(x.predHead))/Number(h)*100):0,selector_core_version:engine.core.VERSION,selector_rank:rank+1}));
   }
   if(isBfiFamily(fam)){
     const result=BFI_CORE.select(BFI_DB,Number(q),Number(h),50),rows=Array.isArray(result?.candidates)?result.candidates:[];
     return rows.slice(0,max).map((x:any,rank:number)=>{const base=String(x.model||'').replace(/T$/i,''),phases=Array.isArray(x.phases)&&x.phases.length?x.phases:['3Ph'],phase=phases.includes('3Ph')?'3Ph':String(phases[0]||'1Ph'),display=phase==='3Ph'?`${base}T`:base;return {brand:'B.G.Reich',family:'BFI',series:String(x.series||'BFI'),model:base,base_model:base,display_model:display,quotation_model:display,motor_phase:phase,motor_efficiency_class:Number(x.motor_hp||0)>0&&Number(x.motor_hp)<=0.75+1e-9?'IE1':phase==='1Ph'?'IE1':'IE2',motor_kw:Number(x.motor_kw||0),motor_hp:Number(x.motor_hp||0),efficiency:Number(x.eff||0),npshr:Number(x.npsh||0),rpm:Number(x.rpm||2900),pole:2,stages:Number(x.stages||0),connection:String(x.connection||'-'),requested_flow_m3h:Number(q),requested_head_m:Number(h),selector_core_version:BFI_CORE.VERSION,selector_rank:rank+1};});
   }
   if(fam==='ES'){
-    const pole=Number(esPole),core=(globalThis as any).ESCore,db=(globalThis as any).ES_SELECTOR_DB;if(!core||!db||![2,4].includes(pole))return [];
-    const rpm=pole===2?2900:1450,results=core.selectPumpsMulti(db,{dutyPoints:[{label:'D1',totalFlowLps:Number(q)/3.6,headM:Number(h),pumps:1}],mode:'trim',rpm});
-    return (Array.isArray(results)?results:[]).slice(0,max).map((r:any,rank:number)=>{const pump=r?.pump||{},d=r?.dutyPoints?.[0]||{},perf=d?.performance||r?.performance||{},motor=d?.motor||r?.motor||{};return {brand:'B.G.Reich',family:'ES',series:'ES',model:`ES ${String(pump.model||'')}`.trim(),motor_kw:Number(motor.motorKw||0),motor_hp:Number(motor.motorHp||0),efficiency:Number(perf.efficiencyPct||0),npshr:Number(perf.npshrM||0),rpm:Number(perf.rpm||pump.rpm||rpm),pole,impeller_mm:Number(r?.impellerMm||d?.impellerMm||0),suction:String(pump.dimensions?.suction||'-'),discharge:String(pump.dimensions?.discharge||'-'),requested_flow_m3h:Number(q),requested_head_m:Number(h),selector_core_version:'ESCore',selector_rank:rank+1};});
+    const pole=Number(esPole),core=(globalThis as any).ESCore,db=(globalThis as any).ES_SELECTOR_DB;if(!core||!db||![2,4].includes(pole))return [];const rpm=pole===2?2900:1450,results=core.selectPumpsMulti(db,{dutyPoints:[{label:'D1',totalFlowLps:Number(q)/3.6,headM:Number(h),pumps:1}],mode:'trim',rpm});
+    let rr=(Array.isArray(results)?results:[]).filter((r:any)=>filterModel(`ES ${r?.pump?.model||''}`));let undersized=false;
+    if(!rr.length){rr=(db.pumps||[]).filter((p:any)=>Number(p.rpm||0)===rpm&&filterModel(`ES ${p.model||''}`)).map((p:any)=>{const d=Number(core.dmax(p)),perf=core.performance(p,d,Number(q)/3.6,1);if(!perf||Number(perf.headM)<Number(h)*.95-1e-9||Number(perf.headM)>=Number(h)-.01)return null;const motor=core.sizeMotor(p,d,1,perf)||{};return {pump:p,impellerMm:d,speedRatio:1,performance:perf,motor,dutyPoints:[{performance:perf,motor,impellerMm:d}],_undersized:true};}).filter(Boolean).sort((a:any,b:any)=>Number(b.performance?.headM||0)-Number(a.performance?.headM||0));undersized=rr.length>0;}
+    return rr.slice(0,max).map((r:any,rank:number)=>{const pump=r?.pump||{},d=r?.dutyPoints?.[0]||{},perf=d?.performance||r?.performance||{},motor=d?.motor||r?.motor||{},u=!!r?._undersized;return {brand:'B.G.Reich',family:'ES',series:'ES',model:`ES ${String(pump.model||'')}`.trim(),motor_kw:Number(motor.motorKw||0),motor_hp:Number(motor.motorHp||0),efficiency:Number(perf.efficiencyPct||0),npshr:Number(perf.npshrM||0),rpm:Number(perf.rpm||pump.rpm||rpm),pole,impeller_mm:Number(r?.impellerMm||d?.impellerMm||0),suction:String(pump.dimensions?.suction||'-'),discharge:String(pump.dimensions?.discharge||'-'),requested_flow_m3h:Number(q),requested_head_m:Number(h),available_head_m:Number(perf.headM||0),undersized:u,head_shortfall_pct:u?Math.max(0,(Number(h)-Number(perf.headM))/Number(h)*100):0,selector_core_version:'ESCore',selector_rank:rank+1};});
   }
   return [];
 }
@@ -672,6 +681,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
   let model='',motorKw=0,motorHp=0,eff=0,npsh=0,selectionShaft=0,dutyBrakeHp=0,rpm=0,pole=2,hz=50;
   let suction='-',discharge='-',stages=0,impellerMm=0,maxPressure=0,dim:any={},esPs:any=null,weightKg=0,phase='3Ph';
   let headPoints:XY[]=[],effPoints:XY[]=[],powerPoints:XY[]=[],npsPoints:XY[]=[];
+  let warning='';
 
   if(isChc){
     const s=selectChc(q,h,forcedModel,fam);if(!s)throw new Error(`No ${engine?.label||'CHC'} model can meet ${fmt(q)} m³/hr @ ${fmt(h)} Mtr.`);
@@ -681,6 +691,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     headPoints=sampleFit(s.headFit,120,engine?.core);effPoints=sampleFit(s.effFit,120,engine?.core);
     powerPoints=sampleSmoothPower(s.powerFit,180,1.34102209,engine?.core);
     npsPoints=sampleFit(s.npshFit,120,engine?.core);
+    if(String(forcedModel||'').trim()){const minQ=headPoints.length?Math.min(...headPoints.map(p=>p.x)):0,maxQ=headPoints.length?Math.max(...headPoints.map(p=>p.x)):0,pred=(q>=minQ&&q<=maxQ)?interpolate(headPoints,q):NaN;if(s.out_of_curve||q<minQ-1e-9||q>maxQ+1e-9||!finite(pred)||h>pred*1.01)warning='Requested duty is outside this model\'s curve.';}
   }else if(isBfi){
     const identityModel=String(displayIdentity?.model||displayIdentity?.display_model||forcedModel||''),enhanced=!!displayIdentity?.enhanced||!!displayIdentity?.enhanced_curve||/E$/i.test(identityModel)||/E$/i.test(String(forcedModel||''));
     const s:any=enhanced?selectBfiEnhanced(q,h,forcedModel):selectBfi(q,h,forcedModel);if(!s)throw new Error(`No BFI${enhanced?' Enhanced':''} model can meet ${fmt(q)} m³/hr @ ${fmt(h)} Mtr.`);
@@ -690,21 +701,17 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     if(enhanced){displayIdentity={...(displayIdentity||{}),enhanced:true,enhanced_curve:true,motor_phase:'3Ph'};}
   }else if(fam==='ES'){
     pole=Number(esPole);if(pole!==2&&pole!==4)throw new Error('ES selection requires 2 Pole or 4 Pole.');
-    const s=esSelect(q,h,pole,forcedModel);if(!s)throw new Error(`No ES ${pole} Pole model can meet ${fmt(q)} m³/hr @ ${fmt(h)} Mtr.`);
-    model=`ES ${s.pump.model}`;motorKw=Number(s.motor.motorKw||0);motorHp=Number(s.motor.motorHp||0);eff=Number(s.perf.efficiencyPct||0);npsh=Number(s.perf.npshrM||0);
+    let s:any=esSelect(q,h,pole,forcedModel);if(!s)throw new Error(`No ES ${pole} Pole model can meet ${fmt(q)} m³/hr @ ${fmt(h)} Mtr.`);
+    const core=(globalThis as any).ESCore,forcedD=Number(displayIdentity?.es_impeller_mm||0),motorLimitHp=Number(displayIdentity?.es_motor_limit_hp||0),motorLimitKw=motorLimitHp*0.745699872;
+    if(forcedD>0&&String(forcedModel||'').trim()){const pump=s.pump,perf=core.performance(pump,forcedD,q/3.6,1)||{},motor=perf?.shaftKw!=null?core.sizeMotor(pump,forcedD,1,perf)||{}:{},points=core.curvePoints(pump,forcedD,1,240)||[];s={result:{impellerMm:forcedD,speedRatio:1},pump,duty:{performance:perf,motor},perf,motor,points,pole,rpm:Number(pump.rpm||0)};}
+    model=`ES ${s.pump.model}`;motorKw=motorLimitHp>0?motorLimitKw:Number(s.motor.motorKw||0);motorHp=motorLimitHp>0?motorLimitHp:Number(s.motor.motorHp||0);eff=Number(s.perf.efficiencyPct||0);npsh=Number(s.perf.npshrM||0);
     selectionShaft=Number(s.perf.shaftKw||0);dutyBrakeHp=Number(s.perf.bhp||selectionShaft*1.34102209);rpm=Number(s.perf.rpm||s.pump.rpm||0);hz=Number(s.perf.frequencyHz||50);
     suction=String(s.pump.dimensions?.suction||'-');discharge=String(s.pump.dimensions?.discharge||'-');impellerMm=Number(s.result.impellerMm||0);maxPressure=Number(s.pump.dimensions?.casing_pressure_bar||0);dim=s.pump.dimensions||{};
-    const pts=(s.points||[]).filter((p:any)=>finite(p.flowM3h));
-    const rawHead=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.headM)}));
-    const rawEff=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.efficiencyPct)}));
-    const rawPowerKw=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.shaftKw)}));
-    const rawNpsh=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.npshrM)}));
-    // Same curve fitting as KeySelector ES Product.
-    headPoints=sampleEsFit(rawHead,2,1);
-    effPoints=sampleEsFit(rawEff,6,1);
-    powerPoints=sampleEsFit(rawPowerKw,6,1/0.746);
-    npsPoints=sampleEsFit(rawNpsh,3,1);
-    esPs=esPumpset(s.pump.model,motorHp,motorKw,pole);
+    let pts=(s.points||[]).filter((p:any)=>finite(p.flowM3h));
+    if(motorLimitHp>0&&displayIdentity?.es_motor_safety_limit===true){pts=pts.filter((p:any)=>{try{const mc=core.sizeMotor(s.pump,impellerMm,1,p);return mc&&Number(mc.requiredKw)<=motorLimitKw+1e-9}catch(_){return false}});}
+    const rawHead=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.headM)})),rawEff=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.efficiencyPct)})),rawPowerKw=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.shaftKw)})),rawNpsh=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.npshrM)}));
+    headPoints=sampleEsFit(rawHead,2,1);effPoints=sampleEsFit(rawEff,6,1);powerPoints=sampleEsFit(rawPowerKw,6,1/0.746);npsPoints=sampleEsFit(rawNpsh,3,1);esPs=esPumpset(s.pump.model,motorHp,motorKw,pole);
+    if(String(forcedModel||'').trim()){const minQ=headPoints.length?Math.min(...headPoints.map(p=>p.x)):0,maxQ=headPoints.length?Math.max(...headPoints.map(p=>p.x)):0,pred=(q>=minQ&&q<=maxQ)?interpolate(headPoints,q):NaN;if(s.out_of_curve||q<minQ-1e-9||q>maxQ+1e-9||!finite(pred)||h>pred*1.01)warning='Requested duty is outside this model\'s curve.';}
   }else throw new Error('Unsupported pump family.');
 
   // Frozen KeySelector PDF displays Brake HP at the REQUIRED duty head.
@@ -727,6 +734,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
       });
     }
   }
+  if(fam==='ES'&&Number(displayIdentity?.es_motor_limit_hp||0)>0&&headPoints.length){headEnvelope=[{points:headPoints,label:`Ø${fmt(impellerMm,impellerMm%1?1:0)} · Motor Limited`,color:BLUE,width:2.5}];}
   const xLabel='Flow (m³/hr)';
   const charts:ChartSpec[]=[
     {yLabel:'Head (m)',points:headPoints,series:headEnvelope,duty:{x:q,y:h},bep,bepLabel:'BEP',xLabel,dutyLabel:''},
@@ -783,7 +791,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
   return {
     bytes:new Uint8Array(bytes),filename:`${safe||fam}_Selection.pdf`,model:displayModel,master_model:model,brand:displayBrand,series:displaySeries,
     motor_kw:motorKw,motor_hp:motorHp,efficiency:eff,npshr:npsh,shaft_kw:selectionShaft,
-    pole:fam==='ES'?pole:null,rpm,selector_core_version:isChc?engine?.core?.VERSION:isBfi?BFI_CORE.VERSION:null,
+    pole:fam==='ES'?pole:null,rpm,warning,selector_core_version:isChc?engine?.core?.VERSION:isBfi?BFI_CORE.VERSION:null,
     pdf_layout:'KeySelector frozen layout',pdf_layout_version:'4.23.18'
   };
 }

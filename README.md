@@ -1,7 +1,17 @@
-# KeySuite V4.28.06 FULL CLEAN
+# KeySuite V4.28.07 FULL CLEAN
 
 Baseline: V4.28.05 FULL CLEAN.
 
+
+## V4.28.07 - KeyBot hydraulic selection + exact-model curve control
+
+- Adds a **5% head undersize allowance** when no fully suitable model remains in the requested scope. The candidate stays selectable and is explicitly marked **(Undersized)**.
+- Adds nominal series filtering: `CHC 15` searches CHC 15-xx only; `ES 65` searches ES 65-xx only.
+- Exact CHC / ES model + duty now keeps the selected model, generates its curve, plots the requested duty even outside the curve range, and shows an out-of-curve warning instead of substituting another model.
+- ES exact model + motor HP can generate a motor-limited curve using the existing KeySuite ES safety-factor motor sizing rules.
+- ES exact model + motor HP + flow-only selects the largest allowable impeller and plots the maximum head available at that flow.
+- ES exact model + motor HP + head-only resolves the maximum usable flow at that head.
+- Preserves the V4.28.06 TESK Chemical Pump / dosing / exact GS selection changes below.
 
 ## V4.28.06 - Chemical template + exact GS selection
 
@@ -53,7 +63,7 @@ TESK KeyBot selection corrections:
 - Brand Series labels without an active OEM Family Map cannot create a searchable hydraulic family.
 
 Deployment:
-1. Upload/deploy the V4.28.06 web files to GitHub.
+1. Upload/deploy the V4.28.07 web files to GitHub.
 2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.

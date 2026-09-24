@@ -1,19 +1,18 @@
 {
-  "version": "4.28.06",
-  "baseline": "4.28.05 FULL CLEAN",
-  "upgrade_supported_from": "4.28.05",
+  "version": "4.28.07",
+  "baseline": "4.28.06 FULL CLEAN",
+  "upgrade_supported_from": "4.28.06",
   "changes": [
-    "Typing chem or chemical opens a copy-and-fill TESK chemical dosing template",
-    "Temperature parsing accepts deg C, degree C, \u00b0C and compact C variants",
-    "Hydrochloric acid, HCl and Muriatic acid normalize to one chemical lookup",
-    "Flow and pressure are the only hard hydraulic sizing requirements; incomplete chemical information can return a preliminary recommendation",
-    "Incomplete chemical information surfaces catalogue material/concentration/temperature reference limits where available",
-    "Adds exact TESK GS hydraulic points GS001-GS060; 30 L/hr at 5 bar selects GS030",
-    "Preserves V4.28.05 direct chemical sizing and TESK clean-water family isolation",
-    "No new database migration is required"
+    "5% undersized head fallback, explicitly labelled (Undersized), when no fully suitable candidate exists in scope",
+    "CHC and ES nominal-series filtering such as CHC 15 and ES 65",
+    "Exact CHC/ES model duty plotting outside the hydraulic curve with warning and no automatic model substitution",
+    "ES exact-model motor-HP curve limiting using existing KeySuite motor safety-factor rules",
+    "ES motor-HP flow-only maximum-head and head-only maximum-flow optimization",
+    "Preserves V4.28.06 TESK Chemical Pump and exact GS selection changes",
+    "No database migration is required"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": true,
   "edge_function": "telegram-webhook",
-  "notes": "Upgrade from V4.28.05. Upload the V4.28.06 web assets to GitHub and redeploy telegram-webhook. No database migration is required."
+  "notes": "Upgrade from V4.28.06. Upload the V4.28.07 web files to GitHub and redeploy telegram-webhook. No database migration is required."
 }

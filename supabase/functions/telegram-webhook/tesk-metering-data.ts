@@ -10,7 +10,7 @@ type ChemicalRule={
   head:'PVDF'|'PVC'|'316SS';diaphragm:string;seal:string;avoid?:string[];note:string;
 };
 
-// V4.28.06: conservative digital rules derived from TESK's catalogue anticorrosion table.
+// V4.28.07: conservative digital rules derived from TESK's catalogue anticorrosion table.
 // Full wetted-parts compatibility is only called "confirmed" where the represented
 // head + seal combination is covered by the conservative rule. Where only the pump
 // head material remains supported, KeyBot returns a preliminary recommendation and
@@ -172,7 +172,7 @@ export function selectTeskMeteringPump(req:any,material:any){
   const gs=TESK_GS_POINTS.filter(x=>x.maxFlowLph>=q&&x.maxPressureBar>=p).sort((a,b)=>a.maxFlowLph-b.maxFlowLph||a.maxPressureBar-b.maxPressureBar)[0];
   if(gs&&(!materialName||['PVC','PVDF','316SS'].includes(materialName)))return {status:'exact',series:'GS',model:gs.model,liquid_end_material:materialName||undefined,max_flow_lph:gs.maxFlowLph,max_pressure_bar:gs.maxPressureBar,note:'Exact GS hydraulic model from the TESK flow/pressure table. Final full model code still depends on liquid-end, connector, motor and option codes.'};
   const families=TESK_SERIES_ENVELOPES.filter(x=>x.maxFlowLph>=q&&x.maxPressureBar>=p&&(!materialName||x.materials.includes(materialName))&&(!(x.plasticMaxBar&&['PVC','PVDF'].includes(materialName))||p<=x.plasticMaxBar)).sort((a,b)=>a.maxFlowLph-b.maxFlowLph||a.maxPressureBar-b.maxPressureBar);
-  const best=families[0];if(!best)return {status:'not_confirmed',reason:'No catalogue-confirmed series/material envelope in V4.28.06 covers this duty. Engineering review is required.'};
+  const best=families[0];if(!best)return {status:'not_confirmed',reason:'No catalogue-confirmed series/material envelope in V4.28.07 covers this duty. Engineering review is required.'};
   return {status:'series',series:best.series,max_flow_lph:best.maxFlowLph,max_pressure_bar:best.maxPressureBar,note:`${best.note} Exact model must be confirmed against the TESK flow/pressure table.`};
 }
 
