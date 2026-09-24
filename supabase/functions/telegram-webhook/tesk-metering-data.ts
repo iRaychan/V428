@@ -106,6 +106,8 @@ function concentrationCovered(rule:ChemicalRule,requested:any){
 export function teskMaterialRecommendation(req:any){
   const key=String(req?.medium_key||'');if(!key)return {status:'missing_medium'};
   const candidates=TESK_CHEMICAL_RULES.filter(r=>r.key.replace(/_98$/,'')===key);
+  const missing:string[]=[];if(candidates.some(r=>r.concentrations?.length)&&req?.concentration_pct==null)missing.push('concentration');if(candidates.some(r=>r.maxTempC)&&req?.temperature_c==null)missing.push('temperature');
+  if(missing.length)return {status:'not_confirmed',medium:req?.medium||key,reason:`Provide ${missing.join(' and ')} to confirm the wetted-parts material. The hydraulic pump recommendation is shown below.`};
   const rule=candidates.find(r=>concentrationCovered(r,req?.concentration_pct)&&(!r.maxTempC||Number(req?.temperature_c)<=r.maxTempC));
   if(!rule)return {status:'not_confirmed',medium:req?.medium||key,reason:'The requested chemical concentration / temperature is not covered by the conservative V4.28.02 catalogue rule. Engineering review is required.'};
   return {status:'confirmed',medium:rule.name,pump_head:rule.head,diaphragm:rule.diaphragm,seal:rule.seal,avoid:rule.avoid||[],note:rule.note};
@@ -123,23 +125,23 @@ export function selectTeskMeteringPump(req:any,material:any){
 
 const fmt=(n:any)=>{const v=Number(n);return Number.isFinite(v)?(Math.round(v*10)/10).toString():'-'};
 export function formatTeskMeteringRecommendation(customerName:string,req:any,material:any,pump:any,chemicalSelection=true){
-  const lines=[`Customer: ${customerName||'-'}`,'','TESK Chemical Pump',`Service: ${req?.service_type==='chemical_dosing'?'Chemical Dosing / Metering':'Dosing / Metering'}`,`Medium: ${req?.medium||'Not specified'}`];
+  const lines=[...(customerName?[`Customer: ${customerName}`,'']:[]),'TESK Chemical Pump',`Service: ${req?.service_type==='chemical_dosing'?'Chemical Dosing / Metering':'Dosing / Metering'}`,`Medium: ${req?.medium||'Not specified'}`];
   if(req?.concentration_pct!=null)lines.push(`Concentration: ${fmt(req.concentration_pct)}%`);
   if(req?.temperature_c!=null)lines.push(`Temperature: ${fmt(req.temperature_c)}°C`);
   lines.push(`Duty: ${fmt(req?.flow_lph)} L/hr @ ${fmt(req?.pressure_bar)} bar`,'');
+  lines.push('Pump');
+  if(pump?.status==='exact')lines.push(`Recommended: ${pump.model}`,`Control variants: ${pump.variants.join(' / ')}`,`Catalogue capability: up to ${fmt(pump.max_flow_lph)} L/hr @ ${fmt(pump.max_pressure_bar)} bar`,`Note: ${pump.note}`);
+  else if(pump?.status==='series')lines.push(`Recommended series: ${pump.series}`,`Series envelope: up to ${fmt(pump.max_flow_lph)} L/hr @ ${fmt(pump.max_pressure_bar)} bar`,`Note: ${pump.note}`);
+  else lines.push('Recommendation: Not confirmed',`Note: ${pump?.reason||'Engineering review is required.'}`);
   if(chemicalSelection){
+    lines.push('');
     lines.push('Material');
     if(material?.status==='confirmed'){
       lines.push(`Pump head: ${material.pump_head}`,`Diaphragm: ${material.diaphragm}`,`Seal / O-ring: ${material.seal}`);
       if(material?.avoid?.length)lines.push(`Avoid: ${material.avoid.join(', ')}`);
       lines.push(`Compatibility: Catalogue-backed conservative rule`,`Note: ${material.note}`);
     }else lines.push('Compatibility: Not confirmed',`Note: ${material?.reason||'Engineering review is required before final material selection.'}`);
-    lines.push('');
   }
-  lines.push('Pump');
-  if(pump?.status==='exact')lines.push(`Recommended: ${pump.model}`,`Control variants: ${pump.variants.join(' / ')}`,`Catalogue capability: up to ${fmt(pump.max_flow_lph)} L/hr @ ${fmt(pump.max_pressure_bar)} bar`,`Note: ${pump.note}`);
-  else if(pump?.status==='series')lines.push(`Recommended series: ${pump.series}`,`Series envelope: up to ${fmt(pump.max_flow_lph)} L/hr @ ${fmt(pump.max_pressure_bar)} bar`,`Note: ${pump.note}`);
-  else lines.push('Recommendation: Not confirmed',`Note: ${pump?.reason||'Engineering review is required.'}`);
   lines.push('','Technical selection only. Confirm chemical concentration, temperature and final wetted-parts compatibility before supply.');
   return lines.join('\n');
 }

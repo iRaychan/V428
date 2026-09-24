@@ -844,6 +844,10 @@ async function guidedUserAvailableProducts(service:any,companyId:string,user:any
   const add=(brandId:any,groupValue:any,brandName:any='',brandSeriesValue:any='')=>{
     const meta=guidedProductGroupMeta(groupValue);if(!allowedGroups.has(meta.group))return;
     const bid=String(brandId||'').trim();if(!bid)return;
+    const resolvedBrandName=String(brandName||brandNames.get(bid)||bid).trim();
+    // TESK has no ES/OEM End Suction range. Never expose the B.G.Reich ES
+    // hydraulic database under TESK, even if a stale mapping row survives.
+    if(keybotFastBrandKey(resolvedBrandName)==='tesk'&&meta.group==='ES')return;
     if(scope==='assigned'){
       const brandAll=assignedKeys.has(`${bid}|*`),groupKey=assignedKeys.has(`${bid}|${meta.group}`),familyKey=assignedKeys.has(`${bid}|${meta.roleFamily}`);
       // V4.26.05: CHC C4 and C6 are independently assignable. Honour exact
@@ -854,7 +858,7 @@ async function guidedUserAvailableProducts(service:any,companyId:string,user:any
       const allowed=brandAll||groupKey||(['CHC_G1','CHC_G2'].includes(meta.group)?(!hasSpecificChc&&familyKey):familyKey);
       if(!allowed)return;
     }
-    const name=String(brandName||brandNames.get(bid)||bid).trim();
+    const name=resolvedBrandName;
     const storedBrandSeries=String(brandSeriesValue||brandSeriesByKey.get(`${bid}|${meta.group}`)||'').trim();
     const masterChcSeries=masterBrandIds.has(bid)&&meta.group==='CHC_G1'?'CHC C4':masterBrandIds.has(bid)&&meta.group==='CHC_G2'?'CHC C6':'';
     const brandSeries=masterChcSeries||storedBrandSeries;
@@ -864,7 +868,10 @@ async function guidedUserAvailableProducts(service:any,companyId:string,user:any
     const key=`${bid}|${meta.group}`;if(candidates.has(key))return;
     candidates.set(key,{key,brand_id:bid,brand_name:name,brand_logo:String(brandLogos.get(bid)||'').trim(),price_group:meta.group,role_family:meta.roleFamily,product_label:productLabel,brand_series:brandSeries,has_curve:meta.hasCurve,product_type:meta.productType});
   };
-  for(const r of sr.data||[])add(r.brand_id,r.product_group,'',r.brand_series);
+  // Brand Series rows provide the selling label only. An active OEM Family Map
+  // is the authority that says a Brand can use a hydraulic family. Building
+  // candidates directly from orphan Series rows allowed (for example) TESK to
+  // borrow the B.G.Reich ES curves even though TESK had no ES OEM mapping.
   for(const r of mr.data||[])add(r.brand_id,r.master_family);
   // V4.21.02: the B.G.Reich master CHC assignment represents two independent
   // hydraulic generations. Generic CHC rows historically resolve to C6/G2, so
@@ -1293,7 +1300,7 @@ function keybotFastBrandKey(value:any){const raw=String(value||'').trim(),compac
 function keybotFastBrandAliases(value:any){const raw=String(value||'').trim(),key=keybotFastBrandKey(raw);if(key==='mos')return guidedUnique([raw,'M.O.S','MOS','Mos']);if(key==='ok')return guidedUnique([raw,'O.K.Pump','O.K. Pump','O.K.','OKPump','OK Pump','O K Pump','OK']);if(key==='bgreich')return guidedUnique([raw,'B.G.Reich','B.G. Reich','BG Reich','BG']);return [raw]}
 function keybotFastProductSeriesKey(product:any){return cleanSearch(product?.brand_series||product?.product_label||'')}
 function keybotFastIsAssignedBrand(text:any,products:any[]){const key=keybotFastBrandKey(text);return !!key&&(products||[]).some((p:any)=>keybotFastBrandKey(p?.brand_name)===key)}
-function keybotFastIsKnownBrand(text:any,products:any[]){const key=keybotFastBrandKey(text);return key==='ok'||key==='mos'||key==='bgreich'||keybotFastIsAssignedBrand(text,products)}
+function keybotFastIsKnownBrand(text:any,products:any[]){const key=keybotFastBrandKey(text);return key==='ok'||key==='mos'||key==='bgreich'||key==='tesk'||keybotFastIsAssignedBrand(text,products)}
 function keybotFastRequestProductScope(input:any,products:any[]){
   const raw=String(input||''),stripped=keybotFastStripBrand(raw,products),query=String(stripped.query||raw),brandKey=keybotFastBrandKey(stripped.brand),chcScope=quoteChcScopeFromText(query);let series='';
   if(/\bCHC\b/i.test(query))series='CHC';else if(/\bSVM\b/i.test(query))series='SVM';else if(/\bVMS\b/i.test(query))series='VMS';else if(/\bHMS\b/i.test(query))series='HMS';else if(/\bBFI\b/i.test(query))series='BFI';else if(/\bES\b/i.test(query))series='ES';
@@ -1347,7 +1354,7 @@ async function keybotFastOpenPreparedMatch(service:any,telegramToken:string,comp
   }
   return await keybotFastOpenMatch(service,telegramToken,companyId,chatId,senderId,session,customer,match,context);
 }
-function keybotFastStripBrand(text:any,products:any[]){let raw=String(text||'').trim(),picked='';const brands=guidedUnique((products||[]).map((p:any)=>String(p.brand_name||'').trim())),configured=brands.flatMap((brand:any)=>keybotFastBrandAliases(brand).map((alias:any)=>({brand,alias}))),builtIn=[...keybotFastBrandAliases('B.G.Reich').map((alias:any)=>({brand:'B.G.Reich',alias})),...keybotFastBrandAliases('O.K.Pump').map((alias:any)=>({brand:'O.K.Pump',alias})),...keybotFastBrandAliases('M.O.S').map((alias:any)=>({brand:'M.O.S',alias}))],aliases=[...configured,...builtIn].sort((a:any,b:any)=>b.alias.length-a.alias.length);for(const x of aliases){const esc=String(x.alias).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),re=new RegExp(`^${esc}(?:\\s*[-,;:/·]\\s*|\\s+)`,'i');if(re.test(raw)){picked=x.brand;raw=raw.replace(re,'').trim();break}}return {brand:picked,query:raw}}
+function keybotFastStripBrand(text:any,products:any[]){let raw=String(text||'').trim(),picked='';const brands=guidedUnique((products||[]).map((p:any)=>String(p.brand_name||'').trim())),configured=brands.flatMap((brand:any)=>keybotFastBrandAliases(brand).map((alias:any)=>({brand,alias}))),builtIn=[...keybotFastBrandAliases('B.G.Reich').map((alias:any)=>({brand:'B.G.Reich',alias})),...keybotFastBrandAliases('TESK').map((alias:any)=>({brand:'TESK',alias})),...keybotFastBrandAliases('O.K.Pump').map((alias:any)=>({brand:'O.K.Pump',alias})),...keybotFastBrandAliases('M.O.S').map((alias:any)=>({brand:'M.O.S',alias}))],aliases=[...configured,...builtIn].sort((a:any,b:any)=>b.alias.length-a.alias.length);for(const x of aliases){const esc=String(x.alias).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),re=new RegExp(`^${esc}(?:\\s*[-,;:/·]\\s*|\\s+)`,'i');if(re.test(raw)){picked=x.brand;raw=raw.replace(re,'').trim();break}}return {brand:picked,query:raw}}
 async function keybotFastModelMatches(service:any,companyId:string,products:any[],input:any){
   const scoped=keybotFastStripBrand(input,products),requestScope=keybotFastRequestProductScope(input,products),bfiDirect=parseDirectPumpModel(scoped.query)?.family==='BFI'?parseDirectPumpModel(scoped.query):null,bfiSuffix=String((String(bfiDirect?.model||'').match(/([TE])$/i)||[])[1]||'').toUpperCase(),requestedPole=quoteEsPoleFromText(scoped.query),modelQuery=bfiDirect?bfiBaseModelName(bfiDirect.model):String(scoped.query||'').replace(/\b[24]\s*P(?:OLE)?S?\b/ig,' ').replace(/\b(?:2900|1450)\s*(?:RPM)?\b/ig,' ').replace(/\s+/g,' ').trim(),brandKey=keybotFastBrandKey(scoped.brand),query=cleanSearch(modelQuery),exact:any[]=[],partial:any[]=[];if(!query)return [];
   const esDb:any=(globalThis as any).ES_SELECTOR_DB;
@@ -1408,7 +1415,7 @@ async function keybotFastHandleProduct(service:any,telegramToken:string,companyI
   const requestScope=keybotFastRequestProductScope(raw,products);
   if(Number(parsed.flow_m3h)>0&&Number(parsed.head_m)>0&&(requestScope.recognized||allAssignedDuty)){
     const family=quoteFamilyFromText(raw),chcScope=quoteChcScopeFromText(raw),requestedEsPole=Number(parsed.es_pole||quoteEsPoleFromText(raw)||0),wanted=(products||[]).filter((p:any)=>p.has_curve===true).filter((p:any)=>allAssignedDuty||keybotFastProductInScope(p,requestScope)).filter((p:any)=>{const g=String(p.price_group||'').toUpperCase();if(allAssignedDuty||requestScope.series||(!family&&requestScope.brandKey))return true;if(family.startsWith('ES'))return g==='ES';if(family==='BFI')return g==='BFI';if(!['CHC_G1','CHC_G2'].includes(g))return false;return chcScope?g===chcScope:true;});
-    const q=Number(parsed.flow_m3h),h=Number(parsed.head_m),hydraulic=await guidedSizeSelectedProducts(service,companyId,wanted,q,h,240,240,requestedEsPole);if(!hydraulic.length){const curveOnly=isCompanyCurveOnlyUser(user);await telegramSend(telegramToken,chatId,curveOnly?'No suitable model was found for the assigned Brand / Series at this duty point.':'No suitable model was found for that Customer / Brand / Series / Duty.',curveOnly?companyCurveOnlyMenu():mainMenuMarkup());return session}
+    const q=Number(parsed.flow_m3h),h=Number(parsed.head_m),hydraulic=await guidedSizeSelectedProducts(service,companyId,wanted,q,h,240,240,requestedEsPole);if(!hydraulic.length){const curveOnly=isCompanyCurveOnlyUser(user),noResult=curveOnly?'No suitable model was found for the assigned Brand / Series at this duty point.':customer?'No suitable model was found for that Customer / Brand / Series / Duty.':'No suitable model was found for the requested Brand / Series at this duty point.';await telegramSend(telegramToken,chatId,noResult,curveOnly?companyCurveOnlyMenu():mainMenuMarkup());return session}
     const genericEs=family==='ES'&&!requestedEsPole,pools=await keybotFastStockCandidatePools(service,hydraulic,{ensure_es_poles:genericEs,ensure_family_mix:allAssignedDuty}),candidates=pools.hot,token=guidedSelectionNewToken(),duty=dutyDisplay(String(productText||''),q,h).duty_text,hasCold=pools.cold.length>0,saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'guided',step:'guided_selection_results',flow_m3h:q,head_m:h,selected_customer_id:String(customer?.id||'')||null,context:{...sessionContext(session),keysuite_user_email:user.email,company_curve_only:user?.company_curve_only===true,...(customer?{customer_name:customer.company_name}:{}),guided_selection_products:wanted,guided_selection_keys:wanted.map((p:any)=>String(p.key)),guided_selection_candidates:candidates,guided_selection_hot_candidates:pools.hot,guided_selection_cold_candidates:pools.cold,guided_selection_stock_view:'hot',guided_selection_token:token,guided_duty_text:duty,guided_pending_request:{...parsed,chc_scope:chcScope||'',es_pole:requestedEsPole||0,flow_m3h:q,head_m:h}}});await telegramSend(telegramToken,chatId,`${customer?`Customer: ${customer.company_name}\n\n`:''}${guidedSelectionResultText(q,h,candidates,duty,'hot',hasCold)}`,guidedSelectionResultKeyboard(candidates,token,{stockView:'hot',hasCold,hasHot:pools.hot.length>0,curveOnly:user?.company_curve_only===true}));return saved||session
   }
   if(keybotFastLooksLikePump(raw)){
@@ -2197,30 +2204,29 @@ async function teskMeteringUserAllowed(service:any,companyId:string,user:any){
   if(!r.data?.permissions||!Object.prototype.hasOwnProperty.call(r.data.permissions,'use_product'))return true;
   return String(r.data.permissions.use_product||'none').trim().toLowerCase()!=='none';
 }
-function meteringRequestMissing(req:any,chemicalSelection:boolean){
+function meteringRequestMissing(req:any,_chemicalSelection:boolean){
   const missing:string[]=[];
   if(!String(req?.medium||'').trim())missing.push('medium / chemical');
   if(!(Number(req?.flow_lph)>0))missing.push('flow (L/hr)');
   if(!(Number(req?.pressure_bar)>0))missing.push('pressure (bar)');
-  if(chemicalSelection&&teskMeteringIsChemical(req)){
-    if(req?.concentration_pct==null)missing.push('concentration (%)');
-    if(req?.temperature_c==null)missing.push('temperature (°C)');
-  }
   return missing;
 }
 function meteringDetailsPrompt(customerName:string,missing:string[]=[]){
   const need=missing.length?`\nStill needed: ${missing.join(', ')}.`:'';
-  return `Customer: ${customerName}\nTESK Chemical Pump${need}\n\nSend: Medium / chemical, concentration, temperature, flow (L/hr) and pressure (bar).\nExample: NaOCl 10%, 30°C, 20 L/hr @ 5 bar`;
+  return `${customerName?`Customer: ${customerName}\n`:''}TESK Chemical Pump${need}\n\nSend: Medium / chemical, concentration, temperature, flow (L/hr) and pressure (bar).\nExample: NaOCl 10%, 30°C, 20 L/hr @ 5 bar`;
 }
 async function continueTeskMetering(service:any,telegramToken:string,companyId:string,chatId:string,senderId:string,session:any,customer:any,user:any,incoming:any){
-  if(!customer||!user)return session;
+  if(!user)return session;
   if(!await teskMeteringUserAllowed(service,companyId,user)){await telegramSend(telegramToken,chatId,'TESK Chemical Pump is not available under your KeySuite Product permission.',mainMenuMarkup());return session}
-  const flags=await loadTeskCustomerFeature(service,companyId,String(customer.id));
-  if(!flags.enabled){await telegramSend(telegramToken,chatId,`Customer: ${customer.company_name}\n\nTESK Chemical Pump is not assigned to this Customer.`,mainMenuMarkup());return await saveKeybotSession(service,companyId,chatId,senderId,{mode:'',step:'idle',selected_customer_id:null,context:{}})}
+  // Direct chemical-duty selection is technical and must not depend on a
+  // Customer. Customer assignment remains relevant in Customer-led flows.
+  const flags=customer?await loadTeskCustomerFeature(service,companyId,String(customer.id)):{enabled:true,chemical_selection:true};
+  if(customer&&!flags.enabled){await telegramSend(telegramToken,chatId,`Customer: ${customer.company_name}\n\nTESK Chemical Pump is not assigned to this Customer.`,mainMenuMarkup());return await saveKeybotSession(service,companyId,chatId,senderId,{mode:'',step:'idle',selected_customer_id:null,context:{}})}
+  const customerId=String(customer?.id||''),customerName=String(customer?.company_name||'');
   const prior=sessionContext(session).pending_metering_request||{},req=mergeTeskMeteringRequest(prior,incoming||{});
   if(String(req.service_type||'')==='ambiguous'){
-    const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_waiting_service',selected_customer_id:String(customer.id),context:{...sessionContext(session),keysuite_user_email:user.email,customer_name:customer.company_name,tesk_feature:flags,pending_metering_request:req}});
-    await telegramSend(telegramToken,chatId,`Customer: ${customer.company_name}\nMedium: ${req.medium||'Chemical detected'}\n\nWhat type of application?`,telegramReplyKeyboard([['Dosing / Metering'],['Transfer / Circulation'],['🔄 New Request']]));return saved;
+    const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_waiting_service',selected_customer_id:customerId||null,context:{...sessionContext(session),keysuite_user_email:user.email,...(customerName?{customer_name:customerName}:{}),tesk_feature:flags,pending_metering_request:req}});
+    await telegramSend(telegramToken,chatId,`${customerName?`Customer: ${customerName}\n`:''}Medium: ${req.medium||'Chemical detected'}\n\nWhat type of application?`,telegramReplyKeyboard([['Dosing / Metering'],['Transfer / Circulation'],['🔄 New Request']]));return saved;
   }
   if(String(req.service_type||'')==='chemical_transfer'){
     const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'',step:'idle',selected_customer_id:null,context:{}});
@@ -2228,11 +2234,11 @@ async function continueTeskMetering(service:any,telegramToken:string,companyId:s
   }
   if(!req.service_type||req.service_type==='none')req.service_type=req?.medium_key&&req.medium_key!=='water'?'chemical_dosing':'dosing';
   const missing=meteringRequestMissing(req,flags.chemical_selection);
-  if(missing.length){const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_waiting_details',selected_customer_id:String(customer.id),context:{...sessionContext(session),keysuite_user_email:user.email,customer_name:customer.company_name,tesk_feature:flags,pending_metering_request:req}});await telegramSend(telegramToken,chatId,meteringDetailsPrompt(customer.company_name,missing),telegramRemoveKeyboard());return saved}
+  if(missing.length){const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_waiting_details',selected_customer_id:customerId||null,context:{...sessionContext(session),keysuite_user_email:user.email,...(customerName?{customer_name:customerName}:{}),tesk_feature:flags,pending_metering_request:req}});await telegramSend(telegramToken,chatId,meteringDetailsPrompt(customerName,missing),telegramRemoveKeyboard());return saved}
   const material=flags.chemical_selection?teskMaterialRecommendation(req):{status:'disabled'};
   const pump=selectTeskMeteringPump(req,material?.status==='confirmed'?material:null);
-  const result=formatTeskMeteringRecommendation(String(customer.company_name||''),req,material,pump,flags.chemical_selection);
-  const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_result',selected_customer_id:String(customer.id),context:{...sessionContext(session),keysuite_user_email:user.email,customer_name:customer.company_name,tesk_feature:flags,pending_metering_request:req,tesk_material:material,tesk_pump:pump}});
+  const result=formatTeskMeteringRecommendation(customerName,req,material,pump,flags.chemical_selection);
+  const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_result',selected_customer_id:customerId||null,context:{...sessionContext(session),keysuite_user_email:user.email,...(customerName?{customer_name:customerName}:{}),tesk_feature:flags,pending_metering_request:req,tesk_material:material,tesk_pump:pump}});
   await telegramSend(telegramToken,chatId,result,telegramReplyKeyboard([['🔄 New Request']]));return saved;
 }
 async function resolveTeskMeteringCustomer(service:any,telegramToken:string,companyId:string,chatId:string,senderId:string,session:any,user:any,query:string,request:any){
@@ -2241,12 +2247,9 @@ async function resolveTeskMeteringCustomer(service:any,telegramToken:string,comp
   const choices=matches.map((x:any)=>({id:String(x.id),label:String(x.company_name).slice(0,55)}));const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_waiting_company',selected_customer_id:null,context:{...sessionContext(session),keysuite_user_email:user.email,pending_metering_request:request,customer_choices:choices}});await telegramSend(telegramToken,chatId,`I found ${matches.length} similar customers for “${query}”.\nPlease confirm which customer you mean:`,telegramReplyKeyboard([...choices.map((x:any)=>[x.label]),['🔄 New Request']]));return saved;
 }
 async function startTeskMetering(service:any,telegramToken:string,companyId:string,chatId:string,senderId:string,session:any,request:any){
-  const user=await linkedKeySuiteUser(service,companyId,senderId);if(!user){await telegramSend(telegramToken,chatId,'TESK Chemical Pump selection requires a linked KeySuite user and Customer assignment.',mainMenuMarkup());return session}
+  const user=await linkedKeySuiteUser(service,companyId,senderId);if(!user){await telegramSend(telegramToken,chatId,'TESK Chemical Pump selection requires a linked KeySuite user.',mainMenuMarkup());return session}
   if(!await teskMeteringUserAllowed(service,companyId,user)){await telegramSend(telegramToken,chatId,'TESK Chemical Pump is not available under your KeySuite Product permission.',mainMenuMarkup());return session}
-  const selectedId=String(session?.selected_customer_id||'');const selected=selectedId?await allowedCustomerById(service,companyId,user,selectedId):null;
-  if(selected)return await continueTeskMetering(service,telegramToken,companyId,chatId,senderId,session,selected,user,request);
-  const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_waiting_company',selected_customer_id:null,context:{keysuite_user_email:user.email,pending_metering_request:request,customer_choices:[]}});
-  await telegramSend(telegramToken,chatId,'TESK Chemical Pump detected.\n\nWhich Customer is this selection for?\nType part of the company name.',telegramRemoveKeyboard());return saved;
+  return await continueTeskMetering(service,telegramToken,companyId,chatId,senderId,session,null,user,request);
 }
 
 async function continueSimplePrice(service:any,telegramToken:string,companyId:string,chatId:string,senderId:string,session:any,customer:any,user:any,request:any){const req=mergeQuoteRequest(sessionContext(session).pending_request,request);if(req.product_type==='keyplc_system'||req.system_type==='KEYPLC')return await sendKeyplcSystem(service,telegramToken,companyId,chatId,senderId,session,req,customer,user);if(req.product_type==='tank')return await sendSimpleTankPrice(service,telegramToken,companyId,chatId,senderId,session,customer,user,req);if(!req.product_type&&!simpleRequestHasTechnical(req)){const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'price',step:'price_waiting_product',selected_customer_id:String(customer.id),context:{...sessionContext(session),keysuite_user_email:user.email,customer_name:customer.company_name,pending_request:req}});await telegramSend(telegramToken,chatId,'What do you need? Send a pump duty such as CHC 30@80, or a GWS Tank model/size.',telegramRemoveKeyboard());return saved}return await sendSimplePumpPrice(service,telegramToken,companyId,chatId,senderId,session,customer,user,{...req,product_type:'pump'})}
@@ -2438,10 +2441,10 @@ Deno.serve(async(req)=>{
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
       if(isCompanyCurveOnlyUser(navigationUser)){
         await telegramSend(telegramToken,chatId,`Hi 👋\n\n${companyCurveOnlyPrompt()}`,companyCurveOnlyMenu());
-        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.04'});
+        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.05'});
       }
       await telegramSend(telegramToken,chatId,`Hi 👋\n\n${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.04'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.05'});
     }
     if(newRequestButton){
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
@@ -2458,21 +2461,26 @@ Deno.serve(async(req)=>{
       return json({ok:true,status:'curve_only_direct_request'});
     }
 
-    // V4.28.02: TESK Chemical Pump customer-specific KeyBot flow.
+    // TESK Chemical Pump follow-up flow. Direct technical sizing is customer-free;
+    // the waiting-company branch remains for older sessions and Customer-led paths.
     if(!callbackQuery&&session?.mode==='metering'&&session?.step==='metering_waiting_company'&&text){
       const user=await linkedKeySuiteUser(service,keySuiteCompanyId,senderId);if(!user){await telegramSend(telegramToken,chatId,'This Telegram account is not linked to an active KeySuite user.',mainMenuMarkup());return json({ok:true,status:'metering_user_not_linked'})}
+      // Recover old in-flight sessions created before technical TESK selection
+      // was separated from Customer selection. A new chemical duty must be
+      // sized immediately, not interpreted as a Customer name.
+      const directMetering=parseTeskMeteringRequest(text);if(teskMeteringLooksRelevant(directMetering)&&String(directMetering.service_type)!=='chemical_transfer'){session=await startTeskMetering(service,telegramToken,keySuiteCompanyId,chatId,senderId,session,directMetering);return json({ok:true,status:'tesk_metering_restarted',service_type:directMetering.service_type})}
       const c=sessionContext(session),choices=Array.isArray(c.customer_choices)?c.customer_choices:[],chosen=choices.find((x:any)=>cleanSearch(x.label)===cleanButton);
       if(chosen){const customer=await allowedCustomerById(service,keySuiteCompanyId,user,String(chosen.id));if(customer){session=await continueTeskMetering(service,telegramToken,keySuiteCompanyId,chatId,senderId,session,customer,user,c.pending_metering_request||{});return json({ok:true,status:'metering_customer_selected'})}}
       session=await resolveTeskMeteringCustomer(service,telegramToken,keySuiteCompanyId,chatId,senderId,session,user,String(text),c.pending_metering_request||{});return json({ok:true,status:'metering_customer_search'});
     }
     if(!callbackQuery&&session?.mode==='metering'&&session?.step==='metering_waiting_service'&&text){
-      const user=await linkedKeySuiteUser(service,keySuiteCompanyId,senderId),customer=await allowedCustomerById(service,keySuiteCompanyId,user,String(session.selected_customer_id||'')),c=sessionContext(session);if(!user||!customer){await telegramSend(telegramToken,chatId,'The metering selection session has expired. Start a new request.',mainMenuMarkup());return json({ok:true,status:'metering_session_expired'})}
+      const user=await linkedKeySuiteUser(service,keySuiteCompanyId,senderId),customer=session.selected_customer_id?await allowedCustomerById(service,keySuiteCompanyId,user,String(session.selected_customer_id)):null,c=sessionContext(session);if(!user){await telegramSend(telegramToken,chatId,'The metering selection session has expired. Start a new request.',mainMenuMarkup());return json({ok:true,status:'metering_session_expired'})}
       if(cleanButton==='transfer circulation'||cleanButton==='transfer'||cleanButton==='circulation'){session=await continueTeskMetering(service,telegramToken,keySuiteCompanyId,chatId,senderId,session,customer,user,mergeTeskMeteringRequest(c.pending_metering_request,{service_type:'chemical_transfer'}));return json({ok:true,status:'metering_routed_transfer'})}
       if(cleanButton==='dosing metering'||cleanButton==='dosing'||cleanButton==='metering'){session=await continueTeskMetering(service,telegramToken,keySuiteCompanyId,chatId,senderId,session,customer,user,mergeTeskMeteringRequest(c.pending_metering_request,{service_type:c.pending_metering_request?.medium_key&&c.pending_metering_request.medium_key!=='water'?'chemical_dosing':'dosing'}));return json({ok:true,status:'metering_service_dosing'})}
       await telegramSend(telegramToken,chatId,'Please choose Dosing / Metering or Transfer / Circulation.',telegramReplyKeyboard([['Dosing / Metering'],['Transfer / Circulation'],['🔄 New Request']]));return json({ok:true,status:'metering_service_waiting'});
     }
     if(!callbackQuery&&session?.mode==='metering'&&session?.step==='metering_waiting_details'&&text){
-      const user=await linkedKeySuiteUser(service,keySuiteCompanyId,senderId),customer=await allowedCustomerById(service,keySuiteCompanyId,user,String(session.selected_customer_id||'')),c=sessionContext(session);if(!user||!customer){await telegramSend(telegramToken,chatId,'The metering selection session has expired. Start a new request.',mainMenuMarkup());return json({ok:true,status:'metering_session_expired'})}
+      const user=await linkedKeySuiteUser(service,keySuiteCompanyId,senderId),customer=session.selected_customer_id?await allowedCustomerById(service,keySuiteCompanyId,user,String(session.selected_customer_id)):null,c=sessionContext(session);if(!user){await telegramSend(telegramToken,chatId,'The metering selection session has expired. Start a new request.',mainMenuMarkup());return json({ok:true,status:'metering_session_expired'})}
       let parsed=parseTeskMeteringRequest(text);const prior=c.pending_metering_request||{};
       if(!prior.medium&&!parsed.medium&&/[a-z]/i.test(text)&&!/[\d@%]/.test(text))parsed={...parsed,medium:String(text).trim(),medium_key:'unlisted',service_type:'chemical_dosing'};
       session=await continueTeskMetering(service,telegramToken,keySuiteCompanyId,chatId,senderId,session,customer,user,parsed);return json({ok:true,status:'metering_details_followup'});
@@ -2604,7 +2612,7 @@ Deno.serve(async(req)=>{
       await telegramSend(telegramToken,chatId,`Hi 👋
 
 ${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.04'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.05'});
     }
 
     if(newRequestButton){

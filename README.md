@@ -1,4 +1,4 @@
-# KeySuite V4.28.04 FULL CLEAN
+# KeySuite V4.28.05 FULL CLEAN
 
 Baseline: V4.27.15.
 
@@ -25,8 +25,16 @@ KeyBot routing restoration:
 - Brand or series can be followed by either an exact model or a duty point.
 - `ES 2P` and `ES 4P` retain the selected pole when the duty is entered next.
 
+TESK KeyBot selection corrections:
+- Direct chemical dosing requests perform technical sizing before any Customer selection.
+- The pump recommendation is shown before chemical material details.
+- Missing temperature no longer blocks hydraulic sizing and is not treated as 0°C; it remains required for final wetted-parts confirmation.
+- Normal clean-water TESK requests use only active TESK OEM family mappings.
+- TESK cannot fall back to or display B.G.Reich ES models.
+- Brand Series labels without an active OEM Family Map cannot create a searchable hydraulic family.
+
 Deployment:
-1. Upload/deploy the V4.28.04 web files to GitHub.
+1. Upload/deploy the V4.28.05 web files to GitHub.
 2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.
