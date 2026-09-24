@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { generateCurvePdf, selectPumpSummary, selectPumpCandidates } from './curve-pdf.ts';
-import { parseTeskMeteringRequest, mergeTeskMeteringRequest, teskMeteringLooksRelevant, teskMeteringIsChemical, teskMaterialRecommendation, selectTeskMeteringPump, formatTeskMeteringRecommendation } from './tesk-metering-data.ts';
+import { parseTeskMeteringRequest, mergeTeskMeteringRequest, teskMeteringLooksRelevant, teskMeteringIsChemical, teskMaterialRecommendation, selectTeskMeteringPump, formatTeskMeteringRecommendation, isTeskChemicalTemplateCommand, teskChemicalInputTemplate } from './tesk-metering-data.ts';
 
 const KEYBOT_ES_MB:any=(globalThis as any).KeySuiteMotorBaseplateV40205;
 
@@ -2192,7 +2192,7 @@ function teskFeatureFlags(selection:any){
 async function loadTeskCustomerFeature(service:any,companyId:string,customerId:string){
   if(!companyId||!customerId)return {enabled:false,chemical_selection:false};
   const r=await service.from('ks_customer_brand_price_preference_v41710').select('selection').eq('company_id',companyId).eq('customer_id',customerId).maybeSingle();
-  if(r.error){console.warn('[KeySuite V4.28.02] TESK customer feature lookup failed',r.error);return {enabled:false,chemical_selection:false}}
+  if(r.error){console.warn('[KeySuite V4.28.06] TESK customer feature lookup failed',r.error);return {enabled:false,chemical_selection:false}}
   return teskFeatureFlags(r.data?.selection);
 }
 async function teskMeteringUserAllowed(service:any,companyId:string,user:any){
@@ -2205,15 +2205,42 @@ async function teskMeteringUserAllowed(service:any,companyId:string,user:any){
   return String(r.data.permissions.use_product||'none').trim().toLowerCase()!=='none';
 }
 function meteringRequestMissing(req:any,_chemicalSelection:boolean){
+  // V4.28.06: flow + pressure are the only hard hydraulic requirements.
+  // Medium, concentration and temperature can remain incomplete so KeyBot can
+  // still provide a preliminary hydraulic recommendation and catalogue limits.
   const missing:string[]=[];
-  if(!String(req?.medium||'').trim())missing.push('medium / chemical');
   if(!(Number(req?.flow_lph)>0))missing.push('flow (L/hr)');
   if(!(Number(req?.pressure_bar)>0))missing.push('pressure (bar)');
   return missing;
 }
-function meteringDetailsPrompt(customerName:string,missing:string[]=[]){
+function meteringFieldValue(req:any,key:string){
+  if(key==='medium')return String(req?.medium||'');
+  if(key==='concentration')return req?.concentration_pct!=null?`${Number(req.concentration_pct)}%`:'';
+  if(key==='flow')return Number(req?.flow_lph)>0?`${Number(req.flow_lph)} L/hr`:'';
+  if(key==='pressure')return Number(req?.pressure_bar)>0?`${Number(req.pressure_bar)} bar`:'';
+  if(key==='temperature')return req?.temperature_c!=null?`${Number(req.temperature_c)}°C`:'';
+  return '';
+}
+function meteringDetailsPrompt(customerName:string,req:any={},missing:string[]=[]){
   const need=missing.length?`\nStill needed: ${missing.join(', ')}.`:'';
-  return `${customerName?`Customer: ${customerName}\n`:''}TESK Chemical Pump${need}\n\nSend: Medium / chemical, concentration, temperature, flow (L/hr) and pressure (bar).\nExample: NaOCl 10%, 30°C, 20 L/hr @ 5 bar`;
+  return `${customerName?`Customer: ${customerName}\n`:''}TESK Chemical Dosing / Metering${need}\n\nCopy, fill in and send back:\n\nMedium: ${meteringFieldValue(req,'medium')}\nConcentration: ${meteringFieldValue(req,'concentration')}\nFlow: ${meteringFieldValue(req,'flow')}\nPressure: ${meteringFieldValue(req,'pressure')}\nTemperature: ${meteringFieldValue(req,'temperature')}\n\nUse L/hr, bar and °C.`;
+}
+function meteringBlankTemplatePrompt(){
+  return `Chemical Dosing / Metering\n\nCopy, fill in and send back:\n\n${teskChemicalInputTemplate()}\n\nUse L/hr, bar and °C.`;
+}
+async function startTeskChemicalTemplate(service:any,telegramToken:string,companyId:string,chatId:string,senderId:string,session:any){
+  const user=await linkedKeySuiteUser(service,companyId,senderId);
+  if(!user){await telegramSend(telegramToken,chatId,'TESK Chemical Pump selection requires a linked KeySuite user.',mainMenuMarkup());return session}
+  if(!await teskMeteringUserAllowed(service,companyId,user)){await telegramSend(telegramToken,chatId,'TESK Chemical Pump is not available under your KeySuite Product permission.',mainMenuMarkup());return session}
+  const selectedId=String(session?.selected_customer_id||'').trim();
+  let selected:any=null;
+  if(selectedId)selected=await allowedCustomerById(service,companyId,user,selectedId);
+  if(selected){
+    const flags=await loadTeskCustomerFeature(service,companyId,String(selected.id));
+    if(!flags.enabled){await telegramSend(telegramToken,chatId,`Customer: ${selected.company_name}\n\nTESK Chemical Pump is not assigned to this Customer.`,mainMenuMarkup());return session}
+  }
+  const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_waiting_template',selected_customer_id:selected?String(selected.id):null,context:{keysuite_user_email:user.email,...(selected?{customer_name:selected.company_name}:{}),pending_metering_request:{service_type:'chemical_dosing'},customer_choices:[]}});
+  await telegramSend(telegramToken,chatId,meteringBlankTemplatePrompt(),telegramRemoveKeyboard());return saved;
 }
 async function continueTeskMetering(service:any,telegramToken:string,companyId:string,chatId:string,senderId:string,session:any,customer:any,user:any,incoming:any){
   if(!user)return session;
@@ -2234,9 +2261,9 @@ async function continueTeskMetering(service:any,telegramToken:string,companyId:s
   }
   if(!req.service_type||req.service_type==='none')req.service_type=req?.medium_key&&req.medium_key!=='water'?'chemical_dosing':'dosing';
   const missing=meteringRequestMissing(req,flags.chemical_selection);
-  if(missing.length){const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_waiting_details',selected_customer_id:customerId||null,context:{...sessionContext(session),keysuite_user_email:user.email,...(customerName?{customer_name:customerName}:{}),tesk_feature:flags,pending_metering_request:req}});await telegramSend(telegramToken,chatId,meteringDetailsPrompt(customerName,missing),telegramRemoveKeyboard());return saved}
+  if(missing.length){const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_waiting_details',selected_customer_id:customerId||null,context:{...sessionContext(session),keysuite_user_email:user.email,...(customerName?{customer_name:customerName}:{}),tesk_feature:flags,pending_metering_request:req}});await telegramSend(telegramToken,chatId,meteringDetailsPrompt(customerName,req,missing),telegramRemoveKeyboard());return saved}
   const material=flags.chemical_selection?teskMaterialRecommendation(req):{status:'disabled'};
-  const pump=selectTeskMeteringPump(req,material?.status==='confirmed'?material:null);
+  const pump=selectTeskMeteringPump(req,material?.pump_head?material:null);
   const result=formatTeskMeteringRecommendation(customerName,req,material,pump,flags.chemical_selection);
   const saved=await saveKeybotSession(service,companyId,chatId,senderId,{mode:'metering',step:'metering_result',selected_customer_id:customerId||null,context:{...sessionContext(session),keysuite_user_email:user.email,...(customerName?{customer_name:customerName}:{}),tesk_feature:flags,pending_metering_request:req,tesk_material:material,tesk_pump:pump}});
   await telegramSend(telegramToken,chatId,result,telegramReplyKeyboard([['🔄 New Request']]));return saved;
@@ -2441,10 +2468,10 @@ Deno.serve(async(req)=>{
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
       if(isCompanyCurveOnlyUser(navigationUser)){
         await telegramSend(telegramToken,chatId,`Hi 👋\n\n${companyCurveOnlyPrompt()}`,companyCurveOnlyMenu());
-        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.05'});
+        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.06'});
       }
       await telegramSend(telegramToken,chatId,`Hi 👋\n\n${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.05'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.06'});
     }
     if(newRequestButton){
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
@@ -2459,6 +2486,22 @@ Deno.serve(async(req)=>{
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
       await telegramSend(telegramToken,chatId,companyCurveOnlyPrompt(),companyCurveOnlyMenu());
       return json({ok:true,status:'curve_only_direct_request'});
+    }
+
+    // V4.28.06: quick chemical template. Typing chem / chemical (plus common
+    // dosing aliases) opens a copy-and-fill form before technical selection.
+    if(!callbackQuery&&text&&isTeskChemicalTemplateCommand(text)){
+      session=await startTeskChemicalTemplate(service,telegramToken,keySuiteCompanyId,chatId,senderId,session);
+      return json({ok:true,status:'tesk_chemical_template'});
+    }
+    if(!callbackQuery&&session?.mode==='metering'&&session?.step==='metering_waiting_template'&&text){
+      const user=await linkedKeySuiteUser(service,keySuiteCompanyId,senderId);if(!user){await telegramSend(telegramToken,chatId,'This Telegram account is not linked to an active KeySuite user.',mainMenuMarkup());return json({ok:true,status:'metering_user_not_linked'})}
+      const c=sessionContext(session);let parsed=parseTeskMeteringRequest(text);
+      if(!parsed.medium&&/[a-z]/i.test(text)&&!/^(?:medium|concentration|flow|pressure|temperature)\s*:/im.test(text)&&!/[@%]/.test(text))parsed={...parsed,medium:String(text).trim(),medium_key:'unlisted',service_type:'chemical_dosing'};
+      const merged=mergeTeskMeteringRequest(c.pending_metering_request||{service_type:'chemical_dosing'},parsed);
+      const customer=session.selected_customer_id?await allowedCustomerById(service,keySuiteCompanyId,user,String(session.selected_customer_id)):null;
+      session=customer?await continueTeskMetering(service,telegramToken,keySuiteCompanyId,chatId,senderId,session,customer,user,merged):await startTeskMetering(service,telegramToken,keySuiteCompanyId,chatId,senderId,session,merged);
+      return json({ok:true,status:'tesk_chemical_template_submitted'});
     }
 
     // TESK Chemical Pump follow-up flow. Direct technical sizing is customer-free;
@@ -2612,7 +2655,7 @@ Deno.serve(async(req)=>{
       await telegramSend(telegramToken,chatId,`Hi 👋
 
 ${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.05'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.06'});
     }
 
     if(newRequestButton){
@@ -3180,7 +3223,7 @@ ${keyplcBomText(bom)}`,keyplcManifoldMenu(bom));return json({ok:true,status:'key
     if(!callbackQuery&&session?.mode==='price'&&session?.step==='price_waiting_family'&&familyTextCode){const user=await linkedKeySuiteUser(service,keySuiteCompanyId,senderId),customer=await allowedCustomerById(service,keySuiteCompanyId,user,String(session.selected_customer_id||'')),c=sessionContext(session);if(user&&customer){session=await continueSimplePrice(service,telegramToken,keySuiteCompanyId,chatId,senderId,session,customer,user,mergeQuoteRequest(c.pending_request,{family_code:familyTextCode,product_type:'pump'}));return json({ok:true,status:'price_family'})}}
     if(!callbackQuery&&session?.mode==='price'&&session?.step==='price_waiting_tank_choice'&&text){const user=await linkedKeySuiteUser(service,keySuiteCompanyId,senderId),customer=await allowedCustomerById(service,keySuiteCompanyId,user,String(session.selected_customer_id||'')),c=sessionContext(session),choices=Array.isArray(c.pending_tank_matches)?c.pending_tank_matches:[],choice=choices.find((x:any)=>cleanSearch(x.label)===cleanButton);if(user&&customer&&choice){const r=await service.from('ks_products_gws').select('*').eq('id',choice.id).eq('status','active').maybeSingle();if(r.data){const qty=Math.max(1,Math.trunc(Number(c.pending_request?.qty)||1)),item=await quoteGwsForCustomer(service,String(customer.id),r.data,qty,String(user.email||''));session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'price',step:'price_result',selected_customer_id:String(customer.id),context:{...c,pending_item:item,pending_tank_matches:null}});await telegramSend(telegramToken,chatId,`Customer: ${customer.company_name}\n\n${quotationResultText(item)}`,simplePriceMenu(false));return json({ok:true,status:'tank_price_ready'})}}await telegramSend(telegramToken,chatId,'Please choose one of the shown GWS Tank options.');return json({ok:true,status:'tank_choice_waiting'})}
 
-    // V4.28.02: route TESK Chemical Pump / dosing / metering before normal pump parsing. Chemical-transfer duties remain on the normal pump path.
+    // V4.28.06: route TESK Chemical Pump / dosing / metering before normal pump parsing. Chemical-transfer duties remain on the normal pump path.
     if(!callbackQuery&&text&&!menuText&&!newRequestButton&&!productButton&&!quickSelectionButton&&!curveButton&&!quotationButton&&!optionsButton&&!checkPriceButton){
       const metering=parseTeskMeteringRequest(text);
       if(teskMeteringLooksRelevant(metering)&&String(metering.service_type)!=='chemical_transfer'){

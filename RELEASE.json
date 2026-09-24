@@ -1,18 +1,19 @@
 {
-  "version": "4.28.05",
-  "baseline": "4.28.04 FULL CLEAN",
-  "upgrade_supported_from": "4.28.04",
+  "version": "4.28.06",
+  "baseline": "4.28.05 FULL CLEAN",
+  "upgrade_supported_from": "4.28.05",
   "changes": [
-    "TESK chemical dosing requests now return the technical pump recommendation before any Customer selection",
-    "TESK chemical selection no longer treats a missing temperature as zero degrees Celsius",
-    "A missing chemical temperature flags material compatibility for confirmation without blocking hydraulic sizing",
-    "TESK clean-water requests search only active TESK OEM family mappings",
-    "TESK never borrows the B.G.Reich ES hydraulic family or displays an ES model",
-    "Brand Series label rows no longer create hydraulic families without an active OEM Family Map",
+    "Typing chem or chemical opens a copy-and-fill TESK chemical dosing template",
+    "Temperature parsing accepts deg C, degree C, \u00b0C and compact C variants",
+    "Hydrochloric acid, HCl and Muriatic acid normalize to one chemical lookup",
+    "Flow and pressure are the only hard hydraulic sizing requirements; incomplete chemical information can return a preliminary recommendation",
+    "Incomplete chemical information surfaces catalogue material/concentration/temperature reference limits where available",
+    "Adds exact TESK GS hydraulic points GS001-GS060; 30 L/hr at 5 bar selects GS030",
+    "Preserves V4.28.05 direct chemical sizing and TESK clean-water family isolation",
     "No new database migration is required"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": true,
   "edge_function": "telegram-webhook",
-  "notes": "Upgrade from V4.28.04. Upload the V4.28.05 web assets to GitHub and redeploy the telegram-webhook Supabase Edge Function. No database migration is required."
+  "notes": "Upgrade from V4.28.05. Upload the V4.28.06 web assets to GitHub and redeploy telegram-webhook. No database migration is required."
 }
