@@ -576,11 +576,11 @@ function keychcMaxParallelCount(){const c=keychcParallelCounts();return c.length
 // The axis is derived once from the selected pump head-curve maximum flow (expanded only by the highest enabled parallel reference count).
 function keychcSharedFlowAxis(best){const maxCount=keychcMaxParallelCount(),pumpMax=Math.max(0.1,(Number(best?.headFit?.max)||0)*maxCount);return nice(pumpMax,5);}
 function keychcParallelColor(n){return ({1:'#1264a3',2:'#7b61a8',3:'#2f855a',4:'#b7791f',5:'#c05621',6:'#607d8b'})[n]||'#718096';}
-function keychcParallelMetricGraph(fit,kind,dutyQ,dutyValue,chartHeight=216,powerUnit='kW',sharedXAxis=null,showDutyMarker=true){
+function keychcParallelMetricGraph(fit,kind,dutyQ,dutyValue,chartHeight=216,powerUnit='kW',sharedXAxis=null,showDutyMarker=true,curveWidth=null){
  const counts=keychcParallelCounts(),drawCounts=[1,...counts];
  const W=700,H=chartHeight,p={l:72,r:28,t:18,b:46};
  const powerScale=kind==='power'&&String(powerUnit||'kW').toUpperCase()==='HP'?(1/0.746):1;
- const powerSmooth=kind==='power'?keysuitePowerSmoothFit(fit):null;
+ const powerSmooth=null; // V4.28.10: Power display follows the 5th-order polynomial directly.
  const maxCount=Math.max(1,...counts);
  const xMax=Math.max(0.1,(Number(fit.max)||0)*maxCount);
  const xa=sharedXAxis||nice(xMax,5);
@@ -603,7 +603,7 @@ function keychcParallelMetricGraph(fit,kind,dutyQ,dutyValue,chartHeight=216,powe
    v=Math.max(0,Math.min(axis.max,v));
    pts.push(`${X(qEach*n)},${Y(v)}`);
   }
-  if(pts.length>1)s+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${keychcParallelColor(n)}" stroke-width="${n===1?3:2}" stroke-linecap="round" stroke-linejoin="round" ${n===1?'':`stroke-dasharray="${4+n} ${3+n%2}"`}/>`;
+  if(pts.length>1)s+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${keychcParallelColor(n)}" stroke-width="${Number.isFinite(Number(curveWidth))?Number(curveWidth):(n===1?3:2)}" stroke-linecap="round" stroke-linejoin="round" ${n===1?'':`stroke-dasharray="${4+n} ${3+n%2}"`}/>`;
   const qEnd=fit.max*n;let vEnd=(kind==='power'&&powerSmooth)?keysuitePowerSmoothValue(powerSmooth,fit.max):fitValue(fit,fit.max);if(kind==='power')vEnd*=n*powerScale;
   if(n>1&&Number.isFinite(vEnd)){const tx=Math.min(W-p.r-3,X(qEnd)-3),ty=Math.max(p.t+10,Math.min(H-p.b-4,Y(Math.max(0,Math.min(axis.max,vEnd)))-4));s+=`<text x="${tx}" y="${ty}" text-anchor="end" font-family="Arial" font-size="9" font-weight="800" fill="${keychcParallelColor(n)}">${n}P</text>`}
  }
@@ -632,7 +632,7 @@ function keychcDisplayModelAtSpeed(base,hz,q=selectionState.q,h=selectionState.h
  if(!headFit||!effFit)return null;
  const npshFit=fitCurve(curve,'npshr',3,r,r*r);if(!npshFit)return null;
  const powerPts=headFit.pts.map(pt=>{const e=Math.max(1,Math.min(100,fitValue(effFit,pt.x)));return {x:pt.x,y:9.81*pt.x*pt.y/3600/(e/100)}});
- const powerOrder=Math.min(6,powerPts.length-1);
+ const powerOrder=Math.min(5,powerPts.length-1);
  const powerFit={pts:powerPts,c:polyfit(powerPts.map(pt=>pt.x),powerPts.map(pt=>pt.y),powerOrder),order:powerOrder,min:headFit.min,max:headFit.max};
  const predHead=fitValue(headFit,q),eff=Math.max(1,Math.min(100,fitValue(effFit,q))),npsh=Math.max(0,fitValue(npshFit,q));
  const shaft=Number.isFinite(predHead)?9.81*q*predHead/3600/(eff/100):NaN;
@@ -758,7 +758,7 @@ function keychcEnhancedCurveData(m){
  }
  if(raw.length<2)return null;
  // Match the existing standard BFI curve-fitting method: Head 2nd, Efficiency 5th, NPSHr 3rd, Power up to 6th order.
- const headFit=keychcEnhancedPolynomialFit(raw,'head',2),effFit=keychcEnhancedPolynomialFit(raw,'eff',5),npshFit=keychcEnhancedPolynomialFit(raw,'npsh',3),powerFit=keychcEnhancedPolynomialFit(raw,'power',6),hzFit=interpolatedFit(raw.map(p=>({x:p.flow,y:p.hz})));
+ const headFit=keychcEnhancedPolynomialFit(raw,'head',2),effFit=keychcEnhancedPolynomialFit(raw,'eff',5),npshFit=keychcEnhancedPolynomialFit(raw,'npsh',3),powerFit=keychcEnhancedPolynomialFit(raw,'power',5),hzFit=interpolatedFit(raw.map(p=>({x:p.flow,y:p.hz})));
  if(!headFit||!effFit||!npshFit||!powerFit||!hzFit)return null;
  return {curve,mix,raw,headFit,effFit,npshFit,powerFit,hzFit};
 }
@@ -1118,7 +1118,7 @@ function exportPDF(requestedFilename){
  if(!pdfFollow)keychcSetGraphDisplayControls(keysuitePdfGraphSettings());
  if(pdfHideDuty){const dutyControl=document.getElementById('showDuty');if(dutyControl)dutyControl.checked=false;}
  const sharedFlowAxis=keychcSharedFlowAxis(best);
- const pdfHead=keychcHeadGraph(best,q,h,270);
+ const pdfHead=keychcHeadGraph(best,q,h,270,1.8);
  // PDF Page 1 layout is locked to the original KeySelector V3.3.3 format.
  // All four chart BOXES keep the original size/position/spacing.
  // Only plotted content follows the current KeyBFI display state.
@@ -1126,9 +1126,9 @@ function exportPDF(requestedFilename){
  // and the current live Curve Hz. D1 selection itself remains a single-pump duty.
  const charts=[
   pdfHead.svg,
-  keychcParallelMetricGraph(best.effFit,'efficiency',pumpQ,requiredEff,216,'kW',sharedFlowAxis,!pdfHideDuty),
-  keychcParallelMetricGraph(best.powerFit,'power',pumpQ,requiredPower,216,'HP',sharedFlowAxis,!pdfHideDuty),
-  keychcParallelMetricGraph(best.npshFit,'npsh',pumpQ,requiredNpsh,216,'kW',sharedFlowAxis,!pdfHideDuty)
+  keychcParallelMetricGraph(best.effFit,'efficiency',pumpQ,requiredEff,216,'kW',sharedFlowAxis,!pdfHideDuty,1.8),
+  keychcParallelMetricGraph(best.powerFit,'power',pumpQ,requiredPower,216,'HP',sharedFlowAxis,!pdfHideDuty,1.8),
+  keychcParallelMetricGraph(best.npshFit,'npsh',pumpQ,requiredNpsh,216,'kW',sharedFlowAxis,!pdfHideDuty,1.8)
  ];
  if(!pdfFollow||pdfHideDuty)keychcSetGraphDisplayControls(livePdfDisplay);
 
@@ -1454,7 +1454,7 @@ function keychcVariableHeadValue(model,q){
  if(typeof peval==='function'&&fit.c)return peval(fit.c,q);
  return null;
 }
-function keychcHeadGraph(best,q,h,chartHeight=440){
+function keychcHeadGraph(best,q,h,chartHeight=440,curveWidth=null){
  const W=700,H=chartHeight,p={l:72,r:28,t:22,b:46};
  const counts=keychcParallelCounts(),maxCount=counts.length?Math.max(...counts):1;
  const showDuty=(document.getElementById('showDuty')||{}).checked!==false;
@@ -1484,7 +1484,7 @@ function keychcHeadGraph(best,q,h,chartHeight=440){
  let z='';
  for(let a=0;a<=xa.max+1e-9;a+=xa.step){const xx=X(a);z+=`<line x1="${xx}" y1="${p.t}" x2="${xx}" y2="${H-p.b}" stroke="#eef2f5"/><text x="${xx}" y="${H-p.b+21}" text-anchor="middle" font-family="Arial" font-size="11" fill="#718096">${fmtTick(a)}</text>`}
  for(let a=0;a<=ya.max+1e-9;a+=ya.step){const yy=Y(a);z+=`<line x1="${p.l}" y1="${yy}" x2="${W-p.r}" y2="${yy}" stroke="#e8edf3"/><text x="${p.l-9}" y="${yy+4}" text-anchor="end" font-family="Arial" font-size="11" fill="#718096">${fmtTick(a)}</text>`}
- function pathFor(fn,min,max,color,width,dash,maxHead=null){let pts=[];for(let i=0;i<=220;i++){const qq=min+(max-min)*i/220,v=fn(qq);if(!Number.isFinite(v)||v<0||(Number.isFinite(maxHead)&&v>maxHead+1e-7))continue;pts.push(`${X(qq)},${Y(Math.min(ya.max,v))}`)}if(pts.length>1)z+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" ${dash?`stroke-dasharray="${dash}"`:''}/>`}
+ function pathFor(fn,min,max,color,width,dash,maxHead=null){const drawWidth=Number.isFinite(Number(curveWidth))?Number(curveWidth):width;let pts=[];for(let i=0;i<=220;i++){const qq=min+(max-min)*i/220,v=fn(qq);if(!Number.isFinite(v)||v<0||(Number.isFinite(maxHead)&&v>maxHead+1e-7))continue;pts.push(`${X(qq)},${Y(Math.min(ya.max,v))}`)}if(pts.length>1)z+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="${drawWidth}" stroke-linecap="round" stroke-linejoin="round" ${dash?`stroke-dasharray="${dash}"`:''}/>`}
  function variableLabel(model,text,color,weight=700){const fit=model&&model.headFit;if(!fit)return;const min=Math.max(0,Number(fit.min)||0),max=Math.max(min,Number(fit.max)||0),ql=min+(max-min)*.90,yl=keychcVariableHeadValue(model,ql);if(!Number.isFinite(yl))return;const tx=Math.min(W-p.r-4,X(ql)+5),ty=Math.max(p.t+11,Math.min(H-p.b-4,Y(yl)-3));z+=`<text x="${tx}" y="${ty}" text-anchor="start" font-family="Arial" font-size="9.5" font-weight="${weight}" fill="${color}">${text}</text>`}
  if(showVariableCurve){
   for(const item of variableModels){

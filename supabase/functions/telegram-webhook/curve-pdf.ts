@@ -97,6 +97,7 @@ const n=(v:any,d=2)=>finite(v)?Number(Number(v).toFixed(d)):0;
 const fmt=(v:any,d=1)=>{const x=n(v,d);return Number.isInteger(x)?String(x):x.toFixed(d)};
 const LETTER:[number,number]=[612,792];
 const BLUE=rgb(0.04,0.38,0.64), DARK=rgb(0.08,0.22,0.31), GRID=rgb(0.85,0.90,0.93);
+const PDF_CURVE_WIDTH_PT=1.35; // V4.28.10: visual equivalent of 1.8 px at 96 dpi.
 const RED=rgb(0.85,0.13,0.12), GREEN=rgb(0.02,0.50,0.33), PINK=rgb(0.90,0.68,0.69);
 
 function b64bytes(s:string){const bin=atob(s),out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out}
@@ -210,7 +211,7 @@ function selectChc(q:number,h:number,forcedModel:string='',family:string='CHC'){
     // Exact-model visualisation fallback: preserve the real curve even when the requested point is beyond the curve's flow domain.
     const curve=db?.curves?.[row.series];if(!curve)return null;const mix=core.parseImpellerMix(row),headFit=core.fitMixedHeadCurve(curve,mix,1),effFit=core.fitMixedEfficiencyCurve(curve,mix,1);if(!headFit||!effFit)return null;
     const npshFit=core.fitCurve(curve,'npshr',3,1,1),nearestQ=Math.max(Number(headFit.min),Math.min(Number(headFit.max),Number(q))),predHead=Number(core.fitValue(headFit,nearestQ)),eff=Math.max(1,Math.min(100,Number(core.fitValue(effFit,nearestQ)))),npsh=Math.max(0,Number(core.fitValue(npshFit,nearestQ))),shaft=9.81*nearestQ*Math.max(0,predHead)/3600/(eff/100);
-    const powerPts=(headFit.pts||[]).map((p:any)=>{const e=Math.max(1,Math.min(100,Number(core.fitValue(effFit,p.x))));return {x:p.x,y:9.81*p.x*p.y/3600/(e/100)}}),powerOrder=Math.min(6,Math.max(1,powerPts.length-1)),powerFit=powerPts.length>1?{pts:powerPts,c:core.polyfit(powerPts.map((p:any)=>p.x),powerPts.map((p:any)=>p.y),powerOrder),order:powerOrder,min:headFit.min,max:headFit.max}:null;
+    const powerPts=(headFit.pts||[]).map((p:any)=>{const e=Math.max(1,Math.min(100,Number(core.fitValue(effFit,p.x))));return {x:p.x,y:9.81*p.x*p.y/3600/(e/100)}}),powerOrder=Math.min(5,Math.max(1,powerPts.length-1)),powerFit=powerPts.length>1?{pts:powerPts,c:core.polyfit(powerPts.map((p:any)=>p.x),powerPts.map((p:any)=>p.y),powerOrder),order:powerOrder,min:headFit.min,max:headFit.max}:null;
     return {...row,impellerMix:mix,predHead,margin:predHead-h,eff,npsh,shaft,headFit,effFit,npshFit,powerFit,rpm:Number(curve.speed_rpm||2900),out_of_curve:true,requested_flow_outside:true};
   }
   return core.select(db,q,h,50).selected;
@@ -248,7 +249,7 @@ function bfiInterpolatedValue(fit:any,x:number){
 function bfiEnhancedCurveData(m:any){
   const curve=BFI_DB?.curves?.[m.series]||BFI_DB?.curves?.[String(m.series||'').replace(/\D/g,'')];if(!curve)return null;const mix=BFI_CORE.parseImpellerMix(m),motorKw=Number(m.motor_kw);if(!(motorKw>0))return null;
   const raw:any[]=[];for(let i=0;i<(curve.flow||[]).length;i++){const p=bfiMixedRawPoint(curve,mix,i);if(!p||!(p.head>0))continue;const basePower=p.q>0?9.81*p.q*p.head/3600/(p.eff/100):0;let ratio=BFI_ENHANCED_MAX_RATIO;if(basePower>0){const limited=Math.cbrt(motorKw/basePower);if(finite(limited))ratio=Math.min(BFI_ENHANCED_MAX_RATIO,limited)}ratio=Math.max(.05,ratio);raw.push({baseFlow:p.q,baseHead:p.head,basePower,ratio,hz:Number(BFI_DB.base_hz||50)*ratio,flow:p.q*ratio,head:p.head*ratio*ratio,eff:p.eff,npsh:p.npsh*ratio*ratio,power:basePower*ratio*ratio*ratio});}
-  if(raw.length<2)return null;const headFit=bfiEnhancedFit(raw,'head',2),effFit=bfiEnhancedFit(raw,'eff',5),npshFit=bfiEnhancedFit(raw,'npsh',3),powerFit=bfiEnhancedFit(raw,'power',6),hzFit=bfiInterpolatedFit(raw.map(p=>({x:p.flow,y:p.hz})));if(!headFit||!effFit||!npshFit||!powerFit||!hzFit)return null;return {raw,headFit,effFit,npshFit,powerFit,hzFit};
+  if(raw.length<2)return null;const headFit=bfiEnhancedFit(raw,'head',2),effFit=bfiEnhancedFit(raw,'eff',5),npshFit=bfiEnhancedFit(raw,'npsh',3),powerFit=bfiEnhancedFit(raw,'power',5),hzFit=bfiInterpolatedFit(raw.map(p=>({x:p.flow,y:p.hz})));if(!headFit||!effFit||!npshFit||!powerFit||!hzFit)return null;return {raw,headFit,effFit,npshFit,powerFit,hzFit};
 }
 function evaluateEnhancedBfi(m:any,q:number,h:number){
   const data=bfiEnhancedCurveData(m);if(!data||q<data.headFit.min-1e-9||q>data.headFit.max+1e-9)return null;const predHead=BFI_CORE.fitValue(data.headFit,q);if(!finite(predHead)||predHead<=0)return null;
@@ -398,7 +399,7 @@ function drawFrozenChart(page:any,font:any,bold:any,x:number,y:number,w:number,h
   page.drawText(s.yLabel,{x:x+16,y:y+h/2-textWidth(bold,s.yLabel,8)/2,size:8,font:bold,color:rgb(.25,.34,.40),rotate:degrees(90)});
 
   allSeries.forEach((ser:any)=>{
-    const color=ser.color||BLUE,width=ser.width||2.1;drawPolyline(page,ser.points,X,Y,color,width);
+    const color=ser.color||BLUE,width=PDF_CURVE_WIDTH_PT;drawPolyline(page,ser.points,X,Y,color,width);
     if(ser.label&&ser.points?.length){
       const ep=ser.points[ser.points.length-1];
       if(finite(ep.x)&&finite(ep.y))page.drawText(ser.label,{x:Math.min(x+w-90,X(ep.x)+7),y:Y(ep.y)-2,size:7.6,font:bold,color});
@@ -416,6 +417,13 @@ function drawPage1(page:any,logo:any,font:any,bold:any,args:any){
   drawFrozenChart(page,font,bold,x,31,w,154,args.charts[3],xAxis);
   drawRight(page,font,'ISO 9906:Grade 3B',564,14,7.5,rgb(.45,.53,.58));
 }
+function trimEsTerminalCurvePoints(input:any[]){
+  const pts=(Array.isArray(input)?input:[]).filter((p:any)=>finite(Number(p?.flowM3h))).slice().sort((a:any,b:any)=>Number(a.flowM3h)-Number(b.flowM3h));
+  // V4.28.10 display-only trim: stop at the last valid hydraulic point instead of drawing a false vertical drop to zero.
+  while(pts.length>2){const last:any=pts[pts.length-1],prev:any=pts[pts.length-2],bad=!(Number(last.headM)>1e-7)||!(Number(last.efficiencyPct)>1e-7)||!(Number(last.shaftKw)>1e-9)||!(Number(last.npshrM)>=0);if(!bad||!(Number(prev.headM)>1e-7))break;pts.pop();}
+  return pts;
+}
+
 function fitText(font:any,text:string,size:number,maxW:number){
   let s=size;while(s>6&&textWidth(font,text,s)>maxW)s-=.3;return s;
 }
@@ -689,7 +697,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     selectionShaft=Number(s.shaft||0);rpm=Number(engine?.db?.curves?.[s.series]?.speed_rpm||2900);pole=2;hz=50;
     suction=String(s.connection||'-');discharge=String(s.connection||'-');stages=Number(s.stages||0);maxPressure=Number(s.max_pressure_bar||0);dim=((engine?.generation==='G1'?CHC_G1_DIMENSIONS:CHC_DIMENSIONS) as any)[s.model]||{};
     headPoints=sampleFit(s.headFit,120,engine?.core);effPoints=sampleFit(s.effFit,120,engine?.core);
-    powerPoints=sampleSmoothPower(s.powerFit,180,1.34102209,engine?.core);
+    powerPoints=sampleFit(s.powerFit,180,engine?.core).map((p:any)=>({x:p.x,y:p.y*1.34102209}));
     npsPoints=sampleFit(s.npshFit,120,engine?.core);
     if(String(forcedModel||'').trim()){const minQ=headPoints.length?Math.min(...headPoints.map(p=>p.x)):0,maxQ=headPoints.length?Math.max(...headPoints.map(p=>p.x)):0,pred=(q>=minQ&&q<=maxQ)?interpolate(headPoints,q):NaN;if(s.out_of_curve||q<minQ-1e-9||q>maxQ+1e-9||!finite(pred)||h>pred*1.01)warning='Requested duty is outside this model\'s curve.';}
   }else if(isBfi){
@@ -697,7 +705,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     const s:any=enhanced?selectBfiEnhanced(q,h,forcedModel):selectBfi(q,h,forcedModel);if(!s)throw new Error(`No BFI${enhanced?' Enhanced':''} model can meet ${fmt(q)} m³/hr @ ${fmt(h)} Mtr.`);
     model=String(s.model).replace(/[TE]$/i,'');motorKw=Number(s.motor_kw||0);motorHp=Number(s.motor_hp||0);eff=Number(s.eff||0);npsh=Number(s.npsh||0);selectionShaft=Number(s.shaft||0);rpm=enhanced?BFI_ENHANCED_MAX_RPM:Number(s.rpm||2900);pole=2;hz=enhanced?BFI_ENHANCED_MAX_HZ:50;
     suction=String(s.inlet||s.connection||'-');discharge=String(s.outlet||s.connection||'-');stages=Number(s.stages||0);maxPressure=Number(s.max_pressure_bar||0);dim=s.dimensions||{};weightKg=Number(s.weight_kg||0);{const phases=Array.isArray(s.phases)&&s.phases.length?s.phases:['3Ph'],identityPhase=String(displayIdentity?.motor_phase||displayIdentity?.phase||'');phase=enhanced?'3Ph':(identityPhase==='1Ph'||identityPhase==='3Ph'?identityPhase:(/T$/i.test(identityModel)?'3Ph':(phases.includes('1Ph')?'1Ph':'3Ph')));if(!phases.includes(phase))phase=phases.includes('3Ph')?'3Ph':String(phases[0]||'1Ph')}
-    headPoints=sampleFit(s.headFit,120,BFI_CORE);effPoints=sampleFit(s.effFit,120,BFI_CORE);powerPoints=sampleSmoothPower(s.powerFit,180,1.34102209,BFI_CORE);npsPoints=sampleFit(s.npshFit,120,BFI_CORE);
+    headPoints=sampleFit(s.headFit,120,BFI_CORE);effPoints=sampleFit(s.effFit,120,BFI_CORE);powerPoints=sampleFit(s.powerFit,180,BFI_CORE).map((p:any)=>({x:p.x,y:p.y*1.34102209}));npsPoints=sampleFit(s.npshFit,120,BFI_CORE);
     if(enhanced){displayIdentity={...(displayIdentity||{}),enhanced:true,enhanced_curve:true,motor_phase:'3Ph'};}
   }else if(fam==='ES'){
     pole=Number(esPole);if(pole!==2&&pole!==4)throw new Error('ES selection requires 2 Pole or 4 Pole.');
@@ -708,9 +716,9 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     selectionShaft=Number(s.perf.shaftKw||0);dutyBrakeHp=Number(s.perf.bhp||selectionShaft*1.34102209);rpm=Number(s.perf.rpm||s.pump.rpm||0);hz=Number(s.perf.frequencyHz||50);
     suction=String(s.pump.dimensions?.suction||'-');discharge=String(s.pump.dimensions?.discharge||'-');impellerMm=Number(s.result.impellerMm||0);maxPressure=Number(s.pump.dimensions?.casing_pressure_bar||0);dim=s.pump.dimensions||{};
     // V4.28.08: motor HP selects/forces an impeller diameter upstream. Never clip the hydraulic curve by power; show the complete curve for the selected trimmed impeller.
-    const pts=(s.points||[]).filter((p:any)=>finite(p.flowM3h));
+    const pts=trimEsTerminalCurvePoints(s.points||[]);
     const rawHead=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.headM)})),rawEff=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.efficiencyPct)})),rawPowerKw=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.shaftKw)})),rawNpsh=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.npshrM)}));
-    headPoints=sampleEsFit(rawHead,2,1);effPoints=sampleEsFit(rawEff,6,1);powerPoints=sampleEsFit(rawPowerKw,6,1/0.746);npsPoints=sampleEsFit(rawNpsh,3,1);esPs=esPumpset(s.pump.model,motorHp,motorKw,pole);
+    headPoints=sampleEsFit(rawHead,2,1);effPoints=sampleEsFit(rawEff,6,1);powerPoints=sampleEsFit(rawPowerKw,5,1/0.746);npsPoints=sampleEsFit(rawNpsh,3,1);esPs=esPumpset(s.pump.model,motorHp,motorKw,pole);
     if(String(forcedModel||'').trim()){const minQ=headPoints.length?Math.min(...headPoints.map(p=>p.x)):0,maxQ=headPoints.length?Math.max(...headPoints.map(p=>p.x)):0,pred=(q>=minQ&&q<=maxQ)?interpolate(headPoints,q):NaN;if(s.out_of_curve||q<minQ-1e-9||q>maxQ+1e-9||!finite(pred)||h>pred*1.01)warning='Requested duty is outside this model\'s curve.';}
   }else throw new Error('Unsupported pump family.');
 
@@ -726,17 +734,17 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
       add(maxD);add(selD);add(minD);
       headEnvelope=defs.map((d:number)=>{
         const selectedCurve=Math.abs(d-selD)<.01;
-        const raw=(core.curvePoints(pump,d,ratio,120)||[]).filter((p:any)=>finite(p.flowM3h)).map((p:any)=>({x:Number(p.flowM3h),y:Number(p.headM)}));
+        const raw=trimEsTerminalCurvePoints(core.curvePoints(pump,d,ratio,120)||[]).map((p:any)=>({x:Number(p.flowM3h),y:Number(p.headM)}));
         const pts=sampleEsFit(raw,2,1);
         const exactFullMin=!!String(forcedModel||'').trim()&&Math.abs(selD-maxD)<.01;
         const label=exactFullMin?(Math.abs(d-maxD)<.01?`Full Size Ø${fmt(d,d%1?1:0)}`:Math.abs(d-minD)<.01?`Min Size Ø${fmt(d,d%1?1:0)}`:`Ø${fmt(d,d%1?1:0)}`):`Ø${fmt(d,d%1?1:0)}`;
-        return {points:pts,label,color:selectedCurve?BLUE:rgb(.36,.55,.68),width:selectedCurve?2.5:1.35};
+        return {points:pts,label,color:selectedCurve?BLUE:rgb(.36,.55,.68),width:PDF_CURVE_WIDTH_PT};
       });
     }
   }
   if(fam==='ES'&&Number(displayIdentity?.es_motor_limit_hp||0)>0&&headPoints.length){
     const maxPumpFlow=Math.max(...headPoints.map(p=>Number(p.x)||0)),systemMaxFlow=Math.min(maxPumpFlow,Math.max(q*1.25,q+1)),system=systemPoints(q,h,systemMaxFlow);
-    headEnvelope=[{points:headPoints,label:`Selected Ø${fmt(impellerMm,impellerMm%1?1:0)}`,color:BLUE,width:2.5},{points:system,label:'System Curve',color:rgb(.46,.50,.53),width:1.35}];
+    headEnvelope=[{points:headPoints,label:`Selected Ø${fmt(impellerMm,impellerMm%1?1:0)}`,color:BLUE,width:PDF_CURVE_WIDTH_PT},{points:system,label:'System Curve',color:rgb(.46,.50,.53),width:PDF_CURVE_WIDTH_PT}];
   }
   const xLabel='Flow (m³/hr)';
   const charts:ChartSpec[]=[

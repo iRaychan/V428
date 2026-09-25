@@ -280,9 +280,15 @@ function esPowerSmoothFit(fit){
 }
 function esPowerSmoothValue(smooth,q){q=Number(q);if(!smooth||!Number.isFinite(q))return null;var pts=smooth.pts||[],d=smooth.d||[];if(!pts.length||q<pts[0].x-1e-9||q>pts[pts.length-1].x+1e-9)return null;if(q<=pts[0].x+1e-9)return pts[0].y;if(q>=pts[pts.length-1].x-1e-9)return pts[pts.length-1].y;var lo=0,hi=pts.length-1;while(hi-lo>1){var mid=(lo+hi)>>1;if(pts[mid].x<=q)lo=mid;else hi=mid}var p0=pts[lo],p1=pts[hi],hh=p1.x-p0.x;if(!(hh>0))return p0.y;var t=(q-p0.x)/hh,t2=t*t,t3=t2*t;return (2*t3-3*t2+1)*p0.y+(t3-2*t2+t)*hh*d[lo]+(-2*t3+3*t2)*p1.y+(t3-t2)*hh*d[hi]}
 
-function pointsForMetric(r,diameter,speedRatio,metric){return ESCore.curvePoints(r.pump,diameter,speedRatio).filter(function(p){return Number.isFinite(p[metric])}).map(function(p){return {x:p.flowM3h,y:p[metric]}})}
+function esDisplayCurvePoints(r,diameter,speedRatio){
+  var pts=(ESCore.curvePoints(r.pump,diameter,speedRatio)||[]).filter(function(p){return Number.isFinite(Number(p.flowM3h))}).slice().sort(function(a,b){return Number(a.flowM3h)-Number(b.flowM3h)});
+  // V4.28.10: remove only invalid trailing hydraulic points. Do not force a selected ES curve down to zero at its high-flow end.
+  while(pts.length>2){var last=pts[pts.length-1],prev=pts[pts.length-2],bad=!(Number(last.headM)>1e-7)||!(Number(last.efficiencyPct)>1e-7)||!(Number(last.shaftKw)>1e-9)||!(Number(last.npshrM)>=0);if(!bad||!(Number(prev.headM)>1e-7))break;pts.pop()}
+  return pts;
+}
+function pointsForMetric(r,diameter,speedRatio,metric){return esDisplayCurvePoints(r,diameter,speedRatio).filter(function(p){return Number.isFinite(p[metric])}).map(function(p){return {x:p.flowM3h,y:p[metric]}})}
 function fitMetric(points,order){return ESCore.polyFit(points.map(function(p){return p.x}),points.map(function(p){return p.y}),order)}
-function curveFitFor(r,diameter,speedRatio,metric,order){var pts=pointsForMetric(r,diameter,speedRatio,metric),fit=fitMetric(pts,order);if(fit&&metric==='headM'){var base=ESCore.pumpFits(r.pump).head,scale=(diameter/ESCore.dmax(r.pump))*speedRatio;fit.min=base.min*scale*3.6;fit.max=base.max*scale*3.6}return fit}
+function curveFitFor(r,diameter,speedRatio,metric,order){var pts=pointsForMetric(r,diameter,speedRatio,metric),fit=fitMetric(pts,order);if(fit&&metric==='headM'){var base=ESCore.pumpFits(r.pump).head,scale=(diameter/ESCore.dmax(r.pump))*speedRatio;fit.min=base.min*scale*3.6}return fit}
 function selectedMetricFit(r,metric,order,speedRatio){return curveFitFor(r,r.impellerMm,speedRatio==null?r.speedRatio:speedRatio,metric,order)}
 function evalSeries(ser,q){var scale=ser.xScale||1,v=ser.fn?ser.fn(q):(ser.fit?ESCore.polyEval(ser.fit,q/scale,false):null);return Number.isFinite(v)?v*(ser.yScale||1):null}
 function seriesMin(ser){return Number.isFinite(ser.min)?ser.min:(ser.fit?ser.fit.min*(ser.xScale||1):0)}function seriesMax(ser){return Number.isFinite(ser.max)?ser.max:(ser.fit?ser.fit.max*(ser.xScale||1):0)}
@@ -325,12 +331,14 @@ function chartBundle(r,screen,scope){scope=scope||'screen';var cfg=displayConfig
   // B4.06.11: one selected ES pump uses one shared Flow X-axis across Head / Efficiency / Power / NPSHr.
   // Use the actual maximum available pump-curve flow (including enabled parallel reference count) with no chart-specific padding.
   var commonMaxFlowM3h=Math.max.apply(null,[1].concat(headSeries.filter(function(s){return s.fit&&s.label&&s.label.indexOf('System Curve')<0&&s.label.indexOf('After Orifice')<0}).map(function(s){return seriesMax(s)}))),commonXAxis=nice(commonMaxFlowM3h,5);
+  if(scope==='pdf')headSeries.forEach(function(ser){ser.width=1.8});
   var hGraph=chartGraph(headSeries,{height:screen?450:270,yLabel:'Head (m)',xLabel:'Flow (m³/hr)',points:dutyPoints,xAxis:commonXAxis});
-  function metricSeries(metric,order,totalPower){var fit=curveFitFor(r,r.impellerMm,r.speedRatio,metric,order);if(metric==='shaftKw'&&fit){var smooth=esPowerSmoothFit(fit),base={fit:fit,fn:function(q){return smooth?esPowerSmoothValue(smooth,q):ESCore.polyEval(fit,q,false)},min:smooth?0:fit.min,max:fit.max,label:'',color:'#1264a3',width:3,opacity:1,xScale:1,yScale:1,dash:''};return [base].concat(cfg.pumpCounts.map(function(n){return {fit:fit,fn:function(q){return smooth?esPowerSmoothValue(smooth,q/n):ESCore.polyEval(fit,q/n,false)},min:smooth?0:fit.min*n,max:fit.max*n,label:totalPower?(n+'P Total'):(n+'P'),color:'#5c7d91',width:1.8,opacity:.78,xScale:1,yScale:totalPower?n:1,dash:'7 4'}}))}var base={fit:fit,label:'',color:'#1264a3',width:3,opacity:1,xScale:1,yScale:1,dash:''};return [base].concat(cfg.pumpCounts.map(function(n){return {fit:curveFitFor(r,r.impellerMm,r.speedRatio,metric,order),label:totalPower?(n+'P Total'):(n+'P'),color:'#5c7d91',width:1.8,opacity:.78,xScale:n,yScale:totalPower?n:1,dash:'7 4'}}))}
+  function metricSeries(metric,order,totalPower){var fit=curveFitFor(r,r.impellerMm,r.speedRatio,metric,order),base={fit:fit,label:'',color:'#1264a3',width:3,opacity:1,xScale:1,yScale:1,dash:''};return [base].concat(cfg.pumpCounts.map(function(n){return {fit:curveFitFor(r,r.impellerMm,r.speedRatio,metric,order),label:totalPower?(n+'P Total'):(n+'P'),color:'#5c7d91',width:1.8,opacity:.78,xScale:n,yScale:totalPower?n:1,dash:'7 4'}}))}
   function metricPoints(metric,totalPower){if(!cfg.showDuty||(scope==='pdf'&&!!$('pdfHideDuty')&&$('pdfHideDuty').checked))return [];return (r.dutyPoints||[]).map(function(d,i){return {x:d.totalFlowLps*3.6,y:d.performance[metric]*(totalPower?d.pumps:1),label:d.label,color:palette[i%palette.length],radius:5}})}
   var powerInHp=scope==='pdf',powerScale=powerInHp?(1/0.746):1;
-  var effSeries=metricSeries('efficiencyPct',6,false),powerSeries=metricSeries('shaftKw',6,true),npsSeries=metricSeries('npshrM',3,false),effPts=metricPoints('efficiencyPct',false),pwrPts=metricPoints('shaftKw',true),npsPts=metricPoints('npshrM',false);
+  var effSeries=metricSeries('efficiencyPct',6,false),powerSeries=metricSeries('shaftKw',5,true),npsSeries=metricSeries('npshrM',3,false),effPts=metricPoints('efficiencyPct',false),pwrPts=metricPoints('shaftKw',true),npsPts=metricPoints('npshrM',false);
   if(powerInHp){powerSeries.forEach(function(s){s.yScale=(s.yScale||1)*powerScale});pwrPts.forEach(function(p){p.y*=powerScale})}
+  if(scope==='pdf'){[effSeries,powerSeries,npsSeries].forEach(function(list){list.forEach(function(ser){ser.width=1.8})})}
   // B4.06.10: auxiliary charts show the operating value, never D1/BEP text. Whole numbers have no .0; otherwise max 1 decimal.
   effPts.forEach(function(p){p.label=fmtMax1(p.y)+'%'});
   pwrPts.forEach(function(p){p.label=fmtMax1(p.y)+(powerInHp?' HP':' kW')});

@@ -106,7 +106,7 @@ function evaluateModel(db,m,q,h,hz=50){
     const e=Math.max(1,Math.min(100,fitValue(effFit,p.x)));
     return {x:p.x,y:9.81*p.x*p.y/3600/(e/100)};
   });
-  const powerOrder=Math.min(6,powerPts.length-1);
+  const powerOrder=Math.min(5,powerPts.length-1);
   const powerFit={pts:powerPts,c:polyfit(powerPts.map(p=>p.x),powerPts.map(p=>p.y),powerOrder),order:powerOrder,min:headFit.min,max:headFit.max};
   return {...m,impellerCurve:mix.type,impellerMix:mix,predHead,margin:predHead-h,eff,npsh,shaft,headFit,effFit,npshFit,powerFit,rpm:(Number(curve.speed_rpm)||2900)*r};
 }

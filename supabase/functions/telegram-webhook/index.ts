@@ -1301,7 +1301,7 @@ function keybotFastProductCustomerRows(text:any){const raw=String(text||'').repl
 function keybotFastLooksLikePump(text:any){return /\b(?:CHC|VMS|SVM|BFI|HMS|ES)\b/i.test(String(text||''))}
 function keybotFastLooksLikeExactPumpModel(text:any){const raw=String(text||'');return /\b(?:BFI|HMS)\s*\d{1,3}\s*-\s*\d{1,3}(?:\s*-\s*\d{1,2})?\s*[TE]?\b/i.test(raw)||/\b(?:CHC|VMS|SVM)\s*\d{1,3}\s*-\s*\d{1,3}(?:\s*-\s*\d{1,2})?(?:\s*-\s*\d{1,2})?(?:\s+[24]\s*P(?:OLE)?)?\b/i.test(raw)||/\bES\s*\d{1,3}\s*-\s*\d{1,3}[A-Za-z]?(?:\s+[24]\s*P(?:OLE)?)?\b/i.test(raw)}
 function keybotFastRequestedDuty(text:any){const parsed=smartQuoteRequest(text),q=Number(parsed.flow_m3h||0),h=Number(parsed.head_m||0);return q>0&&h>0?{flow_m3h:q,head_m:h,duty_text:dutyDisplay(String(text||''),q,h).duty_text}:null}
-function keybotFastRequestedPoint(text:any){const parsed=smartQuoteRequest(text),q=Number(parsed.flow_m3h||0),h=Number(parsed.head_m||0),motorHp=Number(parsed.motor_hp||0);return (q>0||h>0||motorHp>0)?{flow_m3h:q||0,head_m:h||0,motor_hp:motorHp||0,duty_text:q>0&&h>0?dutyDisplay(String(text||''),q,h).duty_text:''}:null}
+function keybotFastRequestedPoint(text:any){const source=String(text||''),parsed=smartQuoteRequest(text),q=Number(parsed.flow_m3h||0),h=Number(parsed.head_m||0),motorHp=Number(parsed.motor_hp||0),display=dutyDisplay(source,q,h);return (q>0||h>0||motorHp>0)?{flow_m3h:q||0,head_m:h||0,motor_hp:motorHp||0,raw_input:source,flow_text:q>0?display.flow_text:'',flow_unit:display.flow_unit,raw_flow:display.raw_flow,duty_text:q>0&&h>0?display.duty_text:''}:null}
 function keybotFastBrandKey(value:any){const raw=String(value||'').trim(),compact=raw.toLowerCase().replace(/[^a-z0-9]+/g,'');if(compact==='mos')return 'mos';if(compact==='ok'||compact==='okpump')return 'ok';if(compact==='bg'||compact==='bgreich')return 'bgreich';return cleanSearch(raw)}
 function keybotFastBrandAliases(value:any){const raw=String(value||'').trim(),key=keybotFastBrandKey(raw);if(key==='mos')return guidedUnique([raw,'M.O.S','MOS','Mos']);if(key==='ok')return guidedUnique([raw,'O.K.Pump','O.K. Pump','O.K.','OKPump','OK Pump','O K Pump','OK']);if(key==='bgreich')return guidedUnique([raw,'B.G.Reich','B.G. Reich','BG Reich','BG']);return [raw]}
 function keybotFastProductSeriesKey(product:any){return cleanSearch(product?.brand_series||product?.product_label||'')}
@@ -1856,7 +1856,12 @@ async function guidedSendExactRatedCurve(service:any,telegramToken:string,compan
     if(family==='BFI')throw new Error(`Rated point could not be resolved for ${exact?.display_model||exact?.master_model||'this BFI model'}.`);
     throw new Error(`Rated point could not be resolved for ${exact?.display_model||exact?.master_model||'this CHC model'}.`);
   }
-  const q=hasRequested?Number(requested.flow_m3h):Number(rated.flow_m3h),h=hasRequested?Number(requested.head_m):Number(rated.head_m),duty=hasRequested?String(requested.duty_text||`${oneDecimal(q)} m3/hr @ ${oneDecimal(h)} mtr`):`${oneDecimal(q)} m3/hr @ ${oneDecimal(h)} mtr`;
+  const q=hasRequested?Number(requested.flow_m3h):Number(rated.flow_m3h),h=hasRequested?Number(requested.head_m):Number(rated.head_m);
+  let duty=hasRequested?String(requested.duty_text||`${oneDecimal(q)} m3/hr @ ${oneDecimal(h)} mtr`):`${oneDecimal(q)} m3/hr @ ${oneDecimal(h)} mtr`;
+  if(!hasRequested&&motorOptimized?.mode==='flow'){
+    const original=dutyDisplay(String(requestedPoint?.raw_input||''),q,h),flowText=String(requestedPoint?.flow_text||original.flow_text||`${oneDecimal(q)} m3/hr`).replace(/m3\/hr/g,'m³/hr');
+    duty=`${flowText} @ ${Math.round(h)} mtr`;
+  }
   const curveIdentity:any=await guidedCurveDisplayIdentity(service,companyId,product,String(exact?.master_model||''),String(exact?.display_model||''));
   if(motorOptimized){curveIdentity.es_motor_limit_hp=requestedHp;curveIdentity.es_impeller_mm=Number(motorOptimized.impeller_mm);curveIdentity.es_motor_trimmed=true;curveIdentity.es_rated_is_bep=motorOptimized.mode==='bep';curveIdentity.es_motor_mode=String(motorOptimized.mode||'');}
   const pdf=await generateCurvePdf(family,q,h,duty,env('KEYSUITE_PUBLIC_URL'),family==='ES'?esPole:0,String(exact?.master_model||''),curveIdentity);
@@ -2511,10 +2516,10 @@ Deno.serve(async(req)=>{
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
       if(isCompanyCurveOnlyUser(navigationUser)){
         await telegramSend(telegramToken,chatId,`Hi 👋\n\n${companyCurveOnlyPrompt()}`,companyCurveOnlyMenu());
-        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.09'});
+        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.10'});
       }
       await telegramSend(telegramToken,chatId,`Hi 👋\n\n${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.09'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.10'});
     }
     if(newRequestButton){
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
@@ -2698,7 +2703,7 @@ Deno.serve(async(req)=>{
       await telegramSend(telegramToken,chatId,`Hi 👋
 
 ${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.09'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.10'});
     }
 
     if(newRequestButton){

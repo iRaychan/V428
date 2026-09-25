@@ -1,7 +1,18 @@
-# KeySuite V4.28.09 FULL CLEAN
+# KeySuite V4.28.10 FULL CLEAN
 
-Baseline: V4.28.08 FULL CLEAN.
+Baseline: V4.28.09 FULL CLEAN.
 
+
+## V4.28.10 - Global Power 5th-order + PDF curve standardisation + ES endpoint correction
+
+- Standardises the **Power curve to 5th-order polynomial** across CHC C4, CHC C6, BFI and ES for both KeySuite and KeyBot.
+- Bypasses the older display-only cubic Power smoother so the visible Power line follows the 5th-order polynomial directly.
+- KeySuite **PDF only**: all plotted pump/system/orifice/parallel/variable curve lines use **1.8 SVG units**. On-screen curve thickness remains unchanged.
+- KeyBot PDF: all plotted curve lines use **1.35 pt**, approximately the visual equivalent of 1.8 px at 96 dpi.
+- ES motor-trimmed curves stop at the last valid hydraulic point instead of adding a false trailing zero point; Head, Efficiency, Power and NPSH no longer drop vertically to zero at the high-flow end.
+- ES exact model + motor + flow-only requests preserve the original flow unit and show the m³/hr conversion. Derived head is rounded to the nearest whole metre for display only.
+- Example: `500 IGPM` is displayed as **500 IGPM (136.4 m³/hr) @ 103 mtr** when the calculated head is approximately 102.9 m. Internal calculations retain the unrounded values.
+- Motor-safe impeller selection, safety-factor logic, BEP motor-only behavior and flow/head constrained operating-point logic are otherwise unchanged.
 
 ## V4.28.09 - ES suffix + assigned-brand routing correction
 
@@ -85,7 +96,7 @@ TESK KeyBot selection corrections:
 - Brand Series labels without an active OEM Family Map cannot create a searchable hydraulic family.
 
 Deployment:
-1. Upload/deploy the V4.28.09 web files to GitHub.
+1. Upload/deploy the V4.28.10 web files to GitHub.
 2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.

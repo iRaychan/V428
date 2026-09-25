@@ -1,18 +1,19 @@
 {
-  "version": "4.28.09",
-  "baseline": "4.28.08 FULL CLEAN",
-  "upgrade_supported_from": "4.28.08",
+  "version": "4.28.10",
+  "baseline": "4.28.09 FULL CLEAN",
+  "upgrade_supported_from": "4.28.09",
   "changes": [
-    "Fast Search exact ES model detection now preserves one-letter model suffixes such as ES 80-32H and ES 80-32G",
-    "Motor HP, kW, 2P/4P, 2Pole/4Pole and c/w tokens are stripped from Customer-name inference and cannot be treated as a company name",
-    "Unbranded exact ES requests no longer auto-collapse to B.G.Reich when several assigned brands match; KeyBot shows the Brand / Model choice first",
-    "If only one assigned brand matches the exact ES model and pole, KeyBot continues automatically",
-    "Explicitly typed brands remain hard-scoped and bypass the brand-choice prompt when exactly one matching assigned product remains",
-    "Preserves V4.28.08 motor-safe impeller trimming, full trimmed curve, BEP default rated point and flow/head-only operating-point behavior",
+    "Power-curve polynomial is standardized to 5th order for CHC C4, CHC C6, BFI and ES in KeySuite and KeyBot",
+    "Legacy display-only cubic Power smoothing is bypassed so the visible Power curve follows the 5th-order polynomial directly",
+    "All plotted pump/system/orifice/parallel/variable curve lines in KeySuite PDF output use 1.8 SVG units while on-screen line thickness remains unchanged",
+    "All plotted curve lines in KeyBot PDF output use 1.35 pt, approximately the visual equivalent of 1.8 px",
+    "ES motor-trimmed curve display removes invalid trailing zero hydraulic points so Head, Efficiency, Power and NPSH no longer drop vertically to zero at the high-flow endpoint",
+    "ES motor + flow-only Fast Search preserves the user-entered flow unit and adds the converted m³/hr value; derived head is displayed rounded to the nearest whole metre",
+    "Example: 500 IGPM is displayed as 500 IGPM (136.4 m³/hr) @ 103 mtr while exact internal flow/head values remain in calculations",
     "No database migration is required"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": true,
   "edge_function": "telegram-webhook",
-  "notes": "Upgrade from V4.28.08. Upload the V4.28.09 web files to GitHub and redeploy telegram-webhook. No database migration is required."
+  "notes": "Upgrade from V4.28.09. Upload the V4.28.10 web files to GitHub and redeploy telegram-webhook. No database migration is required."
 }
