@@ -1,19 +1,18 @@
 {
-  "version": "4.28.11",
-  "baseline": "4.28.10 FULL CLEAN",
-  "upgrade_supported_from": "4.28.10",
+  "version": "4.28.12",
+  "baseline": "4.28.11 FULL CLEAN",
+  "upgrade_supported_from": "4.28.11",
   "changes": [
-    "Regression fix: CHC C4, CHC C6 and BFI on-screen curves are visible again after V4.28.10 PDF-width standardisation",
-    "A null/omitted curveWidth now correctly means use the normal on-screen curve thickness instead of being coerced to numeric zero",
-    "The fix is applied to both selector and Product/Quick Selection renderers for CHC C4, CHC C6 and BFI",
-    "PDF-only 1.8 SVG-unit curve width remains unchanged in KeySuite PDF output",
-    "KeyBot PDF curve width remains 1.35 pt (approximately 1.8 px equivalent)",
-    "Global 5th-order Power curve behavior from V4.28.10 remains unchanged",
-    "ES endpoint and original-unit display fixes from V4.28.10 remain unchanged",
+    "KeyBot ES PDF endpoint regression fix: Head, Efficiency, Power and NPSH no longer drop vertically to zero at the final flow point",
+    "Fixes floating-point endpoint sampling where the last sampled x could become microscopically greater than fit.max; ESCore returned null and the previous finite(null) check coerced it to zero",
+    "The first and final ES polynomial samples are now pinned exactly to fit.min and fit.max and null/undefined polynomial results are rejected instead of converted to zero",
+    "Selected impeller labels now anchor to the true final Head point instead of the false x-axis endpoint",
+    "Verified ES 80-32H 2P at selected impeller Ø280 mm ends naturally near 231.88 m³/hr: Head 84.08 m, Efficiency 66.83%, Power 106.81 HP and NPSH 10.07 m",
+    "Global 5th-order Power curve behavior, KeySuite PDF 1.8 SVG-unit curve width, KeyBot PDF 1.35 pt curve width and original-unit duty formatting remain unchanged",
     "No database migration is required"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": true,
   "edge_function": "telegram-webhook",
-  "notes": "Upgrade from V4.28.10. Upload the V4.28.11 web files. Redeploy telegram-webhook to keep the runtime version/status aligned. No database migration is required."
+  "notes": "Upgrade from V4.28.11. Upload the V4.28.12 versioned web files if desired for suite version alignment, then redeploy telegram-webhook. The functional endpoint fix is in curve-pdf.ts. No database migration is required."
 }

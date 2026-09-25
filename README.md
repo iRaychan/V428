@@ -1,7 +1,18 @@
-# KeySuite V4.28.11 FULL CLEAN
+# KeySuite V4.28.12 FULL CLEAN
 
 Baseline: V4.28.09 FULL CLEAN.
 
+
+
+## V4.28.12 - KeyBot ES PDF natural curve endpoint fix
+
+- Fixes the remaining KeyBot ES PDF issue where Head, Efficiency, Power and NPSH could fall vertically to zero at the final flow point.
+- Root cause: the final sampled x could be microscopically greater than the polynomial fit maximum because of floating-point arithmetic. `ESCore.polyEval(..., false)` then returned `null`, and the previous generic finite check converted `null` to numeric zero.
+- The ES PDF sampler now pins the first and last points exactly to `fit.min` and `fit.max` and rejects `null` / `undefined` results rather than coercing them to zero.
+- The selected-impeller label therefore follows the real final Head point instead of being drawn near the x-axis.
+- Regression example: `ES 80-32H / 100 HP / 2P / 500 IGPM`, selected impeller Ø280 mm, now ends naturally near 231.88 m³/hr at approximately 84.08 m Head, 66.83% efficiency, 106.81 HP and 10.07 m NPSH.
+- Preserves V4.28.10/V4.28.11: global Power = 5th order, KeySuite PDF curve lines = 1.8 SVG units, KeyBot PDF curve lines = 1.35 pt (~1.8 px), and `500 IGPM (136.4 m³/hr) @ 103 mtr` duty display.
+- No database migration is required.
 
 
 ## V4.28.11 - CHC/BFI screen curve visibility regression fix
@@ -107,7 +118,7 @@ TESK KeyBot selection corrections:
 - Brand Series labels without an active OEM Family Map cannot create a searchable hydraulic family.
 
 Deployment:
-1. Upload/deploy the V4.28.11 web files to GitHub.
+1. Upload/deploy the V4.28.12 web files to GitHub.
 2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.

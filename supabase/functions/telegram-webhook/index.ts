@@ -2516,10 +2516,10 @@ Deno.serve(async(req)=>{
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
       if(isCompanyCurveOnlyUser(navigationUser)){
         await telegramSend(telegramToken,chatId,`Hi 👋\n\n${companyCurveOnlyPrompt()}`,companyCurveOnlyMenu());
-        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.11'});
+        return json({ok:true,status:'keybot_curve_only_menu',version:'V4.28.12'});
       }
       await telegramSend(telegramToken,chatId,`Hi 👋\n\n${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.11'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.12'});
     }
     if(newRequestButton){
       session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'',step:'idle',flow_m3h:null,head_m:null,flow_raw:null,head_raw:null,selected_customer_id:null,context:{}});
@@ -2703,7 +2703,7 @@ Deno.serve(async(req)=>{
       await telegramSend(telegramToken,chatId,`Hi 👋
 
 ${simpleRequestMenuText()}`,mainMenuMarkup());
-      return json({ok:true,status:'keybot_menu',version:'V4.28.11'});
+      return json({ok:true,status:'keybot_menu',version:'V4.28.12'});
     }
 
     if(newRequestButton){

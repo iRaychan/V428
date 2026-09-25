@@ -196,9 +196,14 @@ function sampleEsFit(points:XY[],order:number,yScale=1,count=180){
   if(!fit)return clean.map(p=>({x:Number(p.x),y:Number(p.y)*yScale}));
   const out:XY[]=[];
   for(let i=0;i<=count;i++){
-    const x=fit.min+(fit.max-fit.min)*i/count;
+    // V4.28.12: pin the first/last sample exactly to fit.min/fit.max. Floating-point
+    // arithmetic could previously make the final x microscopically greater than fit.max,
+    // causing ESCore.polyEval(..., false) to return null. The old finite(null) check then
+    // coerced null to numeric zero and drew a false vertical line to the x-axis.
+    const x=i===0?Number(fit.min):(i===count?Number(fit.max):Number(fit.min)+(Number(fit.max)-Number(fit.min))*i/count);
     const y=core.polyEval(fit,x,false);
-    if(finite(y))out.push({x:Number(x),y:Math.max(0,Number(y)*yScale)});
+    if(y===null||y===undefined||!Number.isFinite(Number(y)))continue;
+    out.push({x:Number(x),y:Math.max(0,Number(y)*yScale)});
   }
   return out;
 }
