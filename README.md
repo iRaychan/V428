@@ -1,7 +1,18 @@
-# KeySuite V4.28.10 FULL CLEAN
+# KeySuite V4.28.11 FULL CLEAN
 
 Baseline: V4.28.09 FULL CLEAN.
 
+
+
+## V4.28.11 - CHC/BFI screen curve visibility regression fix
+
+- Fixes the V4.28.10 regression where CHC C4/C6 and BFI on-screen curves could render with zero stroke width after Quick Selection/Product selection.
+- `curveWidth = null` now correctly uses the normal existing screen thickness; only an explicit positive width overrides it.
+- Applied to both Selector and Product/Quick Selection curve renderers.
+- KeySuite PDF curve width remains 1.8 SVG units.
+- KeyBot PDF remains 1.35 pt (~1.8 px).
+- Global Power curve remains 5th order.
+- No database migration is required.
 
 ## V4.28.10 - Global Power 5th-order + PDF curve standardisation + ES endpoint correction
 
@@ -96,7 +107,7 @@ TESK KeyBot selection corrections:
 - Brand Series labels without an active OEM Family Map cannot create a searchable hydraulic family.
 
 Deployment:
-1. Upload/deploy the V4.28.10 web files to GitHub.
+1. Upload/deploy the V4.28.11 web files to GitHub.
 2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.

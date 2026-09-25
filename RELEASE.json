@@ -1,19 +1,19 @@
 {
-  "version": "4.28.10",
-  "baseline": "4.28.09 FULL CLEAN",
-  "upgrade_supported_from": "4.28.09",
+  "version": "4.28.11",
+  "baseline": "4.28.10 FULL CLEAN",
+  "upgrade_supported_from": "4.28.10",
   "changes": [
-    "Power-curve polynomial is standardized to 5th order for CHC C4, CHC C6, BFI and ES in KeySuite and KeyBot",
-    "Legacy display-only cubic Power smoothing is bypassed so the visible Power curve follows the 5th-order polynomial directly",
-    "All plotted pump/system/orifice/parallel/variable curve lines in KeySuite PDF output use 1.8 SVG units while on-screen line thickness remains unchanged",
-    "All plotted curve lines in KeyBot PDF output use 1.35 pt, approximately the visual equivalent of 1.8 px",
-    "ES motor-trimmed curve display removes invalid trailing zero hydraulic points so Head, Efficiency, Power and NPSH no longer drop vertically to zero at the high-flow endpoint",
-    "ES motor + flow-only Fast Search preserves the user-entered flow unit and adds the converted m³/hr value; derived head is displayed rounded to the nearest whole metre",
-    "Example: 500 IGPM is displayed as 500 IGPM (136.4 m³/hr) @ 103 mtr while exact internal flow/head values remain in calculations",
+    "Regression fix: CHC C4, CHC C6 and BFI on-screen curves are visible again after V4.28.10 PDF-width standardisation",
+    "A null/omitted curveWidth now correctly means use the normal on-screen curve thickness instead of being coerced to numeric zero",
+    "The fix is applied to both selector and Product/Quick Selection renderers for CHC C4, CHC C6 and BFI",
+    "PDF-only 1.8 SVG-unit curve width remains unchanged in KeySuite PDF output",
+    "KeyBot PDF curve width remains 1.35 pt (approximately 1.8 px equivalent)",
+    "Global 5th-order Power curve behavior from V4.28.10 remains unchanged",
+    "ES endpoint and original-unit display fixes from V4.28.10 remain unchanged",
     "No database migration is required"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": true,
   "edge_function": "telegram-webhook",
-  "notes": "Upgrade from V4.28.09. Upload the V4.28.10 web files to GitHub and redeploy telegram-webhook. No database migration is required."
+  "notes": "Upgrade from V4.28.10. Upload the V4.28.11 web files. Redeploy telegram-webhook to keep the runtime version/status aligned. No database migration is required."
 }
