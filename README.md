@@ -1,8 +1,18 @@
-# KeySuite V4.28.12 FULL CLEAN
+# KeySuite V4.28.13 FULL CLEAN
 
 Baseline: V4.28.09 FULL CLEAN.
 
 
+
+
+## V4.28.13 - Global System Curve +5% display cap
+
+- System Curve display now stops at **105% of the design/system-point head** instead of extending far above the selected operating point.
+- Example: a 100 m system point draws to 105 m; the verified 103 m ES example draws to 108.15 m.
+- Applied to CHC C4/C6, BFI and ES in KeySuite screen/PDF, plus KeyBot ES motor-limited PDF curves.
+- Hydraulic calculations and operating-point intersections are unchanged; this is a display-length rule only.
+- V4.28.12 ES natural endpoint fix, global Power 5th-order fitting and PDF curve-line widths remain unchanged.
+- No database migration is required. Redeploy `telegram-webhook` for the KeyBot PDF change.
 
 ## V4.28.12 - KeyBot ES PDF natural curve endpoint fix
 
@@ -118,7 +128,7 @@ TESK KeyBot selection corrections:
 - Brand Series labels without an active OEM Family Map cannot create a searchable hydraulic family.
 
 Deployment:
-1. Upload/deploy the V4.28.12 web files to GitHub.
+1. Upload/deploy the V4.28.13 web files to GitHub.
 2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.

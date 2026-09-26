@@ -748,7 +748,9 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     }
   }
   if(fam==='ES'&&Number(displayIdentity?.es_motor_limit_hp||0)>0&&headPoints.length){
-    const maxPumpFlow=Math.max(...headPoints.map(p=>Number(p.x)||0)),systemMaxFlow=Math.min(maxPumpFlow,Math.max(q*1.25,q+1)),system=systemPoints(q,h,systemMaxFlow);
+    // V4.28.13: the displayed System Curve stops at 105% of the operating/system-point head.
+    // For this zero-static quadratic H = Hpoint*(Q/Qpoint)^2, Qlimit = Qpoint*sqrt(1.05).
+    const maxPumpFlow=Math.max(...headPoints.map(p=>Number(p.x)||0)),systemMaxFlow=Math.min(maxPumpFlow,q*Math.sqrt(1.05)),system=systemPoints(q,h,systemMaxFlow);
     headEnvelope=[{points:headPoints,label:`Selected Ø${fmt(impellerMm,impellerMm%1?1:0)}`,color:BLUE,width:PDF_CURVE_WIDTH_PT},{points:system,label:'System Curve',color:rgb(.46,.50,.53),width:PDF_CURVE_WIDTH_PT}];
   }
   const xLabel='Flow (m³/hr)';

@@ -1484,13 +1484,15 @@ function keychcShutoffHead(best){
  const pts=(best.headFit.pts||[]).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)).sort((a,b)=>a.x-b.x);
  return pts.length?pts[0].y:null;
 }
-function keychcSystemCurveMaxFlow(system,shutoffHead,pumpMaxFlow){
+function keychcSystemCurveMaxFlow(system,shutoffHead,pumpMaxFlow,displayHeadLimit=null){
  const flowLimit=Math.max(0,Number(pumpMaxFlow)||0);
  if(!system)return flowLimit;
- if(!Number.isFinite(shutoffHead))return flowLimit;
- if(system.staticHeadM>shutoffHead)return 0;
+ const limits=[shutoffHead,displayHeadLimit].filter(v=>v!==null&&v!==undefined&&v!=='').map(Number).filter(v=>Number.isFinite(v)&&v>=0);
+ if(!limits.length)return flowLimit;
+ const headLimit=Math.min(...limits);
+ if(system.staticHeadM>headLimit)return 0;
  if(!(system.k>0))return flowLimit;
- const headLimitFlow=Math.sqrt(Math.max(0,(shutoffHead-system.staticHeadM)/system.k));
+ const headLimitFlow=Math.sqrt(Math.max(0,(headLimit-system.staticHeadM)/system.k));
  if(!Number.isFinite(headLimitFlow))return flowLimit;
  return flowLimit>0?Math.min(headLimitFlow,flowLimit):headLimitFlow;
 }
@@ -1570,7 +1572,11 @@ function keychcHeadGraph(best,q,h,chartHeight=440,curveWidth=null){
  const variableMaxHead=variableModels.length?Math.max(...variableModels.flatMap(x=>(x.model.headFit.pts||[]).map(pt=>Number(pt.y)||0))):0;
  const parallelMax=perPumpMax*maxCount;
  const shutoff=keychcShutoffHead(best);
- const systemMax=showSystem&&system?keychcSystemCurveMaxFlow(system,shutoff,parallelMax):0;
+ // V4.28.13: draw the System Curve only 5% above its design/system point head.
+ const systemPointHead=system&&Number(system.designHeadM)>0?Number(system.designHeadM):Number(h);
+ const systemDisplayHeadMax=showSystem&&system&&systemPointHead>0?systemPointHead*1.05:null;
+ const systemMax=showSystem&&system?keychcSystemCurveMaxFlow(system,shutoff,parallelMax,systemDisplayHeadMax):0;
+ const systemDrawHeadLimit=[shutoff,systemDisplayHeadMax].filter(v=>v!==null&&v!==undefined&&v!=='').map(Number).filter(v=>Number.isFinite(v)&&v>=0).reduce((a,b)=>Math.min(a,b),Infinity);
  const visibleDutyPoints=showDuty?dutyPoints:[];
  const dutyMaxQ=visibleDutyPoints.length?Math.max(...visibleDutyPoints.map(d=>d.q)):q;
  const dutyMaxH=visibleDutyPoints.length?Math.max(...visibleDutyPoints.map(d=>d.h)):h;
@@ -1599,7 +1605,7 @@ function keychcHeadGraph(best,q,h,chartHeight=440,curveWidth=null){
   const endHead=keychcParallelPumpHeadForCount(best,max,n);
   if(Number.isFinite(endHead)){const tx=Math.min(W-p.r-4,X(max)-3),ty=Math.max(p.t+10,Math.min(H-p.b-4,Y(endHead)-4));z+=`<text x="${tx}" y="${ty}" text-anchor="end" font-family="Arial" font-size="9.5" font-weight="800" fill="${color}">${n}P</text>`}
  }
- if(showSystem&&system&&systemMax>0)pathFor(totalQ=>keychcSystemHead(system,totalQ),0,Math.min(systemMax,xa.max),'#d32f2f',2.4,'',shutoff);
+ if(showSystem&&system&&systemMax>0)pathFor(totalQ=>keychcSystemHead(system,totalQ),0,Math.min(systemMax,xa.max),'#d32f2f',2.4,'',Number.isFinite(systemDrawHeadLimit)?systemDrawHeadLimit:null);
  if(showOrifice&&orifice)pathFor(totalQ=>{const hp=peval(best.headFit.c,totalQ),loss=keychcOrificeLoss(orifice,totalQ);return Number.isFinite(hp)&&Number.isFinite(loss)?hp-loss:null},perPumpMin,perPumpMax,'#7b1fa2',2.2,'4 4');
  function point(x,y,label,color,r=6){if(!Number.isFinite(x)||!Number.isFinite(y))return;const px=X(Math.max(0,Math.min(xa.max,x))),py=Y(Math.max(0,Math.min(ya.max,y)));z+=`<circle cx="${px}" cy="${py}" r="${r}" fill="${color}" stroke="#fff" stroke-width="2"/>`;if(label)z+=`<text x="${Math.min(W-p.r-4,px+9)}" y="${Math.max(p.t+12,py-8)}" font-family="Arial" font-size="10" font-weight="800" fill="${color}">${label}</text>`}
  // B4.06.15 Product Curve: D1 marker is bound directly to the current generated/manual Product duty q,h.
@@ -1778,12 +1784,12 @@ function renderSelected(){
    <div class="kpi kpi-core"><span>Shaft Power</span><b>${hasPrimaryDuty?requiredPower.toFixed(2)+' kW':'—'}</b><span>${hasPrimaryDuty?(requiredPower/0.746).toFixed(1)+' HP at D1':'no active D1'}</span></div>
    <div class="kpi"><span>Motor Size</span><b>${best.motor_kw.toFixed(2)} kW</b><span>${formatHP(best.motor_hp)}</span></div>
    <div class="kpi kpi-core"><span>NPSHr</span><b>${hasPrimaryDuty?requiredNpsh.toFixed(2)+' m':'—'}</b><span>${hasPrimaryDuty?'at D1':'no active D1'}</span></div>
-   <div class="kpi"><span>Shut-off Head</span><b>${Number.isFinite(hc.shutoffHead)?hc.shutoffHead.toFixed(2):'—'} m</b><span>system curve display limit</span></div>
+   <div class="kpi"><span>Shut-off Head</span><b>${Number.isFinite(hc.shutoffHead)?hc.shutoffHead.toFixed(2):'—'} m</b><span>pump shut-off reference</span></div>
    <div class="kpi"><span>Pressure Limit</span><b>${best.max_pressure_bar.toFixed(0)} bar</b><span>inlet ${best.max_inlet_bar.toFixed(0)} bar</span></div>
  </div>
  <div class="curve-legend">${pLegend}${hc.showDuty&&hc.dutyPoints.length?'<span class="legend-item"><i class="legend-duty"></i>Duty Points D1–D6</span>':''}${hc.showSystem&&hc.system?'<span class="legend-item"><i class="legend-line legend-system"></i>System Curve</span>':''}${hc.showOrifice&&hc.orifice?'<span class="legend-item"><i class="legend-line legend-orifice"></i>After Orifice</span>':''}${op?'<span class="legend-item"><i class="legend-op"></i>Operating Point</span>':''}</div>
  <div class="curve-grid">
-   <div class="chart-card chart-main"><div class="chart-title">Pump Curve · ${hz.toFixed(1)} Hz</div>${hc.svg}<div class="chart-note">2P–6P curves are optional parallel references; the normal single-pump curve is always shown and D1 remains the single-pump selection duty. System Curve stops at shut-off head or the maximum flow of the highest enabled parallel reference curve, whichever comes first.</div></div>
+   <div class="chart-card chart-main"><div class="chart-title">Pump Curve · ${hz.toFixed(1)} Hz</div>${hc.svg}<div class="chart-note">2P–6P curves are optional parallel references; the normal single-pump curve is always shown and D1 remains the single-pump selection duty. System Curve stops at 5% above the design/system-point head, or earlier at the pump/parallel hydraulic limit.</div></div>
    <div class="chart-stack">
      <div class="chart-card chart-aux"><div class="chart-title">Efficiency · Parallel Reference</div>${keychcParallelMetricGraph(best.effFit,'efficiency',hasPrimaryDuty?q:NaN,requiredEff,216,'kW',sharedFlowAxis)}</div>
      <div class="chart-card chart-aux"><div class="chart-title">Power · Parallel Reference</div>${keychcParallelMetricGraph(best.powerFit,'power',hasPrimaryDuty?q:NaN,requiredPower,216,'kW',sharedFlowAxis)}</div>
