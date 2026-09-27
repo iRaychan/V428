@@ -1543,7 +1543,8 @@ function keychcHeadGraph(best,q,h,chartHeight=440,curveWidth=null){
  const dutyPoints=keychcDutyPoints();
  const system=keychcSystemCurve(),orifice=keychcOrificeCurve(best);
  // D1 selection and the main operating-point marker always remain on the normal single-pump curve.
- const op=showOperating&&showSystem&&system?keychcFindOperating(best,system,orifice,showOrifice&&!!orifice,1):null;
+ const systemIntersection=showSystem&&system?keychcFindOperating(best,system,orifice,showOrifice&&!!orifice,1):null;
+ const op=showOperating?systemIntersection:null;
  const perPumpMin=Math.max(0,Number(best.headFit.min)||0),perPumpMax=Math.max(0,Number(best.headFit.max)||0);
  const variableHz=[50,45,40,35,30,25],activeHz=Number(best.curveHz||keychcCurveHz()||50);
  const variableModels=showVariableCurve?variableHz.map(hz=>({hz,model:keychcDisplayModelAtSpeed(best,hz,q,h)})).filter(x=>x.model&&x.model.headFit):[];
@@ -1552,7 +1553,7 @@ function keychcHeadGraph(best,q,h,chartHeight=440,curveWidth=null){
  const parallelMax=perPumpMax*maxCount;
  const shutoff=keychcShutoffHead(best);
  // V4.28.13: draw the System Curve only 5% above its design/system point head.
- const systemPointHead=system&&Number(system.designHeadM)>0?Number(system.designHeadM):Number(h);
+ const systemPointHead=systemIntersection&&Number(systemIntersection.h)>0?Number(systemIntersection.h):(system&&Number(system.designHeadM)>0?Number(system.designHeadM):Number(h));
  const systemDisplayHeadMax=showSystem&&system&&systemPointHead>0?systemPointHead*1.05:null;
  const systemMax=showSystem&&system?keychcSystemCurveMaxFlow(system,shutoff,parallelMax,systemDisplayHeadMax):0;
  const systemDrawHeadLimit=[shutoff,systemDisplayHeadMax].filter(v=>v!==null&&v!==undefined&&v!=='').map(Number).filter(v=>Number.isFinite(v)&&v>=0).reduce((a,b)=>Math.min(a,b),Infinity);
