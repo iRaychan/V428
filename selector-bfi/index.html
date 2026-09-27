@@ -1154,10 +1154,11 @@ function exportPDF(requestedFilename){
  <html><head><meta charset="utf-8"><title>${pdfFileTitle}</title>
  <style>
  @page{size:210mm 297mm;margin:0}
+ @media print{html,body{width:210mm!important;min-width:210mm!important;max-width:210mm!important;margin:0!important;padding:0!important}body{min-height:296mm!important}.report,.tech-page,.dimension-page{width:210mm!important;max-width:210mm!important;height:296mm!important;min-height:296mm!important;margin:0!important;padding:8mm!important;overflow:hidden!important}.pdf-iso{right:calc(8mm + 2px)!important;bottom:9mm!important}}
  *{box-sizing:border-box}
- body{font-family:Arial,sans-serif;color:#203542;margin:0;background:#fff;min-height:297mm}
+ body{font-family:Arial,sans-serif;color:#203542;margin:0;background:#fff;min-height:281mm}
  ${pdfHideDuty?'.duty{display:none!important}.tech-page,.dimension-page{display:none!important}.report{break-after:auto!important;page-break-after:auto!important}':''}
- .report,.tech-page,.dimension-page{width:210mm;max-width:210mm;height:297mm;min-height:297mm;margin:0;padding:8mm;overflow:hidden}.pdf-body-scale{width:102.040816%;transform:scale(.98);transform-origin:top left}.report-body{flex:0 0 auto}.tech-body{position:relative;top:-2.822mm}.tech-body .tds-table{width:100%}.dimension-body{margin-top:17.70mm}
+ .report,.tech-page,.dimension-page{width:194mm;max-width:194mm;height:281mm;min-height:281mm;margin:0;padding:0;overflow:hidden}.pdf-body-scale{width:102.040816%;transform:scale(.98);transform-origin:top left}.report-body{flex:0 0 auto}.tech-body{position:relative;top:-2.822mm}.tech-body .tds-table{width:100%}.dimension-body{margin-top:17.70mm}
  .report{position:relative;display:flex;flex-direction:column;break-after:page;page-break-after:always}
  .tech-page{break-after:page;page-break-after:always}
  .top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #0f629c;padding:0 0 calc(3px + .353mm) 0}
@@ -1173,7 +1174,7 @@ function exportPDF(requestedFilename){
  .chart-last{display:flex;flex-direction:column;min-height:0;overflow:visible}
  .chart-last svg{height:58mm;flex:0 0 58mm;margin-bottom:1mm;border:0!important;border-radius:7px;background:#fbfcfe;box-shadow:inset 0 0 0 1.2px #d8e3ea;overflow:hidden}
  .iso-note{font-size:10px;color:#8a98a3;margin-top:1mm;text-align:right;line-height:1;white-space:nowrap}
- .pdf-iso{position:absolute;right:calc(8mm + 2px);bottom:9mm;font-size:10px;color:#8a98a3;line-height:1;white-space:nowrap;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .pdf-iso{position:absolute;right:2px;bottom:1mm;font-size:10px;color:#8a98a3;line-height:1;white-space:nowrap;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  .tech-page{position:relative;padding:0;display:flex;flex-direction:column;color:#111;background:#fff;font-family:Arial,Helvetica,sans-serif;font-style:normal;font-variant:normal}
  .tds-header{display:grid;grid-template-columns:65mm 1fr auto;grid-template-rows:8mm 8mm;height:16mm;padding:0;align-items:start;margin-top:5mm}
  .tds-logo-box{grid-column:1;grid-row:1 / span 2;display:flex;align-items:flex-start;justify-content:flex-start;padding:0;transform:translateY(-5.009555mm)}.tds-logo{display:block;width:52mm;height:auto;max-height:17mm;object-fit:contain;object-position:left top;-webkit-print-color-adjust:exact;print-color-adjust:exact}
