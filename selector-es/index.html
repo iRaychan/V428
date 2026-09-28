@@ -4,11 +4,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAgent||'')&&!/(?:Chrome|Chromium|CriOS|Edg|OPR)/i.test(navigator.userAgent||''))document.documentElement.classList.add('macos-safari');</script>
 <title>KeySelector ES V1.9 · KeySuite V4.04.01</title>
 <link rel="icon" href="favicon.svg">
 <style>
 :root{--blue:#0877bd;--blue2:#055d94;--chc:#0f629c;--ink:#173047;--muted:#65798a;--line:#c9d8e4;--bg:#eef4f8;--panel:#fff;--good:#1d7a48;--warn:#a86600;--red:#c62828}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px/1.4 Arial,Helvetica,sans-serif;color:var(--ink)}
+*{box-sizing:border-box}html.macos-safari select:not([multiple]),html.macos-safari input:not([type="checkbox"]):not([type="radio"]){height:38px!important;min-height:38px!important;box-sizing:border-box}body{margin:0;background:var(--bg);font:14px/1.4 Arial,Helvetica,sans-serif;color:var(--ink)}
 button,input,select{font:inherit}.top{height:60px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:8px 18px;gap:18px;position:sticky;top:0;z-index:20}
 .brand{display:flex;align-items:center;gap:12px;min-width:250px}.brand img{width:178px;height:38px;object-fit:contain}.brand b{font-size:15px}.brand small{display:block;color:var(--muted)}
 .actions{margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}.btn{border:1px solid transparent;border-radius:6px;padding:8px 14px;font-weight:600;cursor:pointer;transition:.15s ease;background:#fff}.actions .btn{height:34px;min-width:86px;padding:0 14px;font-size:13px}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.primary:hover{background:var(--blue2);border-color:var(--blue2)}.btn.outline{background:#fff;border-color:#b7c8d4;color:#294b62}.btn.outline:hover{background:#f4f8fb;border-color:#8ca8ba}.btn.dark{background:var(--ink);color:#fff}.btn.mini{padding:6px 9px;font-size:12px}.btn.action-assembly{background:#f59e0b;border-color:#d97706;color:#fff}.btn.action-assembly:hover{background:#d97706;border-color:#d97706}.btn.action-quote{background:#16a34a;border-color:#15803d;color:#fff}.btn.action-quote:hover{background:#15803d;border-color:#15803d}.pdf-header-opt{display:inline-flex;align-items:center;gap:6px;height:34px;margin:0;padding:0 9px;border:1px solid #cfdbe4;border-radius:7px;background:#fff;color:#31546d;font-size:11px;font-weight:800;white-space:nowrap}.pdf-header-opt input{width:auto;margin:0;accent-color:var(--blue)}

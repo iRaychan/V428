@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAgent||'')&&!/(?:Chrome|Chromium|CriOS|Edg|OPR)/i.test(navigator.userAgent||''))document.documentElement.classList.add('macos-safari');</script>
 <title>KeyBFI - BFI Series</title>
 <style>
 :root{--blue:#0f629c;--dark:#15384f;--line:#d8e3ea;--muted:#687b89;--red:#d34242;--green:#198754}
 *{box-sizing:border-box}
+html.macos-safari select:not([multiple]),html.macos-safari input:not([type="checkbox"]):not([type="radio"]){height:38px!important;min-height:38px!important;box-sizing:border-box}
 body{margin:0;background:#eef3f7;color:#203542;font-family:Arial,sans-serif}
 header{background:#ffffff;color:#15384f;padding:17px 28px;border-bottom:4px solid #0f629c;box-shadow:0 3px 12px rgba(20,54,79,.08)}
 header h1{margin:0 0 5px;font-size:27px}header p{margin:0;opacity:.9}
