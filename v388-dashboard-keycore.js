@@ -17,6 +17,7 @@ function addStyles(){
  .ks-dashboard-duty h3{margin:0 0 4px;font-size:15px}.ks-dashboard-duty .muted{font-size:12px}
  .ks-duty-row{display:grid;grid-template-columns:82px repeat(2,minmax(130px,150px));gap:8px;align-items:center;margin-top:9px;max-width:420px}
  .ks-duty-row>label{margin:0;font-weight:700}.ks-duty-row input,.ks-duty-row select{width:100%;min-height:38px}
+ html.macos-safari .ks-duty-row input,html.macos-safari .ks-duty-row select{height:38px!important;min-height:38px!important;box-sizing:border-box}
  .ks-duty-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}.ks-duty-status{font-size:12px;color:#64748b}
  .ks-duty-products{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}.ks-duty-family{border:1px solid #b9cadd;background:#f7fbff;color:#17365d;border-radius:9px;padding:9px 14px;font-weight:800;cursor:pointer}
  .ks-duty-family.active{background:#17365d;color:#fff;border-color:#17365d}.ks-duty-family-body{display:none;margin-top:10px;border:1px solid #dbe4ed;border-radius:10px;padding:10px;background:#fbfdff}.ks-duty-family-body.active{display:block}
