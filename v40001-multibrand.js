@@ -145,7 +145,8 @@
     const actual=cur==='USD'?state.general.usdActual:state.general.rmbActual;
     const based=cur==='USD'?state.general.usdBased:state.general.rmbBased;
     if(!(num(base)>0)||!(actual>0)||!(based>0))return num(base);
-    return roundUp01(num(base)*(actual/based));
+    // Keep the stored calculation precision. Rounding belongs only in display.
+    return num(base)*(actual/based);
   }
   function buildEffectiveMultipliers(book=state.baseMultipliers){
     const out={}; Object.entries(book||{}).forEach(([family,rates])=>{
@@ -471,7 +472,7 @@
   function decorateProductRates(){
     const chcFamily=String($('chcPriceGeneration')?.value||'G2').toUpperCase()==='G1'?'CHC_G1':'CHC_G2';
     const map={[chcFamily]:['chcUsdMultiplier','chcRmbMultiplier'],ES:['esUsdMultiplier','esRmbMultiplier'],GWS:['gwsUsdMultiplier','gwsRmbMultiplier'],KEYPLC:['keyplcUsdMultiplier','keyplcRmbMultiplier'],MANIFOLD:['manifoldUsdMultiplier','manifoldRmbMultiplier'],MOTOR:['motorUsdMultiplier','motorRmbMultiplier'],COUPLING:['couplingUsdMultiplier','couplingRmbMultiplier']};
-    Object.entries(map).forEach(([fam,ids])=>ids.forEach((id,i)=>{const input=$(id);if(!input)return;let note=$(`v391Effective_${id}`);if(!note){note=document.createElement('div');note.id=`v391Effective_${id}`;note.className='v391-effective-note';input.closest('div')?.appendChild(note);}const cur=i?'RMB':'USD',base=num(state.baseMultipliers?.[fam]?.[cur],num(input.value)),eff=effectiveRate(base,cur);note.innerHTML=`Base ${base.toFixed(cur==='USD'?2:3)} → <b>Effective ${eff.toFixed(1)}</b>`;}));
+    Object.entries(map).forEach(([fam,ids])=>ids.forEach((id,i)=>{const input=$(id);if(!input)return;let note=$(`v391Effective_${id}`);if(!note){note=document.createElement('div');note.id=`v391Effective_${id}`;note.className='v391-effective-note';input.closest('div')?.appendChild(note);}const cur=i?'RMB':'USD',base=num(state.baseMultipliers?.[fam]?.[cur],num(input.value)),eff=effectiveRate(base,cur);note.innerHTML=`Base ${base.toFixed(3)} → <b>Effective ${eff.toFixed(3)}</b>`;}));
   }
 
   function injectStyle(){
@@ -494,7 +495,7 @@
       <div id="v391GeneralMessage" class="auth-message"></div>
       <div id="v391GeneralEditor" class="v391-general-locked">
         <div class="v391-grid">
-          <div class="v391-card"><h2>Currency Exchange</h2><div class="v391-compact"><div class="v391-compact-head"><span></span><b>Actual</b><b>Based</b></div><div class="v391-compact-row"><label>USD 1 = MYR</label><input id="v391UsdActual" type="number" min="0.000001" step="0.0001"><input id="v391UsdBased" type="number" min="0.000001" step="0.0001"></div><div class="v391-compact-row"><label>RMB 1 = MYR</label><input id="v391RmbActual" type="number" min="0.000001" step="0.0001"><input id="v391RmbBased" type="number" min="0.000001" step="0.0001"></div></div><div class="v391-note">Effective Product Rate = Base × (Actual ÷ Based), rounded UP to nearest 0.1. Base product rates are never overwritten.</div></div>
+          <div class="v391-card"><h2>Currency Exchange</h2><div class="v391-compact"><div class="v391-compact-head"><span></span><b>Actual</b><b>Based</b></div><div class="v391-compact-row"><label>USD 1 = MYR</label><input id="v391UsdActual" type="number" min="0.000001" step="0.0001"><input id="v391UsdBased" type="number" min="0.000001" step="0.0001"></div><div class="v391-compact-row"><label>RMB 1 = MYR</label><input id="v391RmbActual" type="number" min="0.000001" step="0.0001"><input id="v391RmbBased" type="number" min="0.000001" step="0.0001"></div></div><div class="v391-note">Effective Product Rate = Base × (Actual ÷ Based). Rates retain full precision for calculation and display to 3 decimals. Base product rates are never overwritten.</div></div>
           <div class="v391-card"><h2>Fuel Price (RM/L)</h2><div class="v391-compact v391-fuel-compact"><div class="v391-compact-row"><label>Actual</label><input id="v391FuelActual" type="number" min="0" step="0.01"></div><div class="v391-compact-row"><label>Based</label><input id="v391FuelBased" type="number" min="0" step="0.01"></div></div><div class="v391-note">Single global Fuel Price source for KeySuite. The duplicate Company & Pricing Fuel Price is removed.</div></div>
         </div>
         <div class="v391-card" style="margin-top:16px"><div class="page-title-row"><div><h2 style="margin:0">Effective Product Exchange Rates</h2><div class="muted">Base rates remain editable in their own product pricelist.</div></div></div><div class="table-wrap"><table class="v391-table"><thead><tr><th>Pricelist</th><th>USD Base</th><th>USD Effective</th><th>RMB Base</th><th>RMB Effective</th></tr></thead><tbody id="v391EffectiveRates"></tbody></table></div></div>
@@ -534,7 +535,7 @@
   }
   function renderEffectiveRates(){
     const body=$('v391EffectiveRates');if(!body)return;const labels={CHC_G1:'CHC G1',CHC_G2:'CHC G2',ES:'ES',GWS:'GWS',KEYPLC:'KeyPLC',MANIFOLD:'Manifold',MOTOR:'Motor',COUPLING:'Coupling'};
-    body.innerHTML=Object.keys(labels).map(f=>{const r=state.baseMultipliers?.[f]||{};return `<tr><td><b>${labels[f]}</b></td><td>${num(r.USD).toFixed(2)}</td><td><b>${effectiveRate(r.USD,'USD').toFixed(1)}</b></td><td>${num(r.RMB).toFixed(3)}</td><td><b>${effectiveRate(r.RMB,'RMB').toFixed(1)}</b></td></tr>`}).join('');
+    body.innerHTML=Object.keys(labels).map(f=>{const r=state.baseMultipliers?.[f]||{};return `<tr><td><b>${labels[f]}</b></td><td>${num(r.USD).toFixed(3)}</td><td><b>${effectiveRate(r.USD,'USD').toFixed(3)}</b></td><td>${num(r.RMB).toFixed(3)}</td><td><b>${effectiveRate(r.RMB,'RMB').toFixed(3)}</b></td></tr>`}).join('');
   }
   function renderDefaultMargins(editable=state.generalEditing){
     const body=$('v391DefaultMarginRows');if(!body)return;body.innerHTML=commercialBrands().map(b=>`<tr data-brand-id="${esc(b.id)}"><td><b>${esc(b.brand_name)}</b></td><td><input class="v391-default-margin" type="number" min="0" max="99.99" step="0.1" value="${(num(b.brand_premium)*100).toFixed(1)}" ${editable?'':'readonly'}></td></tr>`).join('');

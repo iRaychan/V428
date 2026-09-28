@@ -1,11 +1,31 @@
-# KeySuite V4.28.13 FULL CLEAN
+# KeySuite V4.28.17 FULL CLEAN
 
-Baseline: V4.28.09 FULL CLEAN.
+Baseline: V4.28.16 FULL CLEAN.
+
+## V4.28.17 - balanced macOS Safari selector PDF layout
+
+- Keeps the Safari-only pagination repair after every legacy print rule, so it takes precedence reliably.
+- macOS Safari now uses equal visible 8 mm margins at the top, bottom, left, and right.
+- Windows and non-macOS browser output remains the V4.28.21 layout.
+
+## V4.28.16 - macOS Safari-only PDF pagination
+
+- Restores the exact V4.28.21 print CSS and layout for Windows and non-macOS browsers.
+- Applies the V4.28.15 blank-page prevention only when the browser is Safari on macOS.
+- Keeps the macOS Safari PDF as Curve, Technical Data, and Dimension on three pages.
+
+## V4.28.15 - Safari/macOS PDF blank-page repair
+
+- Fixes Safari/macOS selector PDFs that insert a blank page after each intended page.
+- Each report page uses a zero-margin A4 print context and a 296 mm high page box, leaving a 1 mm Safari rounding buffer before the explicit page break.
+- The existing 8 mm inset and the visible Curve, Technical Data, and Dimension layouts are preserved.
+- Applied to CHC C4/C6, BFI and ES selector PDF paths, including CHC/BFI Product reports.
+- No hydraulic logic, data, KeyBot function, or database migration changed.
 
 
 
 
-## V4.28.13 - Global System Curve +5% display cap
+## V4.28.21 - Global System Curve +5% display cap
 
 - System Curve display now stops at **105% of the design/system-point head** instead of extending far above the selected operating point.
 - Example: a 100 m system point draws to 105 m; the verified 103 m ES example draws to 108.15 m.
@@ -128,7 +148,7 @@ TESK KeyBot selection corrections:
 - Brand Series labels without an active OEM Family Map cannot create a searchable hydraulic family.
 
 Deployment:
-1. Upload/deploy the V4.28.13 web files to GitHub.
+1. Upload/deploy the V4.28.21 web files to GitHub.
 2. Redeploy Supabase Edge Function `telegram-webhook`.
 3. No new database migration is required.
 4. Refresh KeySuite after deployment.

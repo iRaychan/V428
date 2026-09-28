@@ -1458,11 +1458,12 @@ window.addEventListener('message',function(event){
  }
  if(route==='assembly'){
    const quoteItem=chcAssemblyQuoteItem(p),bare=selectionBareMode(p,$('bareShaft')?.checked);
-   const pricingModel=quoteItem.pricingModel||p.base_model||p.quotation_model||p.model;const item=window.KeySuitePricing?.buildChcAssemblyItem?.(pricingModel,p)||{model:quoteItem.model||pricingModel||'CHC Pumpset',qty:1,unitPrice:0,pumpData:p};
+   const pricingModel=quoteItem.pricingModel||p.base_model||p.quotation_model||p.model;const item=window.KeySuitePricing?.buildChcAssemblyItem?.(pricingModel,{...p,bareShaft:bare})||{model:quoteItem.model||pricingModel||'CHC Pumpset',qty:1,unitPrice:0,pumpData:p};
    item.model=quoteItem.model||item.model;item.description=quoteItem.description;item.pumpData={...p,keysuite_bare_shaft:bare,keysuite_supply_mode:bare?'BARE':'COMPLETE'};
    if(bare){
-     const motorDeduction=chcIe3MotorDeduction(p,'assembly');if(motorDeduction.error){alert(motorDeduction.error);return}
-     item.unitPrice=Math.max(0,Number(item.unitPrice||0)-motorDeduction.amount);item.pricingSource={product_family:'MANUAL',source_kind:'CHC_BARE_SHAFT',pricing_mode:'assembly',calculated_price:item.unitPrice,motor_deduction_amount:motorDeduction.amount};item.assemblyLevel='PUMPSET_COMPONENT';item.assemblySection='pump';window.KeySuiteAssembly?.addItem?.(item,{type:'pumpset',section:'pump',replacePumpset:true});return;
+     // The CHC resolver now prices bare shaft directly, rather than subtracting a
+     // hard-coded IE3 motor from an assembled price.
+     item.assemblyLevel='PUMPSET_COMPONENT';item.assemblySection='pump';window.KeySuiteAssembly?.addItem?.(item,{type:'pumpset',section:'pump',replacePumpset:true});return;
    }
    item.assemblyLevel='COMPLETE_PUMPSET';item.assemblySection='pumpset';window.KeySuiteAssembly?.addItem?.(item);return;
  }
@@ -1522,16 +1523,16 @@ window.addEventListener('message',function(event){
    `Suction & Discharge: ${suctionDischarge}`,
    `Material: ${materialLine}`
  ].filter(Boolean);
- const pricedSelection=window.KeySuitePricing?.findPrice?.(quotationModel,{seal,elastomer,keysuite_seal:seal,keysuite_elastomer:elastomer,generation_code:p.generation_code,motor_hp:Number(p.motor_hp||0),pole:Number(p.pole||2),motor_efficiency_class:p.motor_efficiency_class});
+ const pricedSelection=window.KeySuitePricing?.findPrice?.(quotationModel,{seal,elastomer,keysuite_seal:seal,keysuite_elastomer:elastomer,generation_code:p.generation_code,motor_hp:Number(p.motor_hp||0),motor_kw:Number(p.motor_kw||0),pole:Number(p.pole||2),motor_efficiency_class:p.motor_efficiency_class,bareShaft:bare});
+ if(!pricedSelection){alert(window.KeySuitePricing?.chcPriceProblem?.(quotationModel,{generation_code:p.generation_code,motor_hp:Number(p.motor_hp||0),motor_kw:Number(p.motor_kw||0),pole:Number(p.pole||2),motor_efficiency_class:p.motor_efficiency_class,bareShaft:bare})||`Pump price not found: ${quotationModel}.`);return}
  if(!window.KeySuitePricing?.ensureQuoteableCalculation?.(pricedSelection?.calc,quotationModel))return;
  const rows=[...document.querySelectorAll('.quote-item')];
  const empty=rows.length===1&&!rows[0].querySelector('.item-model').value&&!rows[0].querySelector('.item-description').value&&!+rows[0].querySelector('.item-price').value;
  const row=empty?rows[0]:quoteItemRow({});
  row.querySelector('.item-model').value=itemModel;row.querySelector('.item-qty').value=1;row.querySelector('.item-description').value=lines.join('\n');hydrateQuoteItemCapacity(row);row.dataset.pumpData=JSON.stringify({...p,generation_code:p.generation_code,keysuite_generation_code:p.keysuite_generation_code,keysuite_product_group_code:p.keysuite_product_group_code,keysuite_price_group_code:p.keysuite_price_group_code,quotation_model:quotationModel,display_model:displayQuotationModel,quotation_duty:dutyText,keysuite_material:material,keysuite_seal:seal,keysuite_elastomer:elastomer,keysuite_connection_type:connectionType,keysuite_bare_shaft:bare,keysuite_supply_mode:bare?'BARE':'COMPLETE'});
  if(bare){
-   const motorDeduction=chcIe3MotorDeduction(p,'quotation');if(motorDeduction.error){if(!empty)row.remove();alert(motorDeduction.error);return}
-   const barePrice=Math.max(0,Number(pricedSelection.calc.finalPrice||0)-motorDeduction.amount);row.querySelector('.item-price').value=barePrice.toFixed(2);row.dataset.pricingSource=JSON.stringify(chcBarePricingSource(pricedSelection,motorDeduction,barePrice));
- }else if(window.KeySuitePricing?.applyPriceToQuoteRow)window.KeySuitePricing.applyPriceToQuoteRow(row,quotationModel,{seal,elastomer,keysuite_seal:seal,keysuite_elastomer:elastomer,generation_code:p.generation_code,motor_hp:Number(p.motor_hp||0),pole:Number(p.pole||2),motor_efficiency_class:p.motor_efficiency_class});
+   row.querySelector('.item-price').value=Number(pricedSelection.calc.finalPrice||0).toFixed(2);row.dataset.pricingSource=JSON.stringify(window.KeySuitePricing?.sourceSnapshot?.(pricedSelection)||{});
+ }else if(window.KeySuitePricing?.applyPriceToQuoteRow)window.KeySuitePricing.applyPriceToQuoteRow(row,quotationModel,{seal,elastomer,keysuite_seal:seal,keysuite_elastomer:elastomer,generation_code:p.generation_code,motor_hp:Number(p.motor_hp||0),motor_kw:Number(p.motor_kw||0),pole:Number(p.pole||2),motor_efficiency_class:p.motor_efficiency_class});
  // V4.15.10: pricing above intentionally uses the technical/source CHC identity.
  // After pricing, hand the finished quote row to the currently selected Selling Brand.
  // This is required for OEM: source B.G.Reich / CHC stays internal, while quotation

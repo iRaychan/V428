@@ -33,7 +33,9 @@
     };
   }
   const productLabel=product=>product==='CHC_G1'?'CHC G1':product==='CHC_G2'?'CHC G2':String(product||'');
-  const rateFamily=product=>['CHC_G1','CHC_G2'].includes(String(product||'').toUpperCase())?'CHC':String(product||'CHC').toUpperCase();
+  // CHC G1 and G2 have separate stored rates. Do not collapse either rule card
+  // to legacy CHC (which aliases G2 and previously made G1 show G2's RMB rate).
+  const rateFamily=product=>String(product||'CHC').toUpperCase();
   function ruleFor(category,product=selectedProduct){
     const fallback=product==='CHC_G2'?defaultRule():newCategoryRule();
     if(product==='CHC_G2'){fallback.margin=Number(category?.margins?.CHC_G2??category?.margins?.CHC??category?.factors?.CHC_G2??category?.factors?.CHC??fallback.margin);fallback.transport=Number(category?.transport??fallback.transport)}
@@ -82,7 +84,7 @@
   function showCurrencySummary(){
     const rates=productRates(),box=byId('categoryCurrencySummary'),selected=selectedCurrenciesFromUi(),count=byId('categoryCurrencySelectionCount');
     if(count)count.textContent=`${selected.length} selected`;
-    if(box){const note=selected.length===0?'<span>Price unavailable until at least 1 currency is ticked.</span>':selected.length===1?`<span>Use ${esc(selected[0])} only.</span>`:`<span>Use highest of ${esc(selected.join(' + '))} after MYR conversion.</span>`;box.innerHTML=`${note}<span>USD × ${num(rates.USD,4)}</span><span>RMB × ${num(rates.RMB,4)}</span><span>MYR × 1.0000</span>`}
+    if(box){const note=selected.length===0?'<span>Price unavailable until at least 1 currency is ticked.</span>':selected.length===1?`<span>Use ${esc(selected[0])} only.</span>`:`<span>Use highest of ${esc(selected.join(' + '))} after MYR conversion.</span>`;box.innerHTML=`${note}<span>USD × ${num(rates.USD,3)}</span><span>RMB × ${num(rates.RMB,3)}</span><span>MYR × 1.000</span>`}
   }
   function currencyFormula(rule){const selected=(rule?.currencies||[]).filter(v=>['USD','RMB','MYR'].includes(v));if(!selected.length)return 'No Price List Currency selected → Price unavailable';const converted=selected.map(v=>v==='MYR'?'MYR':`${v} × ${v} rate`);return selected.length===1?converted[0]:`Highest of ${converted.join(' / ')}`}
   function formulaText(rule,rarity,mode='quotation'){
@@ -114,7 +116,7 @@
     if(!calc){valueBox.textContent='RM 0.00';detail.textContent='Unable to calculate with the current pricing rule.';return}
     const rarityName={many:'Many',common:'Common',rare:'Rare',fixed:'Fixed'}[rarity]||'Common';
     valueBox.textContent=`RM ${num(calc.finalPrice,2)}`;
-    detail.textContent=calc.fixedPrice?`${currency} ${num(source,2)} × ${num(calc.multiplier,4)} = RM ${num(calc.baseMyr,2)} · Fixed final selling price · no margin / discounts / fuel / RM10 rounding${customer?` · ${customer.company||'active customer'}`:''}`:`${currency} ${num(source,2)} × ${num(calc.multiplier,4)} = RM ${num(calc.baseMyr,2)} · ${rarityName} · Fuel RM ${num(calc.fuelCharge,2)} · rounded up to RM10${customer?` · ${customer.company||'active customer'}`:' · no active customer (fuel distance 0 km)'}`;
+    detail.textContent=calc.fixedPrice?`${currency} ${num(source,2)} × ${num(calc.multiplier,3)} = RM ${num(calc.baseMyr,2)} · Fixed final selling price · no margin / discounts / fuel / RM10 rounding${customer?` · ${customer.company||'active customer'}`:''}`:`${currency} ${num(source,2)} × ${num(calc.multiplier,3)} = RM ${num(calc.baseMyr,2)} · ${rarityName} · Fuel RM ${num(calc.fuelCharge,2)} · rounded up to RM10${customer?` · ${customer.company||'active customer'}`:' · no active customer (fuel distance 0 km)'}`;
   }
   function refreshZeroMarginIndicators(category=currentCategory()){
     const marginRow=byId('categoryLock_margin');

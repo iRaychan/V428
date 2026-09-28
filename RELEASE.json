@@ -1,5 +1,5 @@
 {
-  "version": "4.28.13",
+  "version": "4.28.21",
   "baseline": "4.28.12 FULL CLEAN",
   "upgrade_supported_from": "4.28.12",
   "changes": [
@@ -14,5 +14,5 @@
   "new_database_migration_required": false,
   "edge_function_deploy_required": true,
   "edge_function": "telegram-webhook",
-  "notes": "Upgrade from V4.28.12. Upload the V4.28.13 web selector files and redeploy telegram-webhook. No database migration is required."
+  "notes": "Upgrade from V4.28.12. Upload the V4.28.21 web selector files and redeploy telegram-webhook. No database migration is required."
 }

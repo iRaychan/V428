@@ -199,7 +199,7 @@
     if(normalizePricingMode(mode)==='quotation'&&company.includeSetDiscount)rows.push(['Set Discount',percent(company.setDiscount)]);
     if(company.includeFinalDiscount)rows.push(['Final Discount',percent(company.finalDiscount)]);
     if(company.includeFuelCharge)rows.push(['Fuel Charge','Customer distance × fuel price variance']);
-    rows.push([`${family} Currency`,`USD (MYR ${n(rates.USD,2)}) · RMB (MYR ${n(rates.RMB,2)}) · MYR (MYR 1.00)`]);return rows;
+    rows.push([`${family} Currency`,`USD (MYR ${n(rates.USD,3)}) · RMB (MYR ${n(rates.RMB,3)}) · MYR (MYR 1.000)`]);return rows;
   }
 
   function renderPricingManualQuote(){
@@ -274,11 +274,30 @@
     return {...calc,baseFinalPrice:baseFinal,sealAddon:addon,sealFaces:normalizeChcSealFaces(seal),sealElastomer:String(elastomer||'Viton'),sealDescription:chcSealDescription(seal,elastomer),finalPrice:baseFinal+addon};
   }
 
-  function motorProductPriceBook(product){return product?.pricesByCurrency||{USD:{MOTOR:Number(product?.priceUsd||0)},RMB:{MOTOR:Number(product?.priceRmb||0)},MYR:{MOTOR:Number(product?.priceMyr||0)}}}
+  function motorProductPriceBook(product){return product?.pricesByCurrency||{USD:{MOTOR:Number(product?.priceUsd??product?.price_usd??0)},RMB:{MOTOR:Number(product?.priceRmb??product?.price_rmb??0)},MYR:{MOTOR:Number(product?.priceMyr??product?.price_myr??0)}}}
   function motorProductRarityBook(product){const rarity=normalizeRarity(product?.rarity||'common');return product?.rarityByCurrency||{USD:{MOTOR:rarity},RMB:{MOTOR:rarity},MYR:{MOTOR:rarity}}}
-  function nearestPricedMotors(hp,pole,efficiencyClass){
-    const wantedHp=Number(hp),wantedPole=Number(pole||2),eff=String(efficiencyClass||'').toUpperCase();
-    return (secureData.motorProducts||[]).filter(product=>String(product?.efficiencyClass||'').toUpperCase()===eff&&Number(product?.pole||0)===wantedPole&&currencyCandidates(motorProductPriceBook(product),motorProductRarityBook(product),'MOTOR','MOTOR').length).sort((a,b)=>Math.abs(Number(a.hp||0)-wantedHp)-Math.abs(Number(b.hp||0)-wantedHp)||(Number(a.hp||0)<wantedHp?1:0)-(Number(b.hp||0)<wantedHp?1:0)||Number(a.hp||0)-Number(b.hp||0));
+  const positivePrice=(book,currency,key)=>{const value=Number(book?.[currency]?.[key]);return Number.isFinite(value)&&value>0?value:null};
+  const normalizedEfficiency=value=>{const m=String(value||'').trim().toUpperCase().replace(/\s+/g,'').match(/^IE([1-5])$/);return m?`IE${m[1]}`:''};
+  function motorMatchesSpec(product,{hp,kw,pole,efficiency}){
+    const hpMatch=Number(hp)>0&&Math.abs(Number(product?.hp||0)-Number(hp))<.001;
+    const kwMatch=Number(kw)>0&&Math.abs(Number(product?.kw??product?.motor_kw??0)-Number(kw))<.001;
+    // Older motor rows contain HP only; use the standard HP-to-kW equivalence as a
+    // compatibility fallback, never a nearest-size substitution.
+    const derivedKwMatch=Number(kw)>0&&Number(product?.hp)>0&&Math.abs(Number(product.hp)*.746-Number(kw))<.06;
+    return normalizedEfficiency(product?.efficiencyClass||product?.efficiency_class)===efficiency&&Number(product?.pole||0)===Number(pole)&&((Number(hp)>0&&(hpMatch||kwMatch))||(Number(kw)>0&&(kwMatch||derivedKwMatch)));
+  }
+  function exactPricedMotor(spec={}){
+    const normalized={hp:Number(spec.hp||0),kw:Number(spec.kw||0),pole:Number(spec.pole||2)||2,efficiency:normalizedEfficiency(spec.efficiency)};
+    if(!normalized.efficiency||(!(normalized.hp>0)&&!(normalized.kw>0)))return null;
+    return (secureData.motorProducts||[]).find(product=>motorMatchesSpec(product,normalized)&&currencyCandidates(motorProductPriceBook(product),motorProductRarityBook(product),'MOTOR','MOTOR').length)||null;
+  }
+  function combinedChcComponentBook(pumpBook,motorBook,material){
+    const book={USD:{},RMB:{},MYR:{}};
+    for(const currency of ['USD','RMB','MYR']){
+      const pump=positivePrice(pumpBook,currency,material),motor=positivePrice(motorBook,currency,'MOTOR');
+      book[currency][material]=pump!==null&&motor!==null?pump+motor:null;
+    }
+    return book;
   }
   function applyPumpMotorReplacement(calc,options={},defaultEfficiency='IE3'){
     if(!calc||options.bareShaft===true||options.keysuite_bare_shaft===true)return calc;
@@ -298,12 +317,28 @@
     const catalogue=generation==='G1'?(secureData.chcG1Products||[]):(secureData.products||[]);
     const product=catalogue.find(p=>String(p.model).toLowerCase()===base.toLowerCase());if(!product)return null;
     const pricingFamily=generation==='G1'?'CHC_G1':'CHC_G2';
-    const rawCalc=calculatePrice(product.pricesByCurrency||{},material,cat,pricingFamily,{...options,customer,rarityBook:product.rarityByCurrency||{}});
-    const defaultMotorEfficiency=pumpDefaultMotorEfficiency(options.motor_hp??options.motorHp??product.motor_hp??product.hp,generation==='G1'?'IE2':'IE3'),selectedMotorEfficiency=defaultMotorEfficiency==='IE1'?'IE1':String(options.motor_efficiency_class||options.motorEfficiencyClass||options.motor_efficiency||defaultMotorEfficiency).toUpperCase(),sealedCalc=applyChcSealAddon(rawCalc,base,options),calc=applyPumpMotorReplacement(sealedCalc,{...options,customer,category:cat,motor_efficiency_class:selectedMotorEfficiency},defaultMotorEfficiency);
+    const motorHp=Number(options.motor_hp??options.motorHp??product.motor_hp??product.hp),motorKw=Number(options.motor_kw??options.motorKw??product.motor_kw??product.kw),pole=Number(options.pole??product.pole??2)||2;
+    const defaultMotorEfficiency=pumpDefaultMotorEfficiency(motorHp,generation==='G1'?'IE2':'IE3'),selectedMotorEfficiency=defaultMotorEfficiency==='IE1'?'IE1':(normalizedEfficiency(options.motor_efficiency_class||options.motorEfficiencyClass||options.motor_efficiency||defaultMotorEfficiency)||defaultMotorEfficiency);
+    const complete=!options.bareShaft&&!options.keysuite_bare_shaft;
+    const pumpBook=product.pricesByCurrency||{},motor=complete?exactPricedMotor({hp:motorHp,kw:motorKw,pole,efficiency:selectedMotorEfficiency}):null;
+    // CHC complete pumps are priced from independently maintained pump and motor
+    // records. A complete-item source-price row is deliberately not required.
+    const priceBook=complete?(motor?combinedChcComponentBook(pumpBook,motorProductPriceBook(motor),material):null):pumpBook;
+    const rawCalc=priceBook?calculatePrice(priceBook,material,cat,pricingFamily,{...options,customer,rarityBook:product.rarityByCurrency||{}}):null;
+    const calc=applyChcSealAddon(rawCalc,base,options);
     const seal=options.seal??options.keysuite_seal??options.sealFaces??'Car/Cer',elastomer=options.elastomer??options.keysuite_elastomer??'Viton';
-    const sourceExtra={seal_faces:normalizeChcSealFaces(seal),seal_elastomer:String(elastomer||'Viton'),seal_addon_myr:Number(calc?.sealAddon||0),base_final_price:Number(calc?.baseFinalPrice||calc?.finalPrice||0),seal_description:calc?.sealDescription,default_motor_efficiency_class:defaultMotorEfficiency,selected_motor_efficiency_class:selectedMotorEfficiency,motor_hp:Number((options.motor_hp??options.motorHp)||0),motor_pole:Number(options.pole||2),...(calc?.motorReplacement?{motor_replacement:calc.motorReplacement}: {})};
+    const sourceExtra={seal_faces:normalizeChcSealFaces(seal),seal_elastomer:String(elastomer||'Viton'),seal_addon_myr:Number(calc?.sealAddon||0),base_final_price:Number(calc?.baseFinalPrice||calc?.finalPrice||0),seal_description:calc?.sealDescription,default_motor_efficiency_class:defaultMotorEfficiency,selected_motor_efficiency_class:selectedMotorEfficiency,motor_hp:motorHp,motor_kw:motorKw,motor_pole:pole,component_pricing:complete,...(complete&&motor?{pump_product_id:product.id,motor_product_id:motor.id,motor_model:motor.model}: {})};
     sourceExtra.generation_code=generation;
     return calc?{product,material,rarity:calc.rarity,calc,category:cat,customer,family:'CHC',sourceExtra}:null;
+  }
+  function chcPriceProblem(model,options={}){
+    const generation=String(options.generation_code||options.generation||'G2').toUpperCase()==='G1'?'G1':'G2',catalogue=generation==='G1'?(secureData.chcG1Products||[]):(secureData.products||[]),text=String(model||'').trim().replace(/^CHCS\b/i,'CHC').replace(/^CHCN\b/i,'CHC'),product=catalogue.find(row=>String(row.model||'').toLowerCase()===text.toLowerCase());
+    if(!product)return `Pump price not found: ${model}.`;
+    const material=/^CHCS\b/i.test(String(model))?'CHCS':/^CHCN\b/i.test(String(model))?'CHCN':'CHC',pumpCandidates=currencyCandidates(product.pricesByCurrency||{},product.rarityByCurrency||{},material,generation==='G1'?'CHC_G1':'CHC_G2');
+    if(!pumpCandidates.length)return `Pump price not found: ${model} (${material}).`;
+    if(options.bareShaft||options.keysuite_bare_shaft)return 'CHC pricing is unavailable for this customer or Category Pricing Rule.';
+    const hp=Number(options.motor_hp??options.motorHp??product.motor_hp??product.hp),kw=Number(options.motor_kw??options.motorKw??product.motor_kw??product.kw),pole=Number(options.pole??product.pole??2)||2,eff=normalizedEfficiency(options.motor_efficiency_class||options.motorEfficiencyClass||options.motor_efficiency||pumpDefaultMotorEfficiency(hp,generation==='G1'?'IE2':'IE3'))||'IE3';
+    return `Motor price not found: ${kw>0?`${kw} kW / `:''}${hp>0?`${hp} HP / `:''}${pole}P / ${eff}.`;
   }
 
 
@@ -416,7 +451,7 @@ BOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
     return {total,items:priced,source:{product_family:'ASSEMBLY',pricing_mode:'quotation',customer_id:customer.id||'',category_id:cat.id||'',assembly_items:priced,calculated_price:total}};
   }
 
-  function applyPriceToQuoteRow(row,model,options={}){if(window.KeySuiteApp?.canEditQuotation&&!window.KeySuiteApp.canEditQuotation(true))return false;const found=options.productFamily==='GWS'?findGwsPrice(model,options.pressure,options):findPrice(model,options);if(!row||!found||!ensureQuoteableCalculation(found.calc,model))return false;const input=row.querySelector('.item-price');if(!input)return false;input.value=found.calc.finalPrice.toFixed(2);row.dataset.pricingSource=JSON.stringify(sourceSnapshot(found));if(typeof calcTotal==='function')calcTotal();return true}
+  function applyPriceToQuoteRow(row,model,options={}){if(window.KeySuiteApp?.canEditQuotation&&!window.KeySuiteApp.canEditQuotation(true))return false;const found=options.productFamily==='GWS'?findGwsPrice(model,options.pressure,options):findPrice(model,options);if(!found){if(options.productFamily!=='GWS')alert(chcPriceProblem(model,options));return false}if(!row||!ensureQuoteableCalculation(found.calc,model))return false;const input=row.querySelector('.item-price');if(!input)return false;input.value=found.calc.finalPrice.toFixed(2);row.dataset.pricingSource=JSON.stringify(sourceSnapshot(found));if(typeof calcTotal==='function')calcTotal();return true}
 
   function refreshQuotePrices(){
     if(window.KeySuiteApp?.isQuotationSealed?.())return;
@@ -617,5 +652,5 @@ ${indent}Wiring for pumps & pressure transmitter within pump skid @ 1 Lot`;
     const row=window.KeySuiteApp?.addExternalQuoteItem?.(item);if(row)showPage('quotation');
   }
 
-  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,priceAssemblyForQuotation,findPrice,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
+  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,priceAssemblyForQuotation,findPrice,chcPriceProblem,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
 })();
