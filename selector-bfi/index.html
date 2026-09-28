@@ -731,7 +731,13 @@ function keysuiteBfiApplyBrandingToReport(html){
  }
  return out;
 }
-function keychcVisibleModelName(model,enhanced=!!selectionState?.enhanced){const ph=motorPhase?.value||selectionState?.motorPhase||'3Ph',on=!!enhanced&&keybfiEnhancedAllowed(ph),material=document.getElementById('pumpMaterial')?.value||window.keysuiteExportPayload?.keysuite_material||'SS304';return keysuiteBfiPresentationAlias(keybfiMaterialModelName(keybfiPhaseModelName(model,ph,on),material));}
+function keychcVisibleModelName(model,enhanced=!!selectionState?.enhanced){const ph=document.getElementById('motorPhase')?.value||selectionState?.motorPhase||'3Ph',on=!!enhanced&&keybfiEnhancedAllowed(ph),material=document.getElementById('pumpMaterial')?.value||window.keysuiteExportPayload?.keysuite_material||'SS304';return keysuiteBfiPresentationAlias(keybfiMaterialModelName(keybfiPhaseModelName(model,ph,on),material));}
+function keybfiRefreshPresentationIdentity(){
+ const best=selectionState.models?.[selectionState.selectedIndex||0];if(!best)return '';
+ const material=keybfiMaterialCode(document.getElementById('pumpMaterial')?.value),phase=document.getElementById('motorPhase')?.value||selectionState.motorPhase||'3Ph',displayModel=keychcVisibleModelName(best.model,!!selectionState.enhanced);
+ window.keysuiteExportPayload={...(window.keysuiteExportPayload||{}),base_model:best.model,display_model:displayModel,quotation_model:displayModel,keysuite_material:material,material_variant:material==='SS316'?'BFIN':'BFI',motor_phase:phase};
+ return displayModel;
+}
 function keychcEnhancedEnabled(){const el=document.getElementById('enhancedMode'),on=!!(el?el.checked:selectionState?.enhanced);return on&&keybfiEnhancedAllowed()}
 function keychcMixedRawPoint(curve,mix,i){
  const q=Number(curve.flow?.[i]),hf=Number(curve.head_per_stage?.[i]);if(!Number.isFinite(q)||!Number.isFinite(hf))return null;
@@ -1759,7 +1765,7 @@ function keybfiHandleMotorPhaseChange(){
  updateEnhancedModeUI();updateMotorVoltageRange();
  selectionState={...selectionState,motorEffClass:motorEff.value,motorVoltage:+motorVoltage.value};
  const productMode=new URLSearchParams(location.search).get('product')==='1';
- if(productMode&&selectionState.models.length){renderSelected();const data=currentSelection(),displayModel=data?.quotation_model||data?.display_model||'';window.keysuiteExportPayload={...(window.keysuiteExportPayload||{}),quotation_model:displayModel,display_model:displayModel,motor_phase:motorPhase.value};window.parent?.postMessage({type:'KEYSUITE_PRODUCT_CURVE_STATE',family:'BFI',model:data?.base_model||data?.model||'',display_model:displayModel,phase:motorPhase.value,flowM3h:selectionState.q,headM:selectionState.h,enhanced:!!selectionState.enhanced,valid:true,message:'Motor phase updated.'},'*');return;}
+ if(productMode&&selectionState.models.length){renderSelected();const data=currentSelection(),displayModel=keybfiRefreshPresentationIdentity()||data?.quotation_model||data?.display_model||'';window.keysuiteExportPayload={...(window.keysuiteExportPayload||{}),quotation_model:displayModel,display_model:displayModel,motor_phase:motorPhase.value};window.parent?.postMessage({type:'KEYSUITE_PRODUCT_CURVE_STATE',family:'BFI',model:data?.base_model||data?.model||'',display_model:displayModel,phase:motorPhase.value,flowM3h:selectionState.q,headM:selectionState.h,enhanced:!!selectionState.enhanced,valid:true,message:'Motor phase updated.'},'*');return;}
  run();
 }
 function keybfiHandleMotorEffChange(){
@@ -1770,7 +1776,7 @@ function keybfiHandleMotorEffChange(){
 }
 motorPhase.addEventListener("change",keybfiHandleMotorPhaseChange);
 motorEff.addEventListener("change",keybfiHandleMotorEffChange);
-document.getElementById('pumpMaterial')?.addEventListener('change',()=>{const material=keybfiMaterialCode(document.getElementById('pumpMaterial').value);window.keysuiteExportPayload={...(window.keysuiteExportPayload||{}),keysuite_material:material,material_variant:material==='SS316'?'BFIN':'BFI'};const best=selectionState.models[selectionState.selectedIndex];if(best){renderAlternatives();renderSelected();}});
+document.getElementById('pumpMaterial')?.addEventListener('change',()=>{const material=keybfiMaterialCode(document.getElementById('pumpMaterial').value);window.keysuiteExportPayload={...(window.keysuiteExportPayload||{}),keysuite_material:material,material_variant:material==='SS316'?'BFIN':'BFI'};const best=selectionState.models[selectionState.selectedIndex];if(best){keybfiRefreshPresentationIdentity();renderAlternatives();renderSelected();}});
 updateMotorVoltageRange();
 // V4.11.00 Telegram uses the real manual Selector with a preloaded D1.
 (function keychcAutoCurveRequest(){

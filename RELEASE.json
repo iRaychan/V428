@@ -1,17 +1,18 @@
 {
-  "version": "4.28.22",
-  "baseline": "4.28.21 FULL CLEAN",
-  "upgrade_supported_from": "4.28.21",
+  "version": "4.28.23",
+  "baseline": "4.28.22 FULL CLEAN",
+  "upgrade_supported_from": "4.28.22",
   "changes": [
     "C1/C2/BFI package pricing preserves the included standard motor; bare shaft and IE changes use the specified raw-cost and Motor-rule adjustment",
     "CHC mechanical-seal add-ons update quotation price and description",
     "G1/G2 exchange rates are independent and retain calculation precision",
     "USD effective rates display to 2 decimals and RMB to 3 decimals",
     "Saved legacy C1 quotations re-resolve compatible pricing sources",
-    "Visible version and service-worker cache are V4.28.22"
+    "BFI SS316/1-phase identity refresh and macOS-only PDF header/right-margin corrections",
+    "Visible version and service-worker cache are V4.28.23"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade from V4.28.21. Upload the V4.28.22 web files. No database migration is required. The visible product version is locked to V4.28.22 across pages and browsers."
+  "notes": "Upgrade from V4.28.22. Upload the V4.28.23 web files. No database migration is required. The visible product version is locked to V4.28.23 across pages and browsers."
 }

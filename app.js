@@ -4,6 +4,9 @@ const printAmount=n=>Number(n||0).toLocaleString('en-MY',{minimumFractionDigits:
 const normalizeQuoteUnit=value=>String(value||'unit').toLowerCase()==='set'?'set':'unit';
 const printQty=(n,unit='unit')=>`${Number(n||0).toLocaleString('en-MY')} ${normalizeQuoteUnit(unit)==='set'?(Number(n||0)===1?'Set':'Sets'):(Number(n||0)===1?'Unit':'Units')}`;
 const normalizeDescriptionIndentation=value=>String(value||'').replace(/\r\n?/g,'\n').split('\n').map(line=>{if(/^c\/w(?:\t+| +)/i.test(line))return `c/w\t${line.replace(/^c\/w(?:\t+| +)/i,'')}`;if(/^(?:\t+| {4,})/.test(line))return `\t\t${line.replace(/^(?:\t+| +)/,'')}`;return line}).join('\n');
+// Safari's native PDF engine has a slightly smaller usable right edge than Windows.
+// Scope the extra inset to macOS Safari so the verified Windows layout is unchanged.
+if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAgent||'')&&!/(?:Chrome|Chromium|CriOS|Edg|OPR)\//i.test(navigator.userAgent||''))document.documentElement.classList.add('macos-safari');
 /* KEYSUITE V3.8.5 RUNTIME UI START */
 (function installKeySuiteV340Runtime(){
  const styleId='keysuite-v350-runtime-style';
