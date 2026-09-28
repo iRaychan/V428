@@ -15,7 +15,7 @@ function addStyles(){
  body.ks-keycore-active .page.active{min-height:100vh!important;border-radius:0!important;margin:0!important;max-width:none!important}
  .ks-dashboard-duty{margin-top:14px;padding-top:14px;border-top:1px solid #dbe4ed}
  .ks-dashboard-duty h3{margin:0 0 4px;font-size:15px}.ks-dashboard-duty .muted{font-size:12px}
- .ks-duty-row{display:grid;grid-template-columns:82px minmax(130px,220px) minmax(115px,150px);gap:8px;align-items:center;margin-top:9px;max-width:520px}
+ .ks-duty-row{display:grid;grid-template-columns:82px repeat(2,minmax(130px,150px));gap:8px;align-items:center;margin-top:9px;max-width:420px}
  .ks-duty-row>label{margin:0;font-weight:700}.ks-duty-row input,.ks-duty-row select{width:100%;min-height:38px}
  .ks-duty-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}.ks-duty-status{font-size:12px;color:#64748b}
  .ks-duty-products{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}.ks-duty-family{border:1px solid #b9cadd;background:#f7fbff;color:#17365d;border-radius:9px;padding:9px 14px;font-weight:800;cursor:pointer}

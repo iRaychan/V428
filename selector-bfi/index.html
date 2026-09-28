@@ -731,7 +731,18 @@ function keysuiteBfiApplyBrandingToReport(html){
  }
  return out;
 }
-function keychcVisibleModelName(model,enhanced=!!selectionState?.enhanced){const ph=document.getElementById('motorPhase')?.value||selectionState?.motorPhase||'3Ph',on=!!enhanced&&keybfiEnhancedAllowed(ph),material=document.getElementById('pumpMaterial')?.value||window.keysuiteExportPayload?.keysuite_material||'SS304';return keysuiteBfiPresentationAlias(keybfiMaterialModelName(keybfiPhaseModelName(model,ph,on),material));}
+// The presentation name is always derived from the live controls.  It must not
+// retain the original BFI / T identity after Material or Motor Phase changes.
+function keychcVisibleModelName(model,enhanced=!!selectionState?.enhanced){
+ const ph=String(document.getElementById('motorPhase')?.value||selectionState?.motorPhase||'3Ph');
+ const material=keybfiMaterialCode(document.getElementById('pumpMaterial')?.value||window.keysuiteExportPayload?.keysuite_material||'SS304');
+ const core=keybfiPhaseModelName(model,ph,!!enhanced&&keybfiEnhancedAllowed(ph));
+ const visible=keybfiMaterialModelName(core,material);
+ // A brand/series presentation context may rename BFI, but it must never turn
+ // a selected SS316 BFIN model back into BFI.
+ const branded=keysuiteBfiPresentationAlias(visible);
+ return material==='SS316'?branded.replace(/^BFI\b/i,'BFIN'):branded;
+}
 function keybfiRefreshPresentationIdentity(){
  const best=selectionState.models?.[selectionState.selectedIndex||0];if(!best)return '';
  const material=keybfiMaterialCode(document.getElementById('pumpMaterial')?.value),phase=document.getElementById('motorPhase')?.value||selectionState.motorPhase||'3Ph',displayModel=keychcVisibleModelName(best.model,!!selectionState.enhanced);
