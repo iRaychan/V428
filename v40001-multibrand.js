@@ -472,7 +472,7 @@
   function decorateProductRates(){
     const chcFamily=String($('chcPriceGeneration')?.value||'G2').toUpperCase()==='G1'?'CHC_G1':'CHC_G2';
     const map={[chcFamily]:['chcUsdMultiplier','chcRmbMultiplier'],ES:['esUsdMultiplier','esRmbMultiplier'],GWS:['gwsUsdMultiplier','gwsRmbMultiplier'],KEYPLC:['keyplcUsdMultiplier','keyplcRmbMultiplier'],MANIFOLD:['manifoldUsdMultiplier','manifoldRmbMultiplier'],MOTOR:['motorUsdMultiplier','motorRmbMultiplier'],COUPLING:['couplingUsdMultiplier','couplingRmbMultiplier']};
-    Object.entries(map).forEach(([fam,ids])=>ids.forEach((id,i)=>{const input=$(id);if(!input)return;let note=$(`v391Effective_${id}`);if(!note){note=document.createElement('div');note.id=`v391Effective_${id}`;note.className='v391-effective-note';input.closest('div')?.appendChild(note);}const cur=i?'RMB':'USD',base=num(state.baseMultipliers?.[fam]?.[cur],num(input.value)),eff=effectiveRate(base,cur);note.innerHTML=`Base ${base.toFixed(3)} → <b>Effective ${eff.toFixed(3)}</b>`;}));
+    Object.entries(map).forEach(([fam,ids])=>ids.forEach((id,i)=>{const input=$(id);if(!input)return;let note=$(`v391Effective_${id}`);if(!note){note=document.createElement('div');note.id=`v391Effective_${id}`;note.className='v391-effective-note';input.closest('div')?.appendChild(note);}const cur=i?'RMB':'USD',digits=cur==='USD'?2:3,base=num(state.baseMultipliers?.[fam]?.[cur],num(input.value)),eff=effectiveRate(base,cur);note.innerHTML=`Base ${base.toFixed(digits)} → <b>Effective ${eff.toFixed(digits)}</b>`;}));
   }
 
   function injectStyle(){
@@ -535,7 +535,7 @@
   }
   function renderEffectiveRates(){
     const body=$('v391EffectiveRates');if(!body)return;const labels={CHC_G1:'CHC G1',CHC_G2:'CHC G2',ES:'ES',GWS:'GWS',KEYPLC:'KeyPLC',MANIFOLD:'Manifold',MOTOR:'Motor',COUPLING:'Coupling'};
-    body.innerHTML=Object.keys(labels).map(f=>{const r=state.baseMultipliers?.[f]||{};return `<tr><td><b>${labels[f]}</b></td><td>${num(r.USD).toFixed(3)}</td><td><b>${effectiveRate(r.USD,'USD').toFixed(3)}</b></td><td>${num(r.RMB).toFixed(3)}</td><td><b>${effectiveRate(r.RMB,'RMB').toFixed(3)}</b></td></tr>`}).join('');
+    body.innerHTML=Object.keys(labels).map(f=>{const r=state.baseMultipliers?.[f]||{};return `<tr><td><b>${labels[f]}</b></td><td>${num(r.USD).toFixed(2)}</td><td><b>${effectiveRate(r.USD,'USD').toFixed(2)}</b></td><td>${num(r.RMB).toFixed(3)}</td><td><b>${effectiveRate(r.RMB,'RMB').toFixed(3)}</b></td></tr>`}).join('');
   }
   function renderDefaultMargins(editable=state.generalEditing){
     const body=$('v391DefaultMarginRows');if(!body)return;body.innerHTML=commercialBrands().map(b=>`<tr data-brand-id="${esc(b.id)}"><td><b>${esc(b.brand_name)}</b></td><td><input class="v391-default-margin" type="number" min="0" max="99.99" step="0.1" value="${(num(b.brand_premium)*100).toFixed(1)}" ${editable?'':'readonly'}></td></tr>`).join('');

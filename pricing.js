@@ -157,7 +157,20 @@
     const multiplier=Number(source.currency_multiplier??source.multiplier??1),sourcePrice=Number(source.source_price??0);
     const baseMyr=Number(source.base_myr??source.baseMyr??(sourcePrice*multiplier));
     const margin=Number(source.margin??rule?.margin??0),fixedPrice=source.fixed_price===true||normalizeRarity(source.rarity)==='fixed';
-    if(!(baseMyr>0))return 'Cannot quote: No valid USD, RMB or MYR cost is available.';
+    // Older quotations can contain the old complete-item C1 snapshot, whose
+    // base amount is zero even when the separately stored pump and motor are
+    // both priceable. Re-resolve that snapshot before marking a free-text row
+    // red; editing Model / Item or Description must not invalidate its price.
+    if(!(baseMyr>0)){
+      const refreshed=repriceSource(source,'quotation',{customer,category:cat});
+      if(refreshed?.calc)return quoteBlockReason(refreshed.calc);
+      if(family==='CHC')return chcPriceProblem(source.product_id||source.model||'CHC item',{
+        motor_hp:Number(source.motor_hp||0),motor_kw:Number(source.motor_kw||0),pole:Number(source.motor_pole||2),
+        motor_efficiency_class:source.selected_motor_efficiency_class||source.default_motor_efficiency_class||'IE3',
+        bareShaft:source.bare_shaft===true
+      });
+      return 'Cannot quote: No valid USD, RMB or MYR cost is available.';
+    }
     if(fixedPrice)return '';
     if(!(margin>0))return 'Cannot quote: Category Margin is 0%.';
     return '';
@@ -199,7 +212,7 @@
     if(normalizePricingMode(mode)==='quotation'&&company.includeSetDiscount)rows.push(['Set Discount',percent(company.setDiscount)]);
     if(company.includeFinalDiscount)rows.push(['Final Discount',percent(company.finalDiscount)]);
     if(company.includeFuelCharge)rows.push(['Fuel Charge','Customer distance × fuel price variance']);
-    rows.push([`${family} Currency`,`USD (MYR ${n(rates.USD,3)}) · RMB (MYR ${n(rates.RMB,3)}) · MYR (MYR 1.000)`]);return rows;
+    rows.push([`${family} Currency`,`USD (MYR ${n(rates.USD,2)}) · RMB (MYR ${n(rates.RMB,3)}) · MYR (MYR 1.000)`]);return rows;
   }
 
   function renderPricingManualQuote(){
@@ -291,22 +304,19 @@
     if(!normalized.efficiency||(!(normalized.hp>0)&&!(normalized.kw>0)))return null;
     return (secureData.motorProducts||[]).find(product=>motorMatchesSpec(product,normalized)&&currencyCandidates(motorProductPriceBook(product),motorProductRarityBook(product),'MOTOR','MOTOR').length)||null;
   }
-  function combinedChcComponentBook(pumpBook,motorBook,material){
-    const book={USD:{},RMB:{},MYR:{}};
-    for(const currency of ['USD','RMB','MYR']){
-      const pump=positivePrice(pumpBook,currency,material),motor=positivePrice(motorBook,currency,'MOTOR');
-      book[currency][material]=pump!==null&&motor!==null?pump+motor:null;
-    }
-    return book;
-  }
   function applyPumpMotorReplacement(calc,options={},defaultEfficiency='IE3'){
-    if(!calc||options.bareShaft===true||options.keysuite_bare_shaft===true)return calc;
-    const selected=String(options.motor_efficiency_class||options.motorEfficiencyClass||options.motor_efficiency||defaultEfficiency).toUpperCase(),included=String(defaultEfficiency||'IE3').toUpperCase();if(selected===included)return calc;
-    const hp=Number(options.motor_hp??options.motorHp),pole=Number(options.pole||2)||2,customer=options.customer||quotationCustomer(),cat=options.category||categoryForCustomer(customer);if(!(hp>0)||!customer||!cat)return null;
-    const pricedMotor=(efficiency)=>{for(const product of nearestPricedMotors(hp,pole,efficiency)){const motorCalc=calculatePrice(motorProductPriceBook(product),'MOTOR',cat,'MOTOR',{...options,customer,rarityBook:motorProductRarityBook(product),rarity:product.rarity||'common'});if(motorCalc)return {product,calc:motorCalc}}return null},includedMatch=pricedMotor(included),replacementMatch=pricedMotor(selected);if(!includedMatch||!replacementMatch)return null;
+    if(!calc)return calc;
+    const bareShaft=options.bareShaft===true||options.keysuite_bare_shaft===true;
+    const selected=String(options.motor_efficiency_class||options.motorEfficiencyClass||options.motor_efficiency||defaultEfficiency).toUpperCase(),included=String(defaultEfficiency||'IE3').toUpperCase();if(!bareShaft&&selected===included)return calc;
+    const hp=Number(options.motor_hp??options.motorHp),kw=Number(options.motor_kw??options.motorKw),pole=Number(options.pole||2)||2,customer=options.customer||quotationCustomer(),cat=options.category||categoryForCustomer(customer);if((!(hp>0)&&!(kw>0))||!customer||!cat)return null;
+    // The C1/C2/BFI list price already includes its standard motor. A bare
+    // shaft removes that motor's raw Price List cost. Any IE upgrade/downgrade
+    // removes the included raw cost, then adds the selected motor calculated
+    // with the MOTOR pricing rule.
+    const pricedMotor=(efficiency)=>{const product=exactPricedMotor({hp,kw,pole,efficiency});if(!product)return null;const motorCalc=calculatePrice(motorProductPriceBook(product),'MOTOR',cat,'MOTOR',{...options,customer,rarityBook:motorProductRarityBook(product),rarity:product.rarity||'common'});return motorCalc?{product,calc:motorCalc}:null},includedMatch=pricedMotor(included),replacementMatch=pricedMotor(selected);if(!includedMatch||!replacementMatch)return null;
     const includedMotor=includedMatch.product,replacementMotor=replacementMatch.product,includedCalc=includedMatch.calc,replacementCalc=replacementMatch.calc;
-    const includedCost=Number(includedCalc.baseMyr||0),unrounded=Math.max(0,Number(calc.finalPrice||0)-includedCost+Number(replacementCalc.finalPrice||0)),finalPrice=roundUp10(unrounded);
-    return {...calc,preMotorReplacementPrice:Number(calc.finalPrice||0),motorReplacement:{includedEfficiency:included,selectedEfficiency:selected,requestedHp:hp,pole,includedMotorId:includedMotor.id,includedMotorModel:includedMotor.model,includedMotorHp:Number(includedMotor.hp||0),includedMotorCostMyr:includedCost,replacementMotorId:replacementMotor.id,replacementMotorModel:replacementMotor.model,replacementMotorHp:Number(replacementMotor.hp||0),replacementMotorQuotedPrice:Number(replacementCalc.finalPrice||0),unroundedPrice:unrounded},unroundedPrice:unrounded,finalPrice};
+    const includedMotorRawPriceMyr=Number(includedCalc.baseMyr||0),replacementMotorQuotedPrice=bareShaft?0:Number(replacementCalc.finalPrice||0),unrounded=Math.max(0,Number(calc.finalPrice||0)-includedMotorRawPriceMyr+replacementMotorQuotedPrice),finalPrice=roundUp10(unrounded);
+    return {...calc,preMotorReplacementPrice:Number(calc.finalPrice||0),motorReplacement:{bareShaft,includedEfficiency:included,selectedEfficiency:bareShaft?'':selected,requestedHp:hp,requestedKw:kw,pole,includedMotorId:includedMotor.id,includedMotorModel:includedMotor.model,includedMotorHp:Number(includedMotor.hp||0),includedMotorRawPriceMyr,replacementMotorId:bareShaft?'':replacementMotor.id,replacementMotorModel:bareShaft?'':replacementMotor.model,replacementMotorHp:bareShaft?0:Number(replacementMotor.hp||0),replacementMotorQuotedPrice,unroundedPrice:unrounded},unroundedPrice:unrounded,finalPrice};
   }
   function pumpDefaultMotorEfficiency(hp,normal){const value=Number(hp||0);return value>0&&value<=0.75+1e-9?'IE1':String(normal||'IE3').toUpperCase()}
 
@@ -318,16 +328,15 @@
     const product=catalogue.find(p=>String(p.model).toLowerCase()===base.toLowerCase());if(!product)return null;
     const pricingFamily=generation==='G1'?'CHC_G1':'CHC_G2';
     const motorHp=Number(options.motor_hp??options.motorHp??product.motor_hp??product.hp),motorKw=Number(options.motor_kw??options.motorKw??product.motor_kw??product.kw),pole=Number(options.pole??product.pole??2)||2;
-    const defaultMotorEfficiency=pumpDefaultMotorEfficiency(motorHp,generation==='G1'?'IE2':'IE3'),selectedMotorEfficiency=defaultMotorEfficiency==='IE1'?'IE1':(normalizedEfficiency(options.motor_efficiency_class||options.motorEfficiencyClass||options.motor_efficiency||defaultMotorEfficiency)||defaultMotorEfficiency);
-    const complete=!options.bareShaft&&!options.keysuite_bare_shaft;
-    const pumpBook=product.pricesByCurrency||{},motor=complete?exactPricedMotor({hp:motorHp,kw:motorKw,pole,efficiency:selectedMotorEfficiency}):null;
-    // CHC complete pumps are priced from independently maintained pump and motor
-    // records. A complete-item source-price row is deliberately not required.
-    const priceBook=complete?(motor?combinedChcComponentBook(pumpBook,motorProductPriceBook(motor),material):null):pumpBook;
-    const rawCalc=priceBook?calculatePrice(priceBook,material,cat,pricingFamily,{...options,customer,rarityBook:product.rarityByCurrency||{}}):null;
-    const calc=applyChcSealAddon(rawCalc,base,options);
+    const defaultMotorEfficiency=pumpDefaultMotorEfficiency(motorHp,'IE2'),selectedMotorEfficiency=defaultMotorEfficiency==='IE1'?'IE1':(normalizedEfficiency(options.motor_efficiency_class||options.motorEfficiencyClass||options.motor_efficiency||defaultMotorEfficiency)||defaultMotorEfficiency);
+    // C1/C2 price records are complete pump packages including the standard
+    // IE2 motor.  Do not add a motor again.  Only a non-standard IE class
+    // replaces the included motor through the independent MOTOR price table.
+    const rawCalc=calculatePrice(product.pricesByCurrency||{},material,cat,pricingFamily,{...options,customer,rarityBook:product.rarityByCurrency||{}});
+    const replacedCalc=applyPumpMotorReplacement(rawCalc,{...options,customer,category:cat,motor_hp:motorHp,motor_kw:motorKw,pole,motor_efficiency_class:selectedMotorEfficiency},defaultMotorEfficiency);
+    const calc=applyChcSealAddon(replacedCalc,base,options);
     const seal=options.seal??options.keysuite_seal??options.sealFaces??'Car/Cer',elastomer=options.elastomer??options.keysuite_elastomer??'Viton';
-    const sourceExtra={seal_faces:normalizeChcSealFaces(seal),seal_elastomer:String(elastomer||'Viton'),seal_addon_myr:Number(calc?.sealAddon||0),base_final_price:Number(calc?.baseFinalPrice||calc?.finalPrice||0),seal_description:calc?.sealDescription,default_motor_efficiency_class:defaultMotorEfficiency,selected_motor_efficiency_class:selectedMotorEfficiency,motor_hp:motorHp,motor_kw:motorKw,motor_pole:pole,component_pricing:complete,...(complete&&motor?{pump_product_id:product.id,motor_product_id:motor.id,motor_model:motor.model}: {})};
+    const sourceExtra={seal_faces:normalizeChcSealFaces(seal),seal_elastomer:String(elastomer||'Viton'),seal_addon_myr:Number(calc?.sealAddon||0),base_final_price:Number(calc?.baseFinalPrice||calc?.finalPrice||0),seal_description:calc?.sealDescription,default_motor_efficiency_class:defaultMotorEfficiency,selected_motor_efficiency_class:selectedMotorEfficiency,motor_hp:motorHp,motor_kw:motorKw,motor_pole:pole,bare_shaft:!!(options.bareShaft||options.keysuite_bare_shaft),package_price_includes_motor:true,...(calc?.motorReplacement?{motor_replacement:calc.motorReplacement}: {})};
     sourceExtra.generation_code=generation;
     return calc?{product,material,rarity:calc.rarity,calc,category:cat,customer,family:'CHC',sourceExtra}:null;
   }
@@ -336,9 +345,11 @@
     if(!product)return `Pump price not found: ${model}.`;
     const material=/^CHCS\b/i.test(String(model))?'CHCS':/^CHCN\b/i.test(String(model))?'CHCN':'CHC',pumpCandidates=currencyCandidates(product.pricesByCurrency||{},product.rarityByCurrency||{},material,generation==='G1'?'CHC_G1':'CHC_G2');
     if(!pumpCandidates.length)return `Pump price not found: ${model} (${material}).`;
-    if(options.bareShaft||options.keysuite_bare_shaft)return 'CHC pricing is unavailable for this customer or Category Pricing Rule.';
-    const hp=Number(options.motor_hp??options.motorHp??product.motor_hp??product.hp),kw=Number(options.motor_kw??options.motorKw??product.motor_kw??product.kw),pole=Number(options.pole??product.pole??2)||2,eff=normalizedEfficiency(options.motor_efficiency_class||options.motorEfficiencyClass||options.motor_efficiency||pumpDefaultMotorEfficiency(hp,generation==='G1'?'IE2':'IE3'))||'IE3';
-    return `Motor price not found: ${kw>0?`${kw} kW / `:''}${hp>0?`${hp} HP / `:''}${pole}P / ${eff}.`;
+    const hp=Number(options.motor_hp??options.motorHp??product.motor_hp??product.hp),kw=Number(options.motor_kw??options.motorKw??product.motor_kw??product.kw),pole=Number(options.pole??product.pole??2)||2,eff=normalizedEfficiency(options.motor_efficiency_class||options.motorEfficiencyClass||options.motor_efficiency||pumpDefaultMotorEfficiency(hp,'IE2'))||'IE2';
+    const included=pumpDefaultMotorEfficiency(hp,'IE2');
+    if(options.bareShaft||options.keysuite_bare_shaft)return `Included motor price not found for bare-shaft deduction: ${kw>0?`${kw} kW / `:''}${hp>0?`${hp} HP / `:''}${pole}P / ${included}.`;
+    if(eff===included)return 'CHC package pricing is unavailable for this customer or Category Pricing Rule.';
+    return `Motor replacement price not found: ${kw>0?`${kw} kW / `:''}${hp>0?`${hp} HP / `:''}${pole}P / ${included} or ${eff}.`;
   }
 
 

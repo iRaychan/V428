@@ -84,7 +84,7 @@
   function showCurrencySummary(){
     const rates=productRates(),box=byId('categoryCurrencySummary'),selected=selectedCurrenciesFromUi(),count=byId('categoryCurrencySelectionCount');
     if(count)count.textContent=`${selected.length} selected`;
-    if(box){const note=selected.length===0?'<span>Price unavailable until at least 1 currency is ticked.</span>':selected.length===1?`<span>Use ${esc(selected[0])} only.</span>`:`<span>Use highest of ${esc(selected.join(' + '))} after MYR conversion.</span>`;box.innerHTML=`${note}<span>USD × ${num(rates.USD,3)}</span><span>RMB × ${num(rates.RMB,3)}</span><span>MYR × 1.000</span>`}
+    if(box){const note=selected.length===0?'<span>Price unavailable until at least 1 currency is ticked.</span>':selected.length===1?`<span>Use ${esc(selected[0])} only.</span>`:`<span>Use highest of ${esc(selected.join(' + '))} after MYR conversion.</span>`;box.innerHTML=`${note}<span>USD × ${num(rates.USD,2)}</span><span>RMB × ${num(rates.RMB,3)}</span><span>MYR × 1.000</span>`}
   }
   function currencyFormula(rule){const selected=(rule?.currencies||[]).filter(v=>['USD','RMB','MYR'].includes(v));if(!selected.length)return 'No Price List Currency selected → Price unavailable';const converted=selected.map(v=>v==='MYR'?'MYR':`${v} × ${v} rate`);return selected.length===1?converted[0]:`Highest of ${converted.join(' / ')}`}
   function formulaText(rule,rarity,mode='quotation'){
