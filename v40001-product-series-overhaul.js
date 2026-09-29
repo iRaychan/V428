@@ -14,7 +14,7 @@
   if(window.top!==window.self||window.__KEYSUITE_V40001_PRODUCT_SERIES_OVERHAUL__)return;
   window.__KEYSUITE_V40001_PRODUCT_SERIES_OVERHAUL__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.39';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.40';
   const $=id=>document.getElementById(id);
   const norm=v=>String(v??'').trim();
   const low=v=>norm(v).toLowerCase();
@@ -445,8 +445,20 @@
 
   function installSelectionEsProductPanel(){
     const frame=$('selectorEsFrame');if(!frame)return false;
-    const apply=()=>{try{const doc=frame.contentDocument;if(!doc?.body)return false;doc.body.classList.add('product-frame','ks3963-product-es');ensureFrameStyle(doc,'ES');installPdfHooks(frame,'ES',{generic:true});resizeFrame(frame);return true}catch(_){return false}};
-    if(frame.dataset.ks42839ProductPanel!=='1'){frame.dataset.ks42839ProductPanel='1';frame.addEventListener('load',()=>setTimeout(apply,0))}
+    const apply=()=>{try{const doc=frame.contentDocument;if(!doc?.body)return false;doc.body.classList.add('product-frame','ks3963-product-es');ensureFrameStyle(doc,'ES');let fit=doc.getElementById('ksV42840SelectionEsFit');if(!fit){fit=doc.createElement('style');fit.id='ksV42840SelectionEsFit';doc.head.appendChild(fit)}fit.textContent=`
+      html,body{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:hidden!important}
+      body.product-frame.ks3963-product-es>.top,body.product-frame.ks3963-product-es>.es-top-options,body.product-frame.ks3963-product-es>.layout,body.product-frame.ks3963-product-es .main,body.product-frame.ks3963-product-es .main>*,body.product-frame.ks3963-product-es .grid2,body.product-frame.ks3963-product-es .grid2>*,body.product-frame.ks3963-product-es .chart-stack,body.product-frame.ks3963-product-es .chart-stack>*{width:100%;max-width:100%!important;min-width:0!important;box-sizing:border-box}
+      body.product-frame.ks3963-product-es>.top{height:auto!important;min-height:60px!important;flex-wrap:wrap!important}
+      body.product-frame.ks3963-product-es>.layout{max-width:min(1550px,100%)!important}
+      body.product-frame.ks3963-product-es>.es-top-options{grid-template-columns:1.35fr 1.05fr 1.15fr 1fr 1.05fr!important}
+      body.product-frame.ks3963-product-es>.es-top-options label,body.product-frame.ks3963-product-es>.es-top-options select,body.product-frame.ks3963-product-es input,body.product-frame.ks3963-product-es select{min-width:0!important;max-width:100%!important}
+      body.product-frame.ks3963-product-es .grid2{grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr)!important}
+      html.macos-safari body.product-frame.ks3963-product-es>.layout{max-width:min(1480px,100%)!important}
+      @media(max-width:1100px){body.product-frame.ks3963-product-es>.layout{grid-template-columns:1fr!important}body.product-frame.ks3963-product-es aside.inputs{position:static!important}body.product-frame.ks3963-product-es .grid2{grid-template-columns:1fr!important}}
+      @media(max-width:1000px){body.product-frame.ks3963-product-es>.es-top-options{grid-template-columns:repeat(3,minmax(0,1fr))!important;position:static!important}}
+      @media(max-width:650px){body.product-frame.ks3963-product-es>.es-top-options{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+    `;installPdfHooks(frame,'ES',{generic:true});resizeFrame(frame);return true}catch(_){return false}};
+    if(frame.dataset.ks42840ProductPanel!=='1'){frame.dataset.ks42840ProductPanel='1';frame.addEventListener('load',()=>setTimeout(apply,0))}
     apply();setTimeout(apply,120);return true;
   }
 
