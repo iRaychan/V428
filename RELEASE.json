@@ -1,15 +1,15 @@
 {
-  "version": "4.28.38",
-  "baseline": "4.28.37 FULL CLEAN",
-  "upgrade_supported_from": "4.28.37",
+  "version": "4.28.39",
+  "baseline": "4.28.38 FULL CLEAN",
+  "upgrade_supported_from": "4.28.38",
   "changes": [
-    "B.G.Reich ES Selection now uses the compact CHC Selection canvas and 330 px input column while retaining the ES Product result-chart arrangement",
-    "B.G.Reich BFI Selection now uses the compact CHC Selection canvas and 330 px input column while retaining the BFI Product result-chart arrangement",
-    "ES and BFI Selection again use the same contained outer card as CHC, removing the visually enlarged or zoomed appearance",
-    "Visible version and service-worker cache are V4.28.38"
+    "B.G.Reich ES Selection now runs inside a dedicated Product Curve panel instead of the normal Selection card",
+    "The Selection ES iframe receives the same product-frame and ks3963-product-es classes and shared layout rules after every load",
+    "Selection ES now matches Product ES workspace width, input column, chart grid and panel treatment while retaining duty-based pump selection",
+    "Visible version and service-worker cache are V4.28.39"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade V4.28.37 to V4.28.38. For an earlier installation, use the Full Clean package. No database migration is required."
+  "notes": "Upgrade V4.28.38 to V4.28.39. For an earlier installation, use the Full Clean package. No database migration is required."
 }

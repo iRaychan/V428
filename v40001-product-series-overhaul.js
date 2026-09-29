@@ -14,7 +14,7 @@
   if(window.top!==window.self||window.__KEYSUITE_V40001_PRODUCT_SERIES_OVERHAUL__)return;
   window.__KEYSUITE_V40001_PRODUCT_SERIES_OVERHAUL__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.38';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.39';
   const $=id=>document.getElementById(id);
   const norm=v=>String(v??'').trim();
   const low=v=>norm(v).toLowerCase();
@@ -443,6 +443,13 @@
     document.querySelectorAll('iframe').forEach(fr=>{if(genericPdfFrames.has(fr))return;let src='';try{src=fr.getAttribute('src')||fr.dataset.src||''}catch(_){}if(!/selector(?:-bfi|-es)?\/index\.html/i.test(src))return;genericPdfFrames.add(fr);const setup=()=>{let f=/selector-es/i.test(src)?'ES':/selector-bfi/i.test(src)?'BFI':'CHC';if(fr===frameFor('ES')||fr===frameFor('BFI')||fr===frameFor('CHC'))return;installPdfHooks(fr,f,{generic:true});if(f==='CHC')normalizeGenericChcFrame(fr)};fr.addEventListener('load',setup);setTimeout(setup,0)});
   }
 
+  function installSelectionEsProductPanel(){
+    const frame=$('selectorEsFrame');if(!frame)return false;
+    const apply=()=>{try{const doc=frame.contentDocument;if(!doc?.body)return false;doc.body.classList.add('product-frame','ks3963-product-es');ensureFrameStyle(doc,'ES');installPdfHooks(frame,'ES',{generic:true});resizeFrame(frame);return true}catch(_){return false}};
+    if(frame.dataset.ks42839ProductPanel!=='1'){frame.dataset.ks42839ProductPanel='1';frame.addEventListener('load',()=>setTimeout(apply,0))}
+    apply();setTimeout(apply,120);return true;
+  }
+
   function finalizeFrame({freshModel=false}={}){
     const f=currentFamily||activeFamily(),fr=frameFor(f);if(!fr)return;try{window.KeySuiteSelectorBrand?.refresh?.(fr);const pin=baseContext(f,fr),payload=fr.contentWindow?.keysuiteExportPayload||{},master=norm(pin.masterModel)||norm(payload.base_model)||norm(payload.model)||norm(payload.quotation_model)||norm(fr.contentDocument?.querySelector(f==='ES'?'#summary h1':'.selection-model')?.textContent);let display=norm(pin.displayModel)||norm(payload.display_model)||norm(payload.keysuite_display_model)||norm(payload.quotation_model);display=display?aliasModel(display,{...pin,masterModel:'',displayModel:''}):aliasModel(master,pin);if(fr.contentWindow)fr.contentWindow.__KEYSUITE_MODEL_PRESENTATION_CONTEXT={...pin,masterModel:master,displayModel:display,pinned:true}}catch(_){}
     installPdfHooks(fr,f);applyScreenIdentity(f,fr);const doc=fr.contentDocument;if(freshModel){window.KeySuiteSelectorBrand?.collapseSummaryForFrame?.(fr);if(lastDuty[f])applyStoredDuty(doc,f);else clearInitialDuty(doc,f)}
@@ -456,7 +463,7 @@
     window.addEventListener('message',onMessage,true);window.addEventListener('resize',()=>{if(inlineOpen)resizeFrame(activeFrame())},{passive:true});window.addEventListener('pageshow',()=>setTimeout(()=>{markVersion();scanGenericSelectorFrames()},0));window.addEventListener('KEYSUITE_BRANDS_READY',()=>setTimeout(()=>{markVersion();if(inlineOpen)finalizeFrame()},0));window.addEventListener('KEYSUITE_V393_BRAND_CONTEXT_CHANGED',()=>setTimeout(()=>{markVersion();if(inlineOpen)finalizeFrame()},0));
     document.addEventListener('click',event=>{setTimeout(()=>document.querySelectorAll('iframe').forEach(fr=>{let src='';try{src=fr.getAttribute('src')||fr.dataset.src||''}catch(_){}if(/selector\/index\.html/i.test(src)&&fr!==frameFor('CHC'))normalizeGenericChcFrame(fr)}),0);if(inlineOpen&&event.target?.closest?.('#keyButton,aside nav button,nav button'))closeInline();if(event.target?.closest?.('#keysuitePdf,#keysuiteMobileExport,.ks3942-pdf')){if(inlineOpen)lockSnapshot(currentFamily,activeFrame());scanGenericSelectorFrames()}setTimeout(markVersion,0)},true);
   }
-  function init(){injectOuterStyle();installDialogBridge();bind();scanGenericSelectorFrames();markVersion();setTimeout(()=>{installDialogBridge();scanGenericSelectorFrames();markVersion()},120);setTimeout(()=>{installDialogBridge();scanGenericSelectorFrames();markVersion()},700);setTimeout(markVersion,1600)}
+  function init(){injectOuterStyle();installDialogBridge();bind();scanGenericSelectorFrames();installSelectionEsProductPanel();markVersion();setTimeout(()=>{installDialogBridge();scanGenericSelectorFrames();installSelectionEsProductPanel();markVersion()},120);setTimeout(()=>{installDialogBridge();scanGenericSelectorFrames();installSelectionEsProductPanel();markVersion()},700);setTimeout(()=>{installSelectionEsProductPanel();markVersion()},1600)}
   window.KeySuiteV40001ProductSeries={version:VERSION,refresh:()=>finalizeFrame(),snapshot:(f=currentFamily)=>snapshot(f,frameFor(f)),getDuty:f=>lastDuty[String(f||currentFamily).toUpperCase()]?{...lastDuty[String(f||currentFamily).toUpperCase()]}:null,clearDuty:f=>{lastDuty[String(f||currentFamily).toUpperCase()]=null},isOpen:()=>inlineOpen,currentFamily:()=>currentFamily,close:()=>closeInline(),forceClose:()=>forceCloseInline()};
   window.KeySuiteV3964ProductSeries=window.KeySuiteV40001ProductSeries;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
