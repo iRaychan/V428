@@ -4,7 +4,7 @@
   const $=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const natural=(a,b)=>String(a??'').localeCompare(String(b??''),undefined,{numeric:true,sensitivity:'base'});
-  let selectedSeries='',frameReady=false,queued=null,currentCurveModel='',currentCurveFamily='CHC',esFrameReady=false,esQueued=null;
+  let selectedSeries='',selectedEsSeries='',frameReady=false,queued=null,currentCurveModel='',currentCurveFamily='CHC',esFrameReady=false,esQueued=null;
   const catalogueRefreshSeq={GWS:0,KEYPLC:0};
 
   const products=()=>window.KEYSUITE_SECURE_DATA?.products||[];
@@ -22,7 +22,9 @@
   const ES_SEALS=['Carbon Ceramic (Ca Ce)','Silicon Carbide (Sic Sic)','Tungsten (Tuc Tuc)'];
   const ES_ELASTOMERS=['Viton','EPDM','NBR'];
   const seriesName=model=>{const m=String(model||'').match(/^CHC\s+(\d+)/i);return m?`CHC ${m[1]}`:'Other'};
+  const esSeriesName=model=>{const m=String(model||'').match(/^(?:ES\s+)?(\d+)-/i);return m?`ES ${m[1]}`:'Other'};
   const orderedSeries=()=>[...new Set(activeChcProducts().map(p=>seriesName(p.model)))].sort((a,b)=>Number((a.match(/\d+/)||[999])[0])-Number((b.match(/\d+/)||[999])[0]));
+  const orderedEsSeries=()=>[...new Set(esProducts().map(p=>esSeriesName(p.model)))].sort((a,b)=>Number((a.match(/\d+/)||[999])[0])-Number((b.match(/\d+/)||[999])[0]));
   const normMaterial=value=>String(value||'').toUpperCase().replace(/[^A-Z0-9]+/g,'');
 
   function updateDefaultState(control){
@@ -165,9 +167,13 @@
 
 
   function renderEs(){
-    const body=$('esProductRows');if(!body)return;const q=String($('esProductSearch')?.value||'').trim().toLowerCase();
-    const rows=esProducts().filter(x=>!q||x.model.toLowerCase().includes(q));
-    body.innerHTML=rows.map(x=>`<tr data-es-product-row="${esc(x.id)}"><td><b>${esc(x.model)}</b></td><td style="text-align:right"><div class="route-actions"><button class="btn secondary" type="button" data-es-curve="${esc(x.id)}">Curve</button><button class="btn action-assembly" type="button" data-es-assembly="${esc(x.id)}">Assembly</button><button class="btn action-quote" type="button" data-es-quote="${esc(x.id)}">Quote</button></div></td></tr>`).join('')||'<tr><td colspan="2" class="muted">No matching ES models.</td></tr>';
+    const body=$('esProductModelGrid'),list=$('esProductSeriesList');if(!body||!list)return;const q=String($('esProductSearch')?.value||'').trim().toLowerCase(),series=orderedEsSeries();
+    if(!selectedEsSeries||!series.includes(selectedEsSeries))selectedEsSeries=series[0]||'';
+    list.innerHTML=series.map(name=>`<button type="button" class="product-series-button ${name===selectedEsSeries?'active':''}" data-es-product-series="${esc(name)}">${esc(name)}</button>`).join('');
+    list.querySelectorAll('[data-es-product-series]').forEach(button=>button.onclick=()=>{selectedEsSeries=button.dataset.esProductSeries;renderEs()});
+    const rows=esProducts().filter(x=>esSeriesName(x.model)===selectedEsSeries&&(!q||x.model.toLowerCase().includes(q))).sort((a,b)=>natural(a.model,b.model));
+    $('esProductSeriesTitle').textContent=selectedEsSeries||'ES Models';
+    body.innerHTML=rows.map(x=>`<div class="product-model-row" data-es-product-row="${esc(x.id)}"><h3>${esc(x.model)}</h3><div class="product-model-actions"><button class="btn secondary product-action-button" type="button" data-es-curve="${esc(x.id)}">Curve</button><button class="btn action-assembly product-action-button" type="button" data-es-assembly="${esc(x.id)}">Assembly</button><button class="btn action-quote product-action-button" type="button" data-es-quote="${esc(x.id)}">Quote</button></div></div>`).join('')||'<div class="product-empty">No matching ES models.</div>';
     $('esProductCount').textContent=`${rows.length} model${rows.length===1?'':'s'}`;
     const productFor=id=>rows.find(x=>String(x.id)===String(id))||esProducts().find(x=>String(x.id)===String(id));
     body.querySelectorAll('[data-es-curve]').forEach(b=>b.onclick=()=>{const p=productFor(b.dataset.esCurve);if(!p)return;currentCurveFamily='ES';currentCurveModel=p.model;$('productCurveTitle').textContent=p.model;const frame=ensureEsFrame(),host=$('productCurveHost');if(frame.parentNode!==host)host.appendChild(frame);frame.style.display='block';$('productCurveDialog').showModal();sendEsProduct(p.model,'view')});

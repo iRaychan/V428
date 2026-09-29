@@ -1,20 +1,16 @@
 {
-  "version": "4.28.24",
-  "baseline": "4.28.23 FULL CLEAN",
-  "upgrade_supported_from": "4.28.23",
+  "version": "4.28.32",
+  "baseline": "4.28.31 FULL CLEAN",
+  "upgrade_supported_from": "4.28.31",
   "changes": [
-    "C1/C2/BFI package pricing preserves the included standard motor; bare shaft and IE changes use the specified raw-cost and Motor-rule adjustment",
-    "CHC mechanical-seal add-ons update quotation price and description",
-    "G1/G2 exchange rates are independent and retain calculation precision",
-    "USD effective rates display to 2 decimals and RMB to 3 decimals",
-    "Saved legacy C1 quotations re-resolve compatible pricing sources",
-    "BFI visible model is rebuilt from live material and phase: SS316 plus 1 Phase is BFIN with no T suffix",
-    "Windows quotation PDF header rule is restored to its original single line; the unverified macOS margin change is removed",
-    "Quick Pump Selection Flow/Head value and unit controls use equal widths",
-    "Visible version and service-worker cache are V4.28.31"
+    "macOS Safari BFI and ES selectors use the CHC C4 visual scale and keep all header actions visible",
+    "ES Product uses a CHC-style two-column series and model layout",
+    "ES larger impeller curves retain their full valid head-flow range",
+    "ES power curves restore a smooth, estimated non-zero shut-off power at zero flow",
+    "Visible version and service-worker cache are V4.28.32"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade to V4.28.31. Upload the V4.28.31 web files. No database migration is required. The visible product version is locked to V4.28.31 across pages and browsers."
+  "notes": "Upgrade to V4.28.32. Upload the V4.28.32 upgrade files. No database migration is required. The visible product version is locked to V4.28.32 across pages and browsers."
 }
