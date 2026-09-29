@@ -1,0 +1,2 @@
+/* KeySuite V4.28.29 visible version. */
+(()=>{'use strict';const V='4.28.29';function apply(){const title=`KeySuite V${V}`;if(document.title!==title)document.title=title;document.querySelectorAll('.suite-version').forEach(x=>{if(x.textContent!==title)x.textContent=title});document.querySelectorAll('.brand small').forEach(x=>{const t=`Full Suite V${V}`;if(x.textContent!==t)x.textContent=t})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();window.addEventListener('pageshow',apply)})();
