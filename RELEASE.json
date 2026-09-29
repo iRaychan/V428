@@ -1,19 +1,19 @@
 {
-  "version": "4.28.34",
-  "baseline": "4.28.33 FULL CLEAN",
-  "upgrade_supported_from": "4.28.33",
+  "version": "4.28.35",
+  "baseline": "4.28.34 FULL CLEAN",
+  "upgrade_supported_from": "4.28.34",
   "changes": [
     "macOS Safari ES uses the corrected CHC-style scale, while BFI Selection now follows the approved Product BFI layout",
     "ES Product uses a CHC-style two-column series and model layout",
     "ES larger impeller curves retain their full valid head-flow range",
-    "CHC C4, CHC C6, BFI and ES Selection power curves use a smooth estimated non-zero shut-off power at zero flow",
+    "CHC C4, CHC C6 and ES use a shared point-preserving smooth display curve with estimated non-zero shutoff power; approved BFI Product curve method is retained in both BFI routes",
     "CHC C4 and CHC C6 Product power curves now use the same natural smoothing as Selection",
     "BFI Selection power curves now follow the approved Product BFI curve method",
     "PDF printing starts promptly after report assets are ready across selector and product pages",
-    "Visible version and service-worker cache are V4.28.34"
+    "Visible version and service-worker cache are V4.28.35"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade to V4.28.34. Upload the V4.28.34 upgrade files. No database migration is required. The visible product version is locked to V4.28.34 across pages and browsers."
+  "notes": "Upgrade to V4.28.35. Upload the V4.28.35 upgrade files. No database migration is required. The visible product version is locked to V4.28.35 across pages and browsers."
 }

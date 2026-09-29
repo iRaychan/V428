@@ -3,9 +3,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script src="../power-curve.js?v=42835"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <script>if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAgent||'')&&!/(?:Chrome|Chromium|CriOS|Edg|OPR)/i.test(navigator.userAgent||''))document.documentElement.classList.add('macos-safari');</script>
-<title>KeySelector ES · KeySuite V4.28.34</title>
+<title>KeySelector ES · KeySuite V4.28.35</title>
 <link rel="icon" href="favicon.svg">
 <style>
 :root{--blue:#0877bd;--blue2:#055d94;--chc:#0f629c;--ink:#173047;--muted:#65798a;--line:#c9d8e4;--bg:#eef4f8;--panel:#fff;--good:#1d7a48;--warn:#a86600;--red:#c62828}
@@ -51,7 +52,18 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
 .display-save-status{font-size:10.5px;color:#526b7b;min-height:13px}
 </style>
 <script src="../pdf-optimization.js?v=42508"></script>
-<style>html.macos-safari body{zoom:.75;width:133.333333%}html.macos-safari .layout{max-width:none!important;margin:0!important;padding:24px!important;grid-template-columns:360px minmax(0,1fr)!important;gap:16px!important}html.macos-safari .es-top-options{grid-template-columns:minmax(0,1.35fr) minmax(0,1.05fr) minmax(0,1.15fr) minmax(0,1fr) minmax(0,1.05fr)!important}html.macos-safari .es-top-options label,html.macos-safari .es-top-options select{min-width:0!important}</style>
+<style>
+html.macos-safari body{zoom:1;width:100%;min-width:0}
+html.macos-safari .layout{max-width:1480px;margin:0 auto;padding:18px 15px;grid-template-columns:340px minmax(0,1fr);gap:17px}
+html.macos-safari .main,html.macos-safari .main>*{min-width:0}
+html.macos-safari .top{height:auto;min-height:60px;flex-wrap:wrap}
+html.macos-safari .actions{flex:0 0 auto;margin-left:auto;flex-wrap:nowrap}
+html.macos-safari .es-top-options{grid-template-columns:repeat(5,minmax(0,1fr))}
+html.macos-safari .es-top-options label,html.macos-safari .es-top-options select{min-width:0}
+html.macos-safari .grid2{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
+@media(max-width:1100px){html.macos-safari .grid2{grid-template-columns:1fr}}
+@media(max-width:850px){html.macos-safari .layout{grid-template-columns:1fr}html.macos-safari .es-top-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
 </head>
 <body>
 <header class="top">
@@ -120,7 +132,7 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
   <section class="grid2"><div class="card chart-card"><div class="chart-title">Pump Curve</div><div id="headChart" class="chart"></div><div class="chart-note">Parallel curves use total system flow</div></div><div class="chart-stack"><div class="card chart-card"><div class="chart-title">Efficiency</div><div id="effChart" class="chart"></div><div class="chart-note">Parallel curves use total system flow · efficiency remains per pump</div></div><div class="card chart-card"><div class="chart-title">Power</div><div id="powerChart" class="chart"></div><div class="chart-note">Total shaft power of all running pumps</div></div><div class="card chart-card"><div class="chart-title">NPSH</div><div id="npshChart" class="chart"></div><div class="chart-note">Parallel curves use total system flow · NPSHr remains per pump</div></div></div></section>
   <section class="card alts"><h3>Alternative Selections</h3><div id="alternatives" class="alt-list"></div></section>
   <section id="details" class="card details"></section>
-  <div class="footer">KeySelector ES · KeySuite V4.28.34 · Summary + Pumpset Technical Data</div>
+  <div class="footer">KeySelector ES · KeySuite V4.28.35 · Summary + Pumpset Technical Data</div>
 </main>
 </div>
 <script src="es-data.js?v=409"></script>
@@ -273,14 +285,8 @@ function effAxis(v){return v<50?{step:10,max:50}:v<=80?{step:20,max:80}:{step:20
 // V4.25.13: display-only ES Power-curve smoothing. Use a shape-preserving cubic
 // interpolation through the existing shaft-power points plus the non-zero Q=0
 // shut-off estimate. Hydraulic selection and motor-sizing calculations are untouched.
-function esPowerSmoothFit(fit){
-  if(!fit)return null;var grouped=[];(fit.points||[]).forEach(function(p){var x=Number(p&&p[0]),y=Number(p&&p[1]);if(!(Number.isFinite(x)&&x>1e-9&&Number.isFinite(y)&&y>=0))return;var last=grouped[grouped.length-1];if(last&&Math.abs(last.x-x)<1e-9){last.sum+=y;last.count++;last.y=last.sum/last.count}else grouped.push({x:x,y:y,sum:y,count:1})});grouped.sort(function(a,b){return a.x-b.x});
-  if(grouped.length<2)return null;var x1=grouped[0].x,x2=grouped[1].x,y1=grouped[0].y,y2=grouped[1].y;if(!(x2>x1&&y1>0))return null;var slope=(y2-y1)/(x2-x1),y0=y1-slope*x1,minY=Math.max(y1*.15,1e-6),maxY=Math.max(y1*1.75,minY);if(!Number.isFinite(y0))y0=y1;y0=Math.max(minY,Math.min(maxY,y0));
-  var pts=[{x:0,y:y0}].concat(grouped.map(function(p){return {x:p.x,y:p.y}})),n=pts.length,h=[],delta=[],d=new Array(n).fill(0);for(var i=0;i<n-1;i++){h[i]=pts[i+1].x-pts[i].x;if(!(h[i]>0))return null;delta[i]=(pts[i+1].y-pts[i].y)/h[i]}
-  if(n===2){d[0]=d[1]=delta[0]}else{for(var j=1;j<n-1;j++){var a=delta[j-1],b=delta[j];if(a===0||b===0||Math.sign(a)!==Math.sign(b))d[j]=0;else{var w1=2*h[j]+h[j-1],w2=h[j]+2*h[j-1];d[j]=(w1+w2)/(w1/a+w2/b)}}function edge(h0,h1,s0,s1){var m=((2*h0+h1)*s0-h0*s1)/(h0+h1);if(Math.sign(m)!==Math.sign(s0))m=0;else if(Math.sign(s0)!==Math.sign(s1)&&Math.abs(m)>Math.abs(3*s0))m=3*s0;return Number.isFinite(m)?m:0}d[0]=edge(h[0],h[1],delta[0],delta[1]);d[n-1]=edge(h[n-2],h[n-3],delta[n-2],delta[n-3])}
-  return {pts:pts,d:d,min:0,max:pts[n-1].x,y0:y0};
-}
-function esPowerSmoothValue(smooth,q){q=Number(q);if(!smooth||!Number.isFinite(q))return null;var pts=smooth.pts||[],d=smooth.d||[];if(!pts.length||q<pts[0].x-1e-9||q>pts[pts.length-1].x+1e-9)return null;if(q<=pts[0].x+1e-9)return pts[0].y;if(q>=pts[pts.length-1].x-1e-9)return pts[pts.length-1].y;var lo=0,hi=pts.length-1;while(hi-lo>1){var mid=(lo+hi)>>1;if(pts[mid].x<=q)lo=mid;else hi=mid}var p0=pts[lo],p1=pts[hi],hh=p1.x-p0.x;if(!(hh>0))return p0.y;var t=(q-p0.x)/hh,t2=t*t,t3=t2*t;return (2*t3-3*t2+1)*p0.y+(t3-2*t2+t)*hh*d[lo]+(-2*t3+3*t2)*p1.y+(t3-t2)*hh*d[hi]}
+function esPowerSmoothFit(fit){return fit?KeySuitePowerCurve.fit((fit.points||[]).map(p=>({x:p[0],y:p[1]}))):null}
+function esPowerSmoothValue(smooth,q){return KeySuitePowerCurve.value(smooth,q)}
 
 function esDisplayCurvePoints(r,diameter,speedRatio){
   var pts=(ESCore.curvePoints(r.pump,diameter,speedRatio)||[]).filter(function(p){return Number.isFinite(Number(p.flowM3h))}).slice().sort(function(a,b){return Number(a.flowM3h)-Number(b.flowM3h)});

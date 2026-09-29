@@ -14,7 +14,7 @@
   if(window.top!==window.self||window.__KEYSUITE_V40001_PRODUCT_SERIES_OVERHAUL__)return;
   window.__KEYSUITE_V40001_PRODUCT_SERIES_OVERHAUL__=true;
 
-  const VERSION='4.23.14';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.35';
   const $=id=>document.getElementById(id);
   const norm=v=>String(v??'').trim();
   const low=v=>norm(v).toLowerCase();
@@ -240,6 +240,11 @@
       body.product-frame.ks3963-product-es .chart-stack>.chart-card{height:178px!important}
       body.product-frame.ks3963-product-es #run{background:#0f629c!important}
       @media(max-width:1100px){body.product-frame.ks3963-product-es>.layout{grid-template-columns:1fr!important}body.product-frame.ks3963-product-es aside.inputs{position:static!important}body.product-frame.ks3963-product-es .grid2{grid-template-columns:1fr!important}}
+      html.macos-safari body.product-frame.ks3963-product-es>.layout{max-width:1480px!important;margin:0 auto!important;grid-template-columns:340px minmax(0,1fr)!important;padding:18px 15px!important;gap:17px!important}
+      html.macos-safari body.product-frame.ks3963-product-es>.top{height:auto!important;flex-wrap:wrap!important}
+      html.macos-safari body.product-frame.ks3963-product-es .grid2{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)!important}
+      @media(max-width:1100px){html.macos-safari body.product-frame.ks3963-product-es .grid2{grid-template-columns:1fr!important}}
+      @media(max-width:850px){html.macos-safari body.product-frame.ks3963-product-es>.layout{grid-template-columns:1fr!important}}
     `;
     else st.textContent=`
       html,body.ks3963-product-chc{overflow:visible!important}body.ks3963-product-chc{background:#eef3f7!important}
