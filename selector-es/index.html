@@ -3,10 +3,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<script src="../power-curve.js?v=42836"></script>
+<script src="../power-curve.js?v=42837"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <script>if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAgent||'')&&!/(?:Chrome|Chromium|CriOS|Edg|OPR)/i.test(navigator.userAgent||''))document.documentElement.classList.add('macos-safari');</script>
-<title>KeySelector ES · KeySuite V4.28.36</title>
+<title>KeySelector ES · KeySuite V4.28.37</title>
 <link rel="icon" href="favicon.svg">
 <style>
 :root{--blue:#0877bd;--blue2:#055d94;--chc:#0f629c;--ink:#173047;--muted:#65798a;--line:#c9d8e4;--bg:#eef4f8;--panel:#fff;--good:#1d7a48;--warn:#a86600;--red:#c62828}
@@ -53,10 +53,20 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
 </style>
 <script src="../pdf-optimization.js?v=42508"></script>
 <style>
-/* V4.28.36: Selection uses the same contained two-column geometry as Product. */
+/* V4.28.37: Selection uses the actual Product curve geometry. */
 html,body{width:100%;max-width:100%;min-width:0;overflow-x:hidden}
 .es-top-options,.layout,.main,.grid2,.grid2>*,.chart-stack,.chart-stack>*{min-width:0;max-width:100%}
 .es-top-options,.layout,.main,.grid2{width:100%}
+body:not(.product-frame)>.top{display:flex;position:sticky;top:0;z-index:20}
+body:not(.product-frame)>.es-top-options{display:grid;position:sticky;top:60px;z-index:8}
+body:not(.product-frame)>.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:14px;padding:14px;max-width:1550px;margin:auto;align-items:start}
+body:not(.product-frame) aside.inputs{display:block;position:sticky;top:128px;align-self:start;max-height:none;overflow:visible;width:auto}
+body:not(.product-frame) .main{display:grid;gap:14px;max-width:none;min-width:0}
+body:not(.product-frame) .grid2{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(310px,1fr);gap:14px;align-items:stretch}
+body:not(.product-frame) .grid2>.chart-card{height:554px}
+body:not(.product-frame) .chart-stack{display:grid;grid-template-rows:repeat(3,178px);gap:10px}
+body:not(.product-frame) .chart-stack>.chart-card{height:178px}
+@media(max-width:1100px){body:not(.product-frame)>.layout{grid-template-columns:1fr}body:not(.product-frame) aside.inputs{position:static}body:not(.product-frame) .grid2{grid-template-columns:1fr}}
 html.macos-safari body{zoom:1;width:100%;min-width:0}
 html.macos-safari .layout{width:100%;max-width:1480px;margin:0 auto;padding:18px 15px;grid-template-columns:340px minmax(0,1fr);gap:17px}
 html.macos-safari .main,html.macos-safari .main>*{width:100%;max-width:100%;min-width:0}
@@ -136,7 +146,7 @@ html.macos-safari .grid2{width:100%;max-width:100%;grid-template-columns:minmax(
   <section class="grid2"><div class="card chart-card"><div class="chart-title">Pump Curve</div><div id="headChart" class="chart"></div><div class="chart-note">Parallel curves use total system flow</div></div><div class="chart-stack"><div class="card chart-card"><div class="chart-title">Efficiency</div><div id="effChart" class="chart"></div><div class="chart-note">Parallel curves use total system flow · efficiency remains per pump</div></div><div class="card chart-card"><div class="chart-title">Power</div><div id="powerChart" class="chart"></div><div class="chart-note">Total shaft power of all running pumps</div></div><div class="card chart-card"><div class="chart-title">NPSH</div><div id="npshChart" class="chart"></div><div class="chart-note">Parallel curves use total system flow · NPSHr remains per pump</div></div></div></section>
   <section class="card alts"><h3>Alternative Selections</h3><div id="alternatives" class="alt-list"></div></section>
   <section id="details" class="card details"></section>
-  <div class="footer">KeySelector ES · KeySuite V4.28.36 · Summary + Pumpset Technical Data</div>
+  <div class="footer">KeySelector ES · KeySuite V4.28.37 · Summary + Pumpset Technical Data</div>
 </main>
 </div>
 <script src="es-data.js?v=409"></script>

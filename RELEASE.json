@@ -1,15 +1,15 @@
 {
-  "version": "4.28.36",
+  "version": "4.28.37",
   "baseline": "4.28.35 FULL CLEAN",
   "upgrade_supported_from": "4.28.35",
   "changes": [
-    "B.G.Reich ES Selection now uses the same contained two-column curve geometry as ES Product",
-    "B.G.Reich BFI Selection now uses the same contained curve grid geometry as BFI Product",
-    "Selection top controls, main curve and right-side chart stack stay within the embedded Safari viewport",
-    "Visible version and service-worker cache are V4.28.36"
+    "B.G.Reich ES Selection now uses the actual ES Product curve geometry, including the top controls, 350 px input column and Product chart grid",
+    "B.G.Reich BFI Selection now uses the actual BFI Product curve geometry, including the 1480 px content frame, 340 px input column and Product chart grid",
+    "ES and BFI Selection no longer use the rounded clipping card around their selector frame; both use the same flat outer shell as Product Curve",
+    "Visible version and service-worker cache are V4.28.37"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade V4.28.35 to V4.28.36. Upload the complete V4.28.36 upgrade package. No database migration is required."
+  "notes": "Upgrade V4.28.35 or V4.28.36 to V4.28.37. Upload the complete V4.28.37 upgrade package. No database migration is required."
 }
