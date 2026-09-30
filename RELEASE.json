@@ -1,16 +1,16 @@
 {
-  "version": "4.28.45",
+  "version": "4.28.46",
   "baseline": "4.28.41 FULL CLEAN",
   "upgrade_supported_from": "4.28.41",
   "changes": [
-    "Selection CHC C4 and C6 now stabilize their responsive iframe width on the first visible page opening in Safari",
-    "The CHC iframe remains hidden during the bounded first layout pass, preventing the oversized fallback layout from flashing",
-    "The first-open correction runs for Selection navigation, CHC generation changes, page restoration and browser resizing",
-    "The V4.28.44 BFI visibility, shared Product Curve panel and Selection navigation fixes remain included",
-    "Visible version and service-worker cache are V4.28.45"
+    "Product BFI Curve now rebuilds and publishes the visible model identity when Motor Phase changes",
+    "Product BFI Curve now changes BFI to BFIN immediately when Pump Material changes to Stainless Steel 316",
+    "BFI material, phase, screen title, selected-pump heading and export payload remain synchronized",
+    "The V4.28.45 CHC first-open stabilization and earlier ES/BFI layout fixes remain included",
+    "Visible version and service-worker cache are V4.28.46"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade V4.28.41 or later to V4.28.45. For an earlier installation, use the Full Clean package. No database migration is required."
+  "notes": "Upgrade V4.28.41 or later to V4.28.46. For an earlier installation, use the Full Clean package. No database migration is required."
 }

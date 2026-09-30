@@ -14,7 +14,7 @@
   if(window.top!==window.self||window.__KEYSUITE_V40001_PRODUCT_SERIES_OVERHAUL__)return;
   window.__KEYSUITE_V40001_PRODUCT_SERIES_OVERHAUL__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.45';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.46';
   const $=id=>document.getElementById(id);
   const norm=v=>String(v??'').trim();
   const low=v=>norm(v).toLowerCase();
@@ -63,7 +63,10 @@
   }
   function selectedMaterial(f,frame){
     let pin={};try{pin=frame?.contentWindow?.__KEYSUITE_MODEL_PRESENTATION_CONTEXT||{}}catch(_){}
-    if(f==='BFI')return 'Stainless Steel 304';
+    if(f==='BFI'){
+      let live='';try{live=norm(frame?.contentDocument?.getElementById('pumpMaterial')?.value)||norm(frame?.contentWindow?.keysuiteExportPayload?.keysuite_material)}catch(_){}
+      return live||norm($('bfiProductMaterial')?.value)||norm(pin.material)||'SS304';
+    }
     if(f==='ES'){
       const live=norm(frame?.contentDocument?.getElementById('material')?.value)||norm(frame===$('selectorEsFrame')?$('esMaterial')?.value:frame===$('productEsSelectorFrame')?$('esProductMaterial')?.value:'')||norm(frame?.contentWindow?.keysuiteExportPayload?.keysuite_material);
       return live||norm(pin.material)||'CI / SS / SS';
@@ -471,7 +474,7 @@
   }
   function installSelectionEsProductPanel(){
     const frame=$('selectorEsFrame');if(!frame)return false;if(!selectionEsHome)selectionEsHome=frame.parentNode||$('selectorEs');
-    if(frame.dataset.ks42845ProductPanel!=='1'){frame.dataset.ks42845ProductPanel='1';frame.addEventListener('load',()=>setTimeout(()=>prepareSelectionEsFrame(frame),0))}
+    if(frame.dataset.ks42846ProductPanel!=='1'){frame.dataset.ks42846ProductPanel='1';frame.addEventListener('load',()=>setTimeout(()=>prepareSelectionEsFrame(frame),0))}
     prepareSelectionEsFrame(frame);if(document.querySelector('.page.active')?.id==='selectorEs')openSelectionEsPanel();return true;
   }
 
@@ -494,7 +497,7 @@
   }
   function installSelectionBfiProductPanel(){
     const frame=$('selectorBfiFrame');if(!frame)return false;if(!selectionBfiHome)selectionBfiHome=frame.parentNode||$('selectorBfi');
-    if(frame.dataset.ks42845ProductPanel!=='1'){frame.dataset.ks42845ProductPanel='1';frame.addEventListener('load',()=>setTimeout(()=>prepareSelectionBfiFrame(frame),0))}
+    if(frame.dataset.ks42846ProductPanel!=='1'){frame.dataset.ks42846ProductPanel='1';frame.addEventListener('load',()=>setTimeout(()=>prepareSelectionBfiFrame(frame),0))}
     prepareSelectionBfiFrame(frame);if(document.querySelector('.page.active')?.id==='selectorBfi')openSelectionBfiPanel();return true;
   }
   function showSelectionBfiFallback(){
