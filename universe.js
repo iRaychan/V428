@@ -3,7 +3,7 @@
   if(window.__KEYSUITE_KEYCORE_V383__)return;
   window.__KEYSUITE_KEYCORE_V383__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.40';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.41';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
