@@ -4,7 +4,7 @@
   if (window.__KEYSUITE_V394410_MULTIBRAND__) return;
   window.__KEYSUITE_V394410_MULTIBRAND__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.43';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.44';
   const $=id=>document.getElementById(id);
   const clone=v=>JSON.parse(JSON.stringify(v??{}));
   const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -981,6 +981,22 @@
     }
 
     // V4.12.23 hierarchy: Selection -> Brand -> Brand name -> Series.
+    let usable=0;
+    const directSpecs=[{key:'b.g.reich',label:'B.G.Reich'},{key:'tesk',label:'Tesk'}];
+    const directIds=new Set();
+    directSpecs.forEach(spec=>{
+      const brand=brands.find(b=>String(b.brand_key||'').toLowerCase()===spec.key||String(b.brand_name||'').toLowerCase()===spec.key);if(!brand)return;
+      let families=pumpFamilies(brand);
+      if(scopeEnforced())families=families.filter(f=>authority()?.isBrandSeriesAllowed?.(brand.id,f.productGroup||f.family));
+      if(!families.length)return;
+      const d=document.createElement('details');
+      d.className='v391-direct-brand-root v41223-selector-brand v41223-selector-direct';
+      d.dataset.brandId=brand.id;
+      d.innerHTML=`<summary>${esc(spec.label)}</summary><div></div>`;
+      if(openBrandIds.has(String(brand.id)))d.open=true;
+      usable+=addButtons(d.lastElementChild,brand,families);
+      directIds.add(String(brand.id));tree.appendChild(d);
+    });
     const brandRoot=document.createElement('details');
     brandRoot.className='v391-brand-root v41223-selector-brand-root';
     brandRoot.innerHTML='<summary>Brand</summary><div class="v391-brand-list" id="v41223SelectorBrandList"></div>';
@@ -988,20 +1004,14 @@
     tree.appendChild(brandRoot);
     const brandHost=$('v41223SelectorBrandList');
     if(!brandHost){showFallback(true);return}
-
-    let usable=0;
-    brands.forEach(brand=>{
+    brands.filter(brand=>!directIds.has(String(brand.id))).forEach(brand=>{
       let families=pumpFamilies(brand);
       if(scopeEnforced())families=families.filter(f=>authority()?.isBrandSeriesAllowed?.(brand.id,f.productGroup||f.family));
       if(!families.length)return;
-      const d=document.createElement('details');
-      d.className='v391-direct-brand-root v41223-selector-brand';
-      d.dataset.brandId=brand.id;
-      d.innerHTML=`<summary>${esc(brand.brand_name)}</summary><div></div>`;
-      if(openBrandIds.has(String(brand.id)))d.open=true;
-      usable+=addButtons(d.lastElementChild,brand,families);
-      brandHost.appendChild(d);
+      const d=document.createElement('details');d.className='v391-direct-brand-root v41223-selector-brand';d.dataset.brandId=brand.id;d.innerHTML=`<summary>${esc(brand.brand_name)}</summary><div></div>`;
+      if(openBrandIds.has(String(brand.id)))d.open=true;usable+=addButtons(d.lastElementChild,brand,families);brandHost.appendChild(d);
     });
+    if(!brandHost.children.length)brandRoot.remove();
 
     if(!usable){
       const restricted=scopeEnforced()||customerHasBrandRestriction();
@@ -1019,7 +1029,7 @@
   function bindSelectionDefaults(){
     const master=()=>masterBrand(),submenu=document.querySelector('.nav-group[data-nav-group="selectorMenu"] .nav-submenu');
     const fallback=selectorFallbackButtons(submenu);
-    [['selector','CHC',fallback.chc],['selectorEs','ES',fallback.es]].forEach(([page,family,btn])=>{if(btn&&!btn.dataset.v391Bound){btn.dataset.v391Bound='1';btn.addEventListener('click',()=>{
+    [['selector','CHC',fallback.chc],['selectorBfi','BFI',fallback.bfi],['selectorEs','ES',fallback.es]].forEach(([page,family,btn])=>{if(btn&&!btn.dataset.v391Bound){btn.dataset.v391Bound='1';btn.addEventListener('click',()=>{
       if(consumePreservedSelectorBrand(page,family))return;
       clearSelectorPresentationContext(page);
       if(brandSeriesLocked()){const target=resolveAuthorityTarget('',family),b=target?byBrandId(target.brandId):null;if(b)setSelectedBrand(b.id,target.family,page);return}
@@ -1119,7 +1129,7 @@
       if(restricted&&!current)current=visible[0]||null;
       if(current){
         const families=brandFamilies(current).filter(f=>
-          ['CHC','ES','MOTOR'].includes(String(f.family||'').toUpperCase())&&
+          ['CHC','BFI','ES','MOTOR'].includes(String(f.family||'').toUpperCase())&&
           roleAllowsFamily(current.id,f.family,f.productGroup||f.family)&&
           customerAllowsProduct(current.id,f.productGroup||f.family,f.family)
         );
