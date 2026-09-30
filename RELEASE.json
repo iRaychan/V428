@@ -1,15 +1,15 @@
 {
-  "version": "4.28.41",
-  "baseline": "4.28.40 FULL CLEAN",
-  "upgrade_supported_from": "4.28.40",
+  "version": "4.28.42",
+  "baseline": "4.28.41 FULL CLEAN",
+  "upgrade_supported_from": "4.28.41",
   "changes": [
-    "B.G.Reich ES Selection keeps the dedicated Product Curve panel and the exact shared Product ES layout rules",
-    "The Selection iframe viewport is now pinned to the visible Product panel width and follows width changes with ResizeObserver",
-    "The obsolete Selection-only page-fit override is removed so Product and Selection no longer use competing geometry rules",
-    "Visible version and service-worker cache are V4.28.41"
+    "B.G.Reich ES Selection now mounts directly inside the real shared productCurveDialog and productCurveHost",
+    "The separate Selection Product Curve imitation wrapper and its incorrect Safari canvas are removed",
+    "Selection ES and Product ES now receive the same outer panel width and iframe sizing path",
+    "Visible version and service-worker cache are V4.28.42"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade V4.28.40 to V4.28.41. For an earlier installation, use the Full Clean package. No database migration is required."
+  "notes": "Upgrade V4.28.41 to V4.28.42. For an earlier installation, use the Full Clean package. No database migration is required."
 }
