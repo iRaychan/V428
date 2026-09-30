@@ -1,16 +1,16 @@
 {
-  "version": "4.28.46",
+  "version": "4.28.47",
   "baseline": "4.28.41 FULL CLEAN",
   "upgrade_supported_from": "4.28.41",
   "changes": [
-    "Product BFI Curve now rebuilds and publishes the visible model identity when Motor Phase changes",
-    "Product BFI Curve now changes BFI to BFIN immediately when Pump Material changes to Stainless Steel 316",
-    "BFI material, phase, screen title, selected-pump heading and export payload remain synchronized",
-    "The V4.28.45 CHC first-open stabilization and earlier ES/BFI layout fixes remain included",
-    "Visible version and service-worker cache are V4.28.46"
+    "Selection CHC C6 now reloads once after its host becomes visible, preventing the oversized first Safari render",
+    "CHC C4 and CHC C6 now share the CHC Series heading",
+    "Selection and Product BFI Power curves now show a positive shut-off value at zero flow",
+    "Earlier ES/BFI shared-panel and BFI material/phase identity fixes remain included",
+    "Visible version and service-worker cache are V4.28.47"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade V4.28.41 or later to V4.28.46. For an earlier installation, use the Full Clean package. No database migration is required."
+  "notes": "Upgrade V4.28.41 or later to V4.28.47. For an earlier installation, use the Full Clean package. No database migration is required."
 }
