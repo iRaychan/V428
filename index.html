@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#17365d">
-  <title>KeySuite V4.28.47</title>
-  <script>window.KEYSUITE_VERSION='4.28.47';window.KEYSUITE_BUILD='V4.28.47';</script>
+  <title>KeySuite V4.28.48</title>
+  <script>window.KEYSUITE_VERSION='4.28.48';window.KEYSUITE_BUILD='V4.28.48';</script>
   <link rel="manifest" href="manifest.json">
   <style>
     :root{--navy:#17365d;--blue:#2f75b5;--light:#eef3f8;--line:#cbd5e1;--text:#172033;--muted:#64748b;--ok:#15803d}
@@ -83,6 +83,10 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
   html,body{margin:0!important;padding:0!important;background:#fff!important}
   body.print-complete .app{display:none!important}
   body.print-complete #printQuotationDocument{display:block!important}
+  /* Safari on macOS applies the selected printer's non-printable margins even to
+     the A4 preview. Fit the unchanged A4 quotation canvas inside that area so a
+     two-page quotation does not create two additional overflow sheets. */
+  html.macos-safari body.print-complete #printQuotationDocument{zoom:.92}
   .print-page{box-sizing:border-box;position:relative;width:210mm;height:297mm;padding:8mm 8mm 18mm;background:#fff;color:#111;font-family:Calibri,Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.28;page-break-after:always;overflow:hidden}
   .print-page:last-child{page-break-after:auto}
   .print-cover-inner{position:relative;width:194mm;height:271mm;margin:0}
@@ -623,7 +627,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 #v391MappingRows .btn{white-space:nowrap;min-height:40px}
 </style>
 
-  <style id="v42847-selection-scale">
+  <style id="v42848-selection-scale">
     #selectorEs{width:100%;max-width:100%;min-width:0}
     .card.selection-curve-shell{width:100%;min-width:0;padding:0!important;margin-bottom:0!important;border:1px solid var(--line)!important;border-radius:12px!important;background:#fff!important;box-shadow:var(--shadow)!important;overflow:hidden!important}
   </style>
@@ -631,7 +635,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <body>
 <div id="loginView" class="auth-shell">
   <form id="loginForm" class="auth-card" novalidate>
-    <div class="auth-brand">KeySuite<small>V4.28.47</small></div>
+    <div class="auth-brand">KeySuite<small>V4.28.48</small></div>
     <h1>Sign in</h1>
     <p>Only approved Keylargo users can enter KeySuite.</p>
     <div id="loginMessage" class="auth-message"></div>
@@ -647,7 +651,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <div id="loadingView" class="loading-screen hidden"><div class="loading-card"><div class="spinner"></div><div id="loadingText">Checking secure access…</div></div></div>
 <div id="appView" class="app hidden">
   <aside>
-    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.28.47</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
+    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.28.48</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
     <nav>
       <button data-page="dashboard" class="active">Dashboard</button>
       <button data-page="customers">Customers</button>
@@ -672,7 +676,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       <button id="settingsButton" type="button" class="settings-button">⚙ Settings</button>
       <button id="logoutButton" type="button">Sign out</button>
     </div>
-    <div class="suite-version">KeySuite V4.28.47</div>
+    <div class="suite-version">KeySuite V4.28.48</div>
   </aside>
 
   <main>
@@ -842,18 +846,18 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         <div><label>Supply</label><label id="bareShaftControl" class="default-choice-control"><input id="bareShaft" type="checkbox" data-default-checked="false"> Bare Shaft Pump</label></div>
       </div>
       <div class="card" style="padding:0;overflow:hidden">
-        <iframe id="selectorFrame" src="selector/index.html?v=42847" data-src="selector/index.html?v=42847" data-g2-src="selector/index.html?v=42847" data-g1-src="selector-g1/index.html?v=42847" title="KeySelector CHC C6 Series" style="width:100%;height:1900px;border:0;display:block"></iframe>
+        <iframe id="selectorFrame" src="selector/index.html?v=42848" data-src="selector/index.html?v=42848" data-g2-src="selector/index.html?v=42848" data-g1-src="selector-g1/index.html?v=42848" title="KeySelector CHC C6 Series" style="width:100%;height:1900px;border:0;display:block"></iframe>
       </div>
     </section>
 
     <section id="selectorEs" class="page">
       <button id="quickSelectionReturnEs" class="btn secondary quick-selection-return" type="button" hidden title="Return to Quick Selection" aria-label="Return to Quick Selection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5"></path><path d="M4 12h10a6 6 0 0 1 6 6"></path></svg></button>
-      <iframe id="selectorEsFrame" src="selector-es/index.html?v=42847" data-src="selector-es/index.html?v=42847" title="KeyES End Suction Selector V1.7" style="width:100%;height:2600px;border:0;display:none"></iframe>
+      <iframe id="selectorEsFrame" src="selector-es/index.html?v=42848" data-src="selector-es/index.html?v=42848" title="KeyES End Suction Selector V1.7" style="width:100%;height:2600px;border:0;display:none"></iframe>
     </section>
 
     <section id="selectorBfi" class="page">
       <button id="quickSelectionReturnBfi" class="btn secondary quick-selection-return" type="button" hidden title="Return to Quick Selection" aria-label="Return to Quick Selection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5"></path><path d="M4 12h10a6 6 0 0 1 6 6"></path></svg></button>
-      <iframe id="selectorBfiFrame" src="selector-bfi/index.html?v=42847" data-src="selector-bfi/index.html?v=42847" title="KeySelector BFI" style="width:100%;height:1900px;border:0;display:block"></iframe>
+      <iframe id="selectorBfiFrame" src="selector-bfi/index.html?v=42848" data-src="selector-bfi/index.html?v=42848" title="KeySelector BFI" style="width:100%;height:1900px;border:0;display:block"></iframe>
     </section>
 
     <section id="productChc" class="page">
@@ -870,7 +874,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         <div class="card"><h2>CHC Series</h2><div id="productSeriesList" class="product-series-list"></div></div>
         <div class="card"><div class="page-title-row" style="margin-bottom:12px"><div><h2 id="productSeriesTitle" style="margin:0">Models</h2><div id="productModelCount" class="muted"></div></div></div><div id="productModelGrid" class="product-model-grid"></div></div>
       </div>
-      <iframe id="productSelectorFrame" src="about:blank" data-src="selector/product.html?product=1&v=42847" data-g2-src="selector/product.html?product=1&v=42847" data-g1-src="selector-g1/product.html?product=1&v=42847" title="CHC Product Curve" style="display:none"></iframe>
+      <iframe id="productSelectorFrame" src="about:blank" data-src="selector/product.html?product=1&v=42848" data-g2-src="selector/product.html?product=1&v=42848" data-g1-src="selector-g1/product.html?product=1&v=42848" title="CHC Product Curve" style="display:none"></iframe>
     </section>
 
     <section id="productBfi" class="page">
@@ -883,7 +887,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         <div><label>Elastomer</label><select id="bfiProductElastomer"><option selected>Viton</option><option>EPDM</option><option>NBR</option></select></div>
       </div>
       <div class="product-layout"><div class="card"><h2>BFI Series</h2><div id="bfiProductSeriesList" class="product-series-list"></div></div><div class="card"><div class="page-title-row" style="margin-bottom:12px"><div><h2 style="margin:0">BFI Models</h2><div id="bfiProductModelCount" class="muted"></div></div></div><div id="bfiProductModelGrid" class="product-model-grid"></div></div></div>
-      <iframe id="productBfiSelectorFrame" src="about:blank" data-src="selector-bfi/product.html?product=1&amp;v=42847" title="BFI Product Curve" style="display:none"></iframe>
+      <iframe id="productBfiSelectorFrame" src="about:blank" data-src="selector-bfi/product.html?product=1&amp;v=42848" title="BFI Product Curve" style="display:none"></iframe>
     </section>
 
     <section id="productGws" class="page">
@@ -977,7 +981,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       </div>
       <div class="page-title-row" style="margin:16px 0 0"><div><h2 style="margin:0">ES Models</h2></div><div class="price-list-search"><label>Search Model</label><input id="esProductSearch" placeholder="Example: ES 65-32"></div></div>
       <div class="product-layout es-product-layout"><div class="card"><h2>ES Series</h2><div id="esProductSeriesList" class="product-series-list"></div></div><div class="card"><div class="page-title-row" style="margin-bottom:12px"><div><h2 id="esProductSeriesTitle" style="margin:0">ES Models</h2><div id="esProductCount" class="muted"></div></div></div><div id="esProductModelGrid" class="product-model-grid"></div></div></div>
-      <iframe id="productEsSelectorFrame" src="about:blank" data-src="selector-es/index.html?product=1&v=42847" title="ES Product Curve" style="display:none"></iframe>
+      <iframe id="productEsSelectorFrame" src="about:blank" data-src="selector-es/index.html?product=1&v=42848" title="ES Product Curve" style="display:none"></iframe>
     </section>
     <section id="productKeyplc" class="page">
       <div class="page-title-row"><div><h1>Product · KeyPLC Panel</h1><div class="muted">Choose a motor rating and number of pumps, then route the priced control panel to Assembly or Quotation.</div></div></div>
@@ -2109,9 +2113,9 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
   else setGeneration(generation);
 })();
 </script>
-<script src="v42847-chc-first-open.js?v=42847"></script>
+<script src="v42848-chc-first-open.js?v=42848"></script>
 <script src="v41200-bootstrap.js?v=42826"></script>
-<script src="v42847-version-lock.js?v=42847"></script>
+<script src="v42848-version-lock.js?v=42848"></script>
 
 <script id="v41412-static-product-generation">
 document.addEventListener('click',event=>{

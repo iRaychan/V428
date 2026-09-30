@@ -1,16 +1,18 @@
 {
-  "version": "4.28.47",
+  "version": "4.28.48",
   "baseline": "4.28.41 FULL CLEAN",
   "upgrade_supported_from": "4.28.41",
   "changes": [
+    "macOS Safari quotation printing now fits the unchanged A4 canvas into the physical printable area, preventing two blank overflow sheets",
+    "Windows and non-Safari quotation/PDF output remains unchanged",
     "Selection CHC C6 now reloads once after its host becomes visible, preventing the oversized first Safari render",
     "CHC C4 and CHC C6 now share the CHC Series heading",
     "Selection and Product BFI Power curves now show a positive shut-off value at zero flow",
     "Earlier ES/BFI shared-panel and BFI material/phase identity fixes remain included",
-    "Visible version and service-worker cache are V4.28.47"
+    "Visible version and service-worker cache are V4.28.48"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade V4.28.41 or later to V4.28.47. For an earlier installation, use the Full Clean package. No database migration is required."
+  "notes": "Upgrade V4.28.41 or later to V4.28.48. For an earlier installation, use the Full Clean package. No database migration is required."
 }
