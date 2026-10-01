@@ -1,12 +1,12 @@
-# KeySuite V4.28.51 FULL CLEAN
+# KeySuite V4.28.52 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
 
-## V4.28.51 - Quick Selection first-click and BFI Cold Item ranking
+## V4.28.52 - BFI Cold Item series-aware ranking
 
-- CHC C6 now waits for visible-frame stabilization before opening the chosen Quick Selection model, so CHC 2-90 opens on the first click.
-- Ticking **Cold Item** includes unpriced BFI models in the normal hydraulic suitability order instead of keeping priced models ahead.
-- At 18.3 IGPM and 82 ft, BFI 10-2 ranks ahead of BFI 10-3 when both are included.
+- Ticking **Cold Item** keeps the priced recommendation's BFI series as the hydraulic anchor, then re-ranks every suitable hot and cold stage inside that series.
+- At 18.3 IGPM and 82 ft, the BFI 10 series now recommends BFI 10-2 instead of BFI 10-3 or the unrelated BFI 4-5 cold model.
+- The V4.28.51 CHC C6 first-click stabilization fix remains included.
 - No database migration or Edge Function deployment is required.
 
 ## V4.28.17 - balanced macOS Safari selector PDF layout

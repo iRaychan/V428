@@ -1,12 +1,13 @@
 {
-  "version": "4.28.51",
+  "version": "4.28.52",
   "baseline": "4.28.41 FULL CLEAN",
   "upgrade_supported_from": "4.28.41",
   "changes": [
+    "BFI Cold Item selection now keeps the priced recommendation's hydraulic series as its anchor and re-ranks all suitable stages in that series",
+    "for 18.3 IGPM at 82 ft, a priced BFI 10-3 anchor now correctly promotes the suitable cold BFI 10-2 instead of switching to BFI 4-5",
     "Quick Selection CHC C6 now waits for the first visible selector frame to finish stabilizing before opening the chosen curve",
     "the first CHC 2-90 click from Quick Selection now opens its curve without requiring Back and a second click",
-    "when Cold Item is ticked, BFI hot and cold candidates now share the same hydraulic suitability ranking",
-    "Quick Selection no longer promotes a priced BFI model ahead of a more suitable cold model, including BFI 10-2 versus BFI 10-3 at 18.3 IGPM and 82 ft",
+    "within the anchored BFI series, price availability no longer promotes BFI 10-3 ahead of the more suitable BFI 10-2",
     "quotation page 1 now uses two blank body-text rows between Quotation and Project",
     "quotation page 1 now uses two blank body-text rows between Handled by and Dear Mr., on both Windows and macOS",
     "quotation printouts no longer include the floating round return button",
@@ -17,10 +18,10 @@
     "CHC C4 and CHC C6 now share the CHC Series heading",
     "Selection and Product BFI Power curves now show a positive shut-off value at zero flow",
     "Earlier ES/BFI shared-panel and BFI material/phase identity fixes remain included",
-    "Visible version and service-worker cache are V4.28.51"
+    "Visible version and service-worker cache are V4.28.52"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade V4.28.41 or later to V4.28.51. For an earlier installation, use the Full Clean package. No database migration is required."
+  "notes": "Upgrade V4.28.41 or later to V4.28.52. For an earlier installation, use the Full Clean package. No database migration is required."
 }
