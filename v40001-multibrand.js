@@ -110,16 +110,17 @@
   };
   const productGroupLabel=value=>{
     const group=normalizeProductGroup(value);
-    return ({CHC:'CHC',CHC_G1:'CHC C4',CHC_G2:'CHC C6',BFI:'BFI',ES:'End Suction',MOTOR:'Motor'})[group]||String(value||group).replace(/_/g,' ');
+    return ({CHC:'CHC',CHC_G1:'CHC C4',CHC_G2:'CHC C6',CR:'CR',BFI:'BFI',ES:'End Suction',MOTOR:'Motor'})[group]||String(value||group).replace(/_/g,' ');
   };
   // V4.21.09 naming: Price Group/admin pricing uses G1/G2; customer-facing Series uses C4/C6.
   const priceGroupAdminLabel=value=>{
     const group=normalizeProductGroup(value);
-    return ({CHC:'CHC G2',CHC_G1:'CHC G1',CHC_G2:'CHC G2',BFI:'BFI',ES:'End Suction',MOTOR:'Motor'})[group]||String(value||group).replace(/_/g,' ');
+    return ({CHC:'CHC G2',CHC_G1:'CHC G1',CHC_G2:'CHC G2',CR:'CR',BFI:'BFI',ES:'End Suction',MOTOR:'Motor'})[group]||String(value||group).replace(/_/g,' ');
   };
   const PRICE_GROUP_OPTIONS=[
     {value:'CHC_G1',label:'CHC G1'},
     {value:'CHC_G2',label:'CHC G2'},
+    {value:'CR',label:'CR'},
     {value:'BFI',label:'BFI'},
     {value:'ES',label:'End Suction'},
     {value:'MOTOR',label:'Motor'}
@@ -534,7 +535,7 @@
     renderEffectiveRates();renderDefaultMargins(editable);
   }
   function renderEffectiveRates(){
-    const body=$('v391EffectiveRates');if(!body)return;const labels={CHC_G1:'CHC G1',CHC_G2:'CHC G2',ES:'ES',GWS:'GWS',KEYPLC:'KeyPLC',MANIFOLD:'Manifold',MOTOR:'Motor',COUPLING:'Coupling'};
+    const body=$('v391EffectiveRates');if(!body)return;const labels={CHC_G1:'CHC G1',CHC_G2:'CHC G2',CR:'CR',BFI:'BFI',ES:'ES',GWS:'GWS',KEYPLC:'KeyPLC',MANIFOLD:'Manifold',MOTOR:'Motor',COUPLING:'Coupling'};
     body.innerHTML=Object.keys(labels).map(f=>{const r=state.baseMultipliers?.[f]||{};return `<tr><td><b>${labels[f]}</b></td><td>${num(r.USD).toFixed(2)}</td><td><b>${effectiveRate(r.USD,'USD').toFixed(2)}</b></td><td>${num(r.RMB).toFixed(3)}</td><td><b>${effectiveRate(r.RMB,'RMB').toFixed(3)}</b></td></tr>`}).join('');
   }
   function renderDefaultMargins(editable=state.generalEditing){
@@ -732,6 +733,7 @@
     'b.g.reich':[
       {label:'CHC C4',family:'CHC',productGroup:'CHC_G1',page:'productChc',generation:'G1'},
       {label:'CHC C6',family:'CHC',productGroup:'CHC_G2',page:'productChc',generation:'G2'},
+      {label:'CR',family:'CR',productGroup:'CR',page:'crPriceList'},
       {label:'BFI',family:'BFI',productGroup:'BFI',page:'productBfi'},
       {label:'End Suction',family:'ES',page:'productEs'},
       {label:'Motor',family:'MOTOR',page:'productMotor'}
@@ -745,7 +747,7 @@
     try{sessionStorage.setItem('keysuite-v41412-product-chc-generation',code)}catch(_){}
     window.KeySuiteProduct?.setChcGeneration?.(code);
   }
-  function familyPage(fam){return ({CHC:'productChc',BFI:'productBfi',ES:'productEs',MOTOR:'productMotor',GWS:'productGws',KEYPLC:'productKeyplc',MANIFOLD:'productManifold',COUPLING:'productCoupling',BASEPLATE:'productBaseplate'})[baseFamily(fam)]||''}
+  function familyPage(fam){return ({CHC:'productChc',CR:'crPriceList',BFI:'productBfi',ES:'productEs',MOTOR:'productMotor',GWS:'productGws',KEYPLC:'productKeyplc',MANIFOLD:'productManifold',COUPLING:'productCoupling',BASEPLATE:'productBaseplate'})[baseFamily(fam)]||''}
   function brandFamilies(brand){
     const key=String(brand.brand_key||'').toLowerCase(),built=isMasterBrand(brand)?BUILTIN_FAMILIES['b.g.reich']:BUILTIN_FAMILIES[key];
     if(built)return built.map(f=>{
@@ -763,7 +765,7 @@
       out.push({label:brandSeriesFor(brand,group)||productGroupLabel(group),family,productGroup:group,generation:generationForGroup(group),page});
     });
     return out.sort((a,b)=>{
-      const order=g=>({CHC_G1:0,CHC_G2:1,CHC:2,BFI:3,ES:4,MOTOR:5}[normalizeProductGroup(g)]??9);
+      const order=g=>({CHC_G1:0,CHC_G2:1,CHC:2,CR:3,BFI:4,ES:5,MOTOR:6}[normalizeProductGroup(g)]??9);
       return order(a.productGroup)-order(b.productGroup)||String(a.label).localeCompare(String(b.label),undefined,{numeric:true});
     });
   }

@@ -1,8 +1,13 @@
 {
-  "version": "4.28.53",
+  "version": "4.28.54",
   "baseline": "4.28.41 FULL CLEAN",
   "upgrade_supported_from": "4.28.41",
   "changes": [
+    "adds Product > B.G.Reich > CR with a CHC-style CR, CRS and CRN Price List editor",
+    "imports 439 unique CR models with RMB and MYR prices and currency-specific rarity",
+    "includes the workbook mechanical-seal add-on reference table",
+    "adds independent CR USD and RMB multipliers and owner-only database save RPCs",
+    "General Pricelist Effective Product Exchange Rates now includes CR and BFI",
     "Power source calculations remain fifth-order polynomial fits",
     "the displayed Power curve now uses a bounded quintic Hermite bridge from zero flow to the first positive-flow source point",
     "the zero-flow Power extension matches value, slope and curvature at the first source point for a visually smoother C2 join",
@@ -22,10 +27,10 @@
     "CHC C4 and CHC C6 now share the CHC Series heading",
     "Selection and Product BFI Power curves now show a positive shut-off value at zero flow",
     "Earlier ES/BFI shared-panel and BFI material/phase identity fixes remain included",
-    "Visible version and service-worker cache are V4.28.53"
+    "Visible version and service-worker cache are V4.28.54"
   ],
-  "new_database_migration_required": false,
+  "new_database_migration_required": true,
   "edge_function_deploy_required": false,
   "edge_function": null,
-  "notes": "Upgrade V4.28.41 or later to V4.28.53. For an earlier installation, use the Full Clean package. No database migration is required."
+  "notes": "Upgrade V4.28.41 or later to V4.28.54. Run supabase/migrations/20261001190000_v42854_cr_pricelist.sql, then upload the package. For an earlier installation, use the Full Clean package."
 }

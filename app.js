@@ -203,6 +203,7 @@ function showPage(id){
  window.KeySuiteRoles?.pageShown?.(id);
  window.KeySuiteCategories?.pageShown?.(id);
  window.KeySuitePriceList?.pageShown?.(id);
+ window.KeySuiteCRPriceList?.pageShown?.(id);
  window.KeySuiteProduct?.pageShown?.(id);
  window.KeySuiteBFI?.pageShown?.(id);
  window.KeySuiteManifold?.pageShown?.(id);

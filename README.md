@@ -1,14 +1,16 @@
-# KeySuite V4.28.53 FULL CLEAN
+# KeySuite V4.28.54 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
 
-## V4.28.53 - smooth zero-flow Power curve transition
+## V4.28.54 - B.G.Reich CR Price List
 
-- Power calculations remain fifth-order polynomial fits.
-- The display-only transition from zero flow to the first positive-flow point is now a bounded quintic Hermite bridge that matches value, slope and curvature at the join.
-- The smoother C2 transition is shared by CHC C4/C6, BFI Selection/Product and ES without changing source points, selection, duty calculation or motor sizing.
-- The V4.28.52 BFI Cold Item series-aware ranking and V4.28.51 CHC first-click fixes remain included.
-- No database migration or Edge Function deployment is required.
+- Adds Product → B.G.Reich → CR with the CHC-style CR / CRS / CRN price editor.
+- Imports 439 unique CR models and their RMB/MYR prices and per-variant rarity from `010 - CR (Pricelist) - 261001 - V1.0.xlsx`.
+- Includes the workbook's CR mechanical-seal add-on reference table.
+- Adds independent CR USD and RMB multipliers and a database-backed owner save workflow.
+- Shows both CR and BFI in General Pricelist → Effective Product Exchange Rates.
+- Requires `supabase/migrations/20261001190000_v42854_cr_pricelist.sql`.
+- V4.28.53 curve, BFI ranking, and CHC first-click fixes remain included.
 
 ## V4.28.17 - balanced macOS Safari selector PDF layout
 
