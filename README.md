@@ -1,6 +1,13 @@
-# KeySuite V4.28.54 FULL CLEAN
+# KeySuite V4.28.55 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
+
+## V4.28.55 - CR Price List and Category Pricing
+
+- Adds CR / CRS / CRN to the main Price List dashboard.
+- Adds CR as its own Category Pricing sector in Category Management and Company & Pricing.
+- Adds an owner-only CR Category Pricing save function and allows CR currency selection per category.
+- Requires `supabase/migrations/20261001203000_v42855_cr_category_pricing.sql` after the V4.28.54 CR migration.
 
 ## V4.28.54 - B.G.Reich CR Price List
 

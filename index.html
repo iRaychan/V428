@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#17365d">
-  <title>KeySuite V4.28.54</title>
-  <script>window.KEYSUITE_VERSION='4.28.54';window.KEYSUITE_BUILD='V4.28.54';</script>
+  <title>KeySuite V4.28.55</title>
+  <script>window.KEYSUITE_VERSION='4.28.55';window.KEYSUITE_BUILD='V4.28.55';</script>
   <link rel="manifest" href="manifest.json">
   <style>
     :root{--navy:#17365d;--blue:#2f75b5;--light:#eef3f8;--line:#cbd5e1;--text:#172033;--muted:#64748b;--ok:#15803d}
@@ -638,7 +638,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <body>
 <div id="loginView" class="auth-shell">
   <form id="loginForm" class="auth-card" novalidate>
-    <div class="auth-brand">KeySuite<small>V4.28.54</small></div>
+    <div class="auth-brand">KeySuite<small>V4.28.55</small></div>
     <h1>Sign in</h1>
     <p>Only approved Keylargo users can enter KeySuite.</p>
     <div id="loginMessage" class="auth-message"></div>
@@ -654,7 +654,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <div id="loadingView" class="loading-screen hidden"><div class="loading-card"><div class="spinner"></div><div id="loadingText">Checking secure access…</div></div></div>
 <div id="appView" class="app hidden">
   <aside>
-    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.28.54</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
+    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.28.55</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
     <nav>
       <button data-page="dashboard" class="active">Dashboard</button>
       <button data-page="customers">Customers</button>
@@ -679,7 +679,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       <button id="settingsButton" type="button" class="settings-button">⚙ Settings</button>
       <button id="logoutButton" type="button">Sign out</button>
     </div>
-    <div class="suite-version">KeySuite V4.28.54</div>
+    <div class="suite-version">KeySuite V4.28.55</div>
   </aside>
 
   <main>
@@ -1311,6 +1311,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
                   <div class="category-product-buttons" aria-label="Product pricing rules">
                   <button class="category-product-button" type="button" data-category-product="CHC_G1">CHC G1</button>
                   <button class="category-product-button active" type="button" data-category-product="CHC_G2">CHC G2</button>
+                  <button class="category-product-button" type="button" data-category-product="CR">CR</button>
                   <button class="category-product-button" type="button" data-category-product="BFI">BFI</button>
                   <button class="category-product-button" type="button" data-category-product="ES">ES</button>
                   <button class="category-product-button" type="button" data-category-product="GWS">GWS</button>
@@ -1400,6 +1401,12 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
           <span class="module-icon">CHC</span>
           <h2>CHC G1 / CHC G2</h2>
           <p>Maintain separate CHC G1 and CHC G2 price lists. G1 never uses G2 source prices.</p>
+          <span class="module-order">OPEN PRICE LIST</span>
+        </button>
+
+        <button type="button" class="key-module-card" data-go="crPriceList">
+          <span class="module-icon">CR</span><h2>CR / CRS / CRN</h2>
+          <p>Maintain B.G.Reich CR, CRS and CRN source prices and rarity by currency.</p>
           <span class="module-order">OPEN PRICE LIST</span>
         </button>
 
@@ -1782,6 +1789,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
           <div class="pricing-family-tabs" id="pricingFamilyTabs" role="tablist" aria-label="Product pricing rule">
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="CHC_G1">CHC G1</button>
             <button class="pricing-family-tab active" type="button" role="tab" aria-selected="true" data-pricing-family="CHC_G2">CHC G2</button>
+            <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="CR">CR</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="BFI">BFI</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="ES">ES</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="GWS">GWS</button>
@@ -2141,7 +2149,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 </script>
 <script src="v42853-chc-first-open.js?v=42854"></script>
 <script src="v41200-bootstrap.js?v=42826"></script>
-<script src="v42854-version-lock.js?v=42854"></script>
+<script src="v42855-version-lock.js?v=42855"></script>
 
 <script id="v41412-static-product-generation">
 document.addEventListener('click',event=>{

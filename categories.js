@@ -157,7 +157,7 @@
       let rules=c.product_rules||{};if(typeof rules==='string'){try{rules=JSON.parse(rules)}catch(_){rules={}}}
       const legacy={margin:Number(c.chc_margin??c.chc_factor??.38),normal:0,rare:0,transport:Number(c.transport??30),useCommission:true,useSetDiscount:true,useFinalDiscount:true,useFuelCharge:true,currencies:[]},other={margin:0,normal:0,rare:0,transport:0,useCommission:true,useSetDiscount:true,useFinalDiscount:true,useFuelCharge:true,currencies:[]};
       const normalize=(code,fallback=other)=>normalizeRule(rules?.[code]||{},fallback);
-      return {id:c.id,name:String(c.category_name||c.name||'Unnamed Category'),productRules:{CHC:normalize('CHC',legacy),CHC_G1:normalize('CHC_G1',other),CHC_G2:normalizeRule(rules?.CHC_G2||rules?.CHC||{},legacy),BFI:normalize('BFI'),ES:normalize('ES'),GWS:normalize('GWS'),KEYPLC:normalize('KEYPLC'),MANIFOLD:normalize('MANIFOLD'),MOTOR:normalize('MOTOR'),COUPLING:normalize('COUPLING'),BASEPLATE:normalize('BASEPLATE')},margins:{CHC:Number(c.chc_margin??c.chc_factor??0),CHC_G2:Number(c.chc_margin??c.chc_factor??0)},factors:{CHC:Number(c.chc_margin??c.chc_factor??0),CHC_G2:Number(c.chc_margin??c.chc_factor??0)},transport:Number(c.transport||0)};
+      return {id:c.id,name:String(c.category_name||c.name||'Unnamed Category'),productRules:{CHC:normalize('CHC',legacy),CHC_G1:normalize('CHC_G1',other),CHC_G2:normalizeRule(rules?.CHC_G2||rules?.CHC||{},legacy),CR:normalize('CR'),BFI:normalize('BFI'),ES:normalize('ES'),GWS:normalize('GWS'),KEYPLC:normalize('KEYPLC'),MANIFOLD:normalize('MANIFOLD'),MOTOR:normalize('MOTOR'),COUPLING:normalize('COUPLING'),BASEPLATE:normalize('BASEPLATE')},margins:{CHC:Number(c.chc_margin??c.chc_factor??0),CHC_G2:Number(c.chc_margin??c.chc_factor??0)},factors:{CHC:Number(c.chc_margin??c.chc_factor??0),CHC_G2:Number(c.chc_margin??c.chc_factor??0)},transport:Number(c.transport||0)};
     });
   }
   async function reload(){
@@ -185,6 +185,8 @@
         rpc='keysuite_save_chc_generation_category_rule_v41412';args=params;
       }else if(selectedProduct==='BFI'&&selectedId){
         rpc='keysuite_save_bfi_category_rule_v42308';args=params;
+      }else if(selectedProduct==='CR'&&selectedId){
+        rpc='keysuite_save_cr_category_rule_v42855';args=params;
       }else{
         rpc='keysuite_manage_pricing_category_v221';args={...params,p_product_code:selectedProduct==='CHC_G2'?'CHC':selectedProduct};
       }
