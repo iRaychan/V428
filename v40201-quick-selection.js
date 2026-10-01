@@ -168,6 +168,7 @@ function applyDashboardStockPriority(e,data,includeColdItems=false){
   const all=[data,...(Array.isArray(data.alternatives)?data.alternatives:[])],seen=new Set(),tagged=[];
   all.forEach(item=>{const key=priceModelKey(item?.base_model||item?.model,e?.family);if(!key||seen.has(key))return;seen.add(key);const priced=dashboardPriceAvailable(e,item);tagged.push({...item,price_available:priced,stock_status:priced?'hot':'cold'})});
   const hot=tagged.filter(x=>x.price_available),cold=tagged.filter(x=>!x.price_available),visible=includeColdItems?[...hot,...cold]:(hot.length?hot:cold);
+  if(includeColdItems)return tagged.length?{...tagged[0],alternatives:tagged.slice(1)}:null;
   if(!visible.length)return null;
   return {...visible[0],alternatives:visible.slice(1)};
 }
@@ -358,6 +359,14 @@ function ensureFrameState(value){const x=frame(value);if(!x)return {frame:null,c
 function ensureFrame(value){return ensureFrameState(value).frame}
 function frameReady(x){try{return !!x?.contentWindow&&x.contentDocument?.readyState==='complete'}catch(_){return false}}
 function waitFrameReady(value,requestId){return new Promise(resolve=>{const prepared=ensureFrameState(value),x=prepared.frame;if(!x){resolve(false);return}if(!prepared.changed&&frameReady(x)){resolve(true);return}let done=false;const finish=v=>{if(done)return;done=true;x.removeEventListener('load',onload);clearTimeout(timer);resolve(v)};const onload=()=>finish(state.pending?.requestId===requestId);x.addEventListener('load',onload,{once:true});const timer=setTimeout(()=>finish(frameReady(x)&&state.pending?.requestId===requestId),4500)})}
+function waitChcViewportReady(value,requestId){
+  if(entryFamily(value)!=='CHC')return Promise.resolve(true);
+  const x=ensureFrame(value);if(!x)return Promise.resolve(false);
+  const ready=()=>state.pending?.requestId===requestId&&x.dataset.ksChcViewportReady==='1'&&x.style.visibility!=='hidden';
+  if(ready())return Promise.resolve(true);
+  try{window.KeySuiteChcFirstOpen?.stabilize?.()}catch(_){}
+  return new Promise(resolve=>{let done=false;const finish=result=>{if(done)return;done=true;window.removeEventListener('KEYSUITE_CHC_VIEWPORT_READY',onready);clearTimeout(timer);resolve(result)};const onready=event=>{if(event.detail?.frameId===x.id&&ready())finish(true)};window.addEventListener('KEYSUITE_CHC_VIEWPORT_READY',onready);const timer=setTimeout(()=>finish(ready()||(frameReady(x)&&state.pending?.requestId===requestId)),4500)});
+}
 function sendOnce(value,msg){const x=ensureFrame(value);try{x?.contentWindow?.postMessage(msg,'*');return true}catch(_){return false}}
 function clearFamilyTimer(){if(state.familyTimer){clearTimeout(state.familyTimer);state.familyTimer=null}}
 function cancelPending(){clearFamilyTimer();state.queue=[];state.currentEntry=null;state.currentFamily=null;state.pending=null}
@@ -395,6 +404,7 @@ async function openCurve(e,data){
   pinFrameContext(fr,ctx);if(e.family==='CHC')setDefaultChcPayload(fr);
   try{window.KeySuiteSelectorBrand?.collapseSummaryForFrame?.(fr);window.KeySuiteSelectorBrand?.refresh?.(fr)}catch(_){}
   const ready=await waitFrameReady(e,req.requestId);if(!ready||state.pending?.requestId!==req.requestId)return;
+  const viewportReady=await waitChcViewportReady(e,req.requestId);if(!viewportReady||state.pending?.requestId!==req.requestId)return;
   fr=ensureFrame(e);pinFrameContext(fr,ctx);if(e.family==='CHC')setDefaultChcPayload(fr);
   try{window.KeySuiteSelectorBrand?.collapseSummaryForFrame?.(fr)}catch(_){}
 
@@ -417,7 +427,7 @@ function bind(){const box=$('ksDashboardDutyFinder');if(!box||box.dataset.v39444
   const changed=ev=>{if(!ev.target.matches('#ksDashFlow,#ksDashHead,#ksDashFlowUnit,#ksDashHeadUnit,#ks42704IncludeCold,input[data-enhanced-key]'))return;if(ev.target.matches('input[data-enhanced-key]'))syncEnhancedChecks();if(ev.target.matches('#ks42704IncludeCold'))syncColdItemCheck();ev.stopPropagation();ev.stopImmediatePropagation();cancelPending();const st=$('ksDutyStatus');if(st)st.textContent='Press Check Pumps to update results.'};
   box.addEventListener('input',changed,true);box.addEventListener('change',changed,true);return true}
 function message(ev){const m=ev.data||{};if(m.type!=='KEYSUITE_DASHBOARD_RESULT'||m.requestId!==state.pending?.requestId||!FAMILIES.includes(upper(m.family)))return;const f=upper(m.family),e=state.currentEntry;if(!e||f!==upper(e.family))return;const key=entryKey(e),data=m.suitable?applyDashboardStockPriority(e,m.data,state.pending?.includeColdItems===true):null;clearFamilyTimer();state.responded[key]=true;state.results[key]={suitable:!!data,data};state.currentEntry=null;state.currentFamily=null;renderResults(false);processNext(m.requestId)}
-function mark(){const version=window.KEYSUITE_VERSION||'4.28.50';document.title='KeySuite V'+version;document.querySelectorAll('.suite-version').forEach(n=>n.textContent='KeySuite V'+version)}
+function mark(){const version=window.KEYSUITE_VERSION||'4.28.51';document.title='KeySuite V'+version;document.querySelectorAll('.suite-version').forEach(n=>n.textContent='KeySuite V'+version)}
 function setup(){style();mark();if(!ensureUi()||!bind())return false;removeMaterialControls();if(api()?.state?.coreReady){if(!state.prefLoaded)loadPreference();else{renderPreference();renderResults(true)}}else renderBrandState();return true}
 window.addEventListener('message',message,true);
 window.addEventListener('KEYSUITE_BRANDS_READY',()=>{state.prefLoaded=false;if(canQuick())loadPreference()});

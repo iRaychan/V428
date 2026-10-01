@@ -1,6 +1,13 @@
-# KeySuite V4.28.17 FULL CLEAN
+# KeySuite V4.28.51 FULL CLEAN
 
-Baseline: V4.28.16 FULL CLEAN.
+Baseline: V4.28.41 FULL CLEAN.
+
+## V4.28.51 - Quick Selection first-click and BFI Cold Item ranking
+
+- CHC C6 now waits for visible-frame stabilization before opening the chosen Quick Selection model, so CHC 2-90 opens on the first click.
+- Ticking **Cold Item** includes unpriced BFI models in the normal hydraulic suitability order instead of keeping priced models ahead.
+- At 18.3 IGPM and 82 ft, BFI 10-2 ranks ahead of BFI 10-3 when both are included.
+- No database migration or Edge Function deployment is required.
 
 ## V4.28.17 - balanced macOS Safari selector PDF layout
 
