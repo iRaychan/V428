@@ -1,12 +1,13 @@
-# KeySuite V4.28.52 FULL CLEAN
+# KeySuite V4.28.53 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
 
-## V4.28.52 - BFI Cold Item series-aware ranking
+## V4.28.53 - smooth zero-flow Power curve transition
 
-- Ticking **Cold Item** keeps the priced recommendation's BFI series as the hydraulic anchor, then re-ranks every suitable hot and cold stage inside that series.
-- At 18.3 IGPM and 82 ft, the BFI 10 series now recommends BFI 10-2 instead of BFI 10-3 or the unrelated BFI 4-5 cold model.
-- The V4.28.51 CHC C6 first-click stabilization fix remains included.
+- Power calculations remain fifth-order polynomial fits.
+- The display-only transition from zero flow to the first positive-flow point is now a bounded quintic Hermite bridge that matches value, slope and curvature at the join.
+- The smoother C2 transition is shared by CHC C4/C6, BFI Selection/Product and ES without changing source points, selection, duty calculation or motor sizing.
+- The V4.28.52 BFI Cold Item series-aware ranking and V4.28.51 CHC first-click fixes remain included.
 - No database migration or Edge Function deployment is required.
 
 ## V4.28.17 - balanced macOS Safari selector PDF layout
