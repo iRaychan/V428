@@ -130,7 +130,7 @@ if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAg
   if(!document.getElementById(styleId)){
    const style=document.createElement('style');style.id=styleId;style.textContent=css;document.head.appendChild(style);
   }
-  const version=window.KEYSUITE_VERSION||'4.28.53';
+  const version=window.KEYSUITE_VERSION||'4.28.56';
   document.title='KeySuite V'+version;
   document.querySelectorAll('.auth-brand small').forEach(node=>node.textContent='V'+version);
   document.querySelectorAll('.brand small').forEach(node=>node.textContent='Full Suite V'+version);

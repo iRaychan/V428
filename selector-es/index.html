@@ -3,10 +3,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<script src="../power-curve.js?v=42853"></script>
+<script src="../power-curve.js?v=42856"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <script>if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAgent||'')&&!/(?:Chrome|Chromium|CriOS|Edg|OPR)/i.test(navigator.userAgent||''))document.documentElement.classList.add('macos-safari');</script>
-<title>KeySelector ES · KeySuite V4.28.53</title>
+<title>KeySelector ES · KeySuite V4.28.56</title>
 <link rel="icon" href="favicon.svg">
 <style>
 :root{--blue:#0877bd;--blue2:#055d94;--chc:#0f629c;--ink:#173047;--muted:#65798a;--line:#c9d8e4;--bg:#eef4f8;--panel:#fff;--good:#1d7a48;--warn:#a86600;--red:#c62828}
@@ -53,7 +53,7 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
 </style>
 <script src="../pdf-optimization.js?v=42508"></script>
 <style>
-/* V4.28.53: Selection ES defaults to the same geometry as the ES Product Curve panel. */
+/* V4.28.56: Selection ES defaults to the same geometry as the ES Product Curve panel. */
 html,body{width:100%;max-width:100%;min-width:0;overflow-x:hidden}
 .es-top-options,.layout,.main,.grid2,.grid2>*,.chart-stack,.chart-stack>*{min-width:0;max-width:100%}
 .es-top-options,.layout,.main,.grid2{width:100%}
@@ -146,7 +146,7 @@ html.macos-safari .grid2{width:100%;max-width:100%;grid-template-columns:minmax(
   <section class="grid2"><div class="card chart-card"><div class="chart-title">Pump Curve</div><div id="headChart" class="chart"></div><div class="chart-note">Parallel curves use total system flow</div></div><div class="chart-stack"><div class="card chart-card"><div class="chart-title">Efficiency</div><div id="effChart" class="chart"></div><div class="chart-note">Parallel curves use total system flow · efficiency remains per pump</div></div><div class="card chart-card"><div class="chart-title">Power</div><div id="powerChart" class="chart"></div><div class="chart-note">Total shaft power of all running pumps</div></div><div class="card chart-card"><div class="chart-title">NPSH</div><div id="npshChart" class="chart"></div><div class="chart-note">Parallel curves use total system flow · NPSHr remains per pump</div></div></div></section>
   <section class="card alts"><h3>Alternative Selections</h3><div id="alternatives" class="alt-list"></div></section>
   <section id="details" class="card details"></section>
-  <div class="footer">KeySelector ES · KeySuite V4.28.53 · Summary + Pumpset Technical Data</div>
+  <div class="footer">KeySelector ES · KeySuite V4.28.56 · Summary + Pumpset Technical Data</div>
 </main>
 </div>
 <script src="es-data.js?v=409"></script>
@@ -361,7 +361,7 @@ function chartBundle(r,screen,scope){scope=scope||'screen';var cfg=displayConfig
   function metricSeries(metric,order,totalPower){var fit=curveFitFor(r,r.impellerMm,r.speedRatio,metric,order),base={fit:fit,label:'',color:'#1264a3',width:3,opacity:1,xScale:1,yScale:1,dash:''};return [base].concat(cfg.pumpCounts.map(function(n){return {fit:curveFitFor(r,r.impellerMm,r.speedRatio,metric,order),label:totalPower?(n+'P Total'):(n+'P'),color:'#5c7d91',width:1.8,opacity:.78,xScale:n,yScale:totalPower?n:1,dash:'7 4'}}))}
   function metricPoints(metric,totalPower){if(!cfg.showDuty||(scope==='pdf'&&!!$('pdfHideDuty')&&$('pdfHideDuty').checked))return [];return (r.dutyPoints||[]).map(function(d,i){return {x:d.totalFlowLps*3.6,y:d.performance[metric]*(totalPower?d.pumps:1),label:d.label,color:palette[i%palette.length],radius:5}})}
   var powerInHp=scope==='pdf',powerScale=powerInHp?(1/0.746):1;
-  var effSeries=metricSeries('efficiencyPct',6,false),powerFit=curveFitFor(r,r.impellerMm,r.speedRatio,'shaftKw',5),powerSmooth=esPowerSmoothFit(powerFit),powerSeries=powerSmooth?[{fn:function(q){return esPowerSmoothValue(powerSmooth,q)},min:0,max:powerSmooth.max,label:'',color:'#1264a3',width:3,opacity:1,xScale:1,yScale:1,dash:''}].concat(cfg.pumpCounts.map(function(n){return {fn:function(q){var perPump=esPowerSmoothValue(powerSmooth,q/n);return Number.isFinite(perPump)?perPump*n:null},min:0,max:powerSmooth.max*n,label:n+'P Total',color:'#5c7d91',width:1.8,opacity:.78,xScale:1,yScale:1,dash:'7 4'}})):metricSeries('shaftKw',5,true),npsSeries=metricSeries('npshrM',3,false),effPts=metricPoints('efficiencyPct',false),pwrPts=metricPoints('shaftKw',true),npsPts=metricPoints('npshrM',false);
+  var effSeries=metricSeries('efficiencyPct',6,false),powerFit=curveFitFor(r,r.impellerMm,r.speedRatio,'shaftKw',3),powerSmooth=esPowerSmoothFit(powerFit),powerSeries=powerSmooth?[{fn:function(q){return esPowerSmoothValue(powerSmooth,q)},min:0,max:powerSmooth.max,label:'',color:'#1264a3',width:3,opacity:1,xScale:1,yScale:1,dash:''}].concat(cfg.pumpCounts.map(function(n){return {fn:function(q){var perPump=esPowerSmoothValue(powerSmooth,q/n);return Number.isFinite(perPump)?perPump*n:null},min:0,max:powerSmooth.max*n,label:n+'P Total',color:'#5c7d91',width:1.8,opacity:.78,xScale:1,yScale:1,dash:'7 4'}})):metricSeries('shaftKw',3,true),npsSeries=metricSeries('npshrM',3,false),effPts=metricPoints('efficiencyPct',false),pwrPts=metricPoints('shaftKw',true),npsPts=metricPoints('npshrM',false);
   if(powerInHp){powerSeries.forEach(function(s){s.yScale=(s.yScale||1)*powerScale});pwrPts.forEach(function(p){p.y*=powerScale})}
   if(scope==='pdf'){[effSeries,powerSeries,npsSeries].forEach(function(list){list.forEach(function(ser){ser.width=1.8})})}
   // B4.06.10: auxiliary charts show the operating value, never D1/BEP text. Whole numbers have no .0; otherwise max 1 decimal.

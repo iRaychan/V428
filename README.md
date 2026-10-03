@@ -1,6 +1,14 @@
-# KeySuite V4.28.55 FULL CLEAN
+# KeySuite V4.28.56 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
+
+## V4.28.56 - universal zero-flow Power rule
+
+- Sets generated Power Point 1 at `Q = 0` to exactly `Power[1] × 0.68` for CHC C4/C6, BFI, and ES curves.
+- Uses a third-order polynomial for Power curves across CHC C4/C6, BFI, ES, enhanced curves, and generated PDFs.
+- Leaves every positive-flow Power source point and all flow, head, efficiency, NPSH, interpolation, selection, and motor-sizing data unchanged.
+- Applies the same rule to interactive curves and generated KeySelector/KeyBot PDF curves.
+- Preserves the existing frozen PDF/print layout.
 
 ## V4.28.55 - CR Price List and Category Pricing
 
@@ -58,7 +66,7 @@ Baseline: V4.28.41 FULL CLEAN.
 - The ES PDF sampler now pins the first and last points exactly to `fit.min` and `fit.max` and rejects `null` / `undefined` results rather than coercing them to zero.
 - The selected-impeller label therefore follows the real final Head point instead of being drawn near the x-axis.
 - Regression example: `ES 80-32H / 100 HP / 2P / 500 IGPM`, selected impeller Ø280 mm, now ends naturally near 231.88 m³/hr at approximately 84.08 m Head, 66.83% efficiency, 106.81 HP and 10.07 m NPSH.
-- Preserves V4.28.10/V4.28.11: global Power = 5th order, KeySuite PDF curve lines = 1.8 SVG units, KeyBot PDF curve lines = 1.35 pt (~1.8 px), and `500 IGPM (136.4 m³/hr) @ 103 mtr` duty display.
+- V4.28.10/V4.28.11 originally used global Power = 5th order; V4.28.56 supersedes only that Power order with third order while preserving the curve-line widths and `500 IGPM (136.4 m³/hr) @ 103 mtr` duty display.
 - No database migration is required.
 
 

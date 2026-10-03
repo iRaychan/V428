@@ -160,16 +160,15 @@ async function embedReportLogo(pdf:any,value:any,baseUrl:any,optimizePdf=true){
   return await embedPublicJpg(pdf,baseUrl,'assets/keybot-pdf/report-logo.jpg');
 }
 function sampleFit(f:any,count=120,core:any=CHC_CORE){return core.sampleFit(f,count)}
-// V4.26.05: match KeySelector V4.25.13 display-only Power smoothing.
-// Ignore the zero-flow hydraulic power point, estimate a non-zero shut-off power
-// from the first two positive-flow points, then use shape-preserving cubic
-// interpolation. Selection, duty calculations and motor sizing remain unchanged.
+// V4.28.56: Point 1 is display-only shut-off power and is always 68% of
+// Point 2 (the first positive-flow source point). Selection, duty calculations,
+// motor sizing and every later source point remain unchanged.
 function keysuitePowerSmoothFit(fit:any){
   const grouped:any[]=[];
   for(const p of (fit?.pts||[])){const x=Number(p?.x),y=Number(p?.y);if(!(finite(x)&&x>1e-9&&finite(y)&&y>=0))continue;const last=grouped[grouped.length-1];if(last&&Math.abs(last.x-x)<1e-9){last.sum+=y;last.count++;last.y=last.sum/last.count}else grouped.push({x,y,sum:y,count:1});}
   grouped.sort((a:any,b:any)=>a.x-b.x);if(grouped.length<2)return null;
-  const x1=grouped[0].x,x2=grouped[1].x,y1=grouped[0].y,y2=grouped[1].y;if(!(x2>x1&&y1>0))return null;
-  const slope=(y2-y1)/(x2-x1);let y0=y1-slope*x1;const minY=Math.max(y1*.15,1e-6),maxY=Math.max(y1*1.75,minY);if(!finite(y0))y0=y1;y0=Math.max(minY,Math.min(maxY,y0));
+  const x1=grouped[0].x,x2=grouped[1].x,y1=grouped[0].y;if(!(x2>x1&&y1>0))return null;
+  const y0=y1*.68;
   const pts=[{x:0,y:y0},...grouped.map((p:any)=>({x:p.x,y:p.y}))],n=pts.length,h:number[]=[],delta:number[]=[];
   for(let i=0;i<n-1;i++){h[i]=pts[i+1].x-pts[i].x;if(!(h[i]>0))return null;delta[i]=(pts[i+1].y-pts[i].y)/h[i]}
   const d=new Array(n).fill(0);
@@ -216,7 +215,7 @@ function selectChc(q:number,h:number,forcedModel:string='',family:string='CHC'){
     // Exact-model visualisation fallback: preserve the real curve even when the requested point is beyond the curve's flow domain.
     const curve=db?.curves?.[row.series];if(!curve)return null;const mix=core.parseImpellerMix(row),headFit=core.fitMixedHeadCurve(curve,mix,1),effFit=core.fitMixedEfficiencyCurve(curve,mix,1);if(!headFit||!effFit)return null;
     const npshFit=core.fitCurve(curve,'npshr',3,1,1),nearestQ=Math.max(Number(headFit.min),Math.min(Number(headFit.max),Number(q))),predHead=Number(core.fitValue(headFit,nearestQ)),eff=Math.max(1,Math.min(100,Number(core.fitValue(effFit,nearestQ)))),npsh=Math.max(0,Number(core.fitValue(npshFit,nearestQ))),shaft=9.81*nearestQ*Math.max(0,predHead)/3600/(eff/100);
-    const powerPts=(headFit.pts||[]).map((p:any)=>{const e=Math.max(1,Math.min(100,Number(core.fitValue(effFit,p.x))));return {x:p.x,y:9.81*p.x*p.y/3600/(e/100)}}),powerOrder=Math.min(5,Math.max(1,powerPts.length-1)),powerFit=powerPts.length>1?{pts:powerPts,c:core.polyfit(powerPts.map((p:any)=>p.x),powerPts.map((p:any)=>p.y),powerOrder),order:powerOrder,min:headFit.min,max:headFit.max}:null;
+    const powerPts=(headFit.pts||[]).map((p:any)=>{const e=Math.max(1,Math.min(100,Number(core.fitValue(effFit,p.x))));return {x:p.x,y:9.81*p.x*p.y/3600/(e/100)}}),powerOrder=Math.min(3,Math.max(1,powerPts.length-1)),powerFit=powerPts.length>1?{pts:powerPts,c:core.polyfit(powerPts.map((p:any)=>p.x),powerPts.map((p:any)=>p.y),powerOrder),order:powerOrder,min:headFit.min,max:headFit.max}:null;
     return {...row,impellerMix:mix,predHead,margin:predHead-h,eff,npsh,shaft,headFit,effFit,npshFit,powerFit,rpm:Number(curve.speed_rpm||2900),out_of_curve:true,requested_flow_outside:true};
   }
   return core.select(db,q,h,50).selected;
@@ -254,7 +253,7 @@ function bfiInterpolatedValue(fit:any,x:number){
 function bfiEnhancedCurveData(m:any){
   const curve=BFI_DB?.curves?.[m.series]||BFI_DB?.curves?.[String(m.series||'').replace(/\D/g,'')];if(!curve)return null;const mix=BFI_CORE.parseImpellerMix(m),motorKw=Number(m.motor_kw);if(!(motorKw>0))return null;
   const raw:any[]=[];for(let i=0;i<(curve.flow||[]).length;i++){const p=bfiMixedRawPoint(curve,mix,i);if(!p||!(p.head>0))continue;const basePower=p.q>0?9.81*p.q*p.head/3600/(p.eff/100):0;let ratio=BFI_ENHANCED_MAX_RATIO;if(basePower>0){const limited=Math.cbrt(motorKw/basePower);if(finite(limited))ratio=Math.min(BFI_ENHANCED_MAX_RATIO,limited)}ratio=Math.max(.05,ratio);raw.push({baseFlow:p.q,baseHead:p.head,basePower,ratio,hz:Number(BFI_DB.base_hz||50)*ratio,flow:p.q*ratio,head:p.head*ratio*ratio,eff:p.eff,npsh:p.npsh*ratio*ratio,power:basePower*ratio*ratio*ratio});}
-  if(raw.length<2)return null;const headFit=bfiEnhancedFit(raw,'head',2),effFit=bfiEnhancedFit(raw,'eff',5),npshFit=bfiEnhancedFit(raw,'npsh',3),powerFit=bfiEnhancedFit(raw,'power',5),hzFit=bfiInterpolatedFit(raw.map(p=>({x:p.flow,y:p.hz})));if(!headFit||!effFit||!npshFit||!powerFit||!hzFit)return null;return {raw,headFit,effFit,npshFit,powerFit,hzFit};
+  if(raw.length<2)return null;const headFit=bfiEnhancedFit(raw,'head',2),effFit=bfiEnhancedFit(raw,'eff',5),npshFit=bfiEnhancedFit(raw,'npsh',3),powerFit=bfiEnhancedFit(raw,'power',3),hzFit=bfiInterpolatedFit(raw.map(p=>({x:p.flow,y:p.hz})));if(!headFit||!effFit||!npshFit||!powerFit||!hzFit)return null;return {raw,headFit,effFit,npshFit,powerFit,hzFit};
 }
 function evaluateEnhancedBfi(m:any,q:number,h:number){
   const data=bfiEnhancedCurveData(m);if(!data||q<data.headFit.min-1e-9||q>data.headFit.max+1e-9)return null;const predHead=BFI_CORE.fitValue(data.headFit,q);if(!finite(predHead)||predHead<=0)return null;
@@ -702,7 +701,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     selectionShaft=Number(s.shaft||0);rpm=Number(engine?.db?.curves?.[s.series]?.speed_rpm||2900);pole=2;hz=50;
     suction=String(s.connection||'-');discharge=String(s.connection||'-');stages=Number(s.stages||0);maxPressure=Number(s.max_pressure_bar||0);dim=((engine?.generation==='G1'?CHC_G1_DIMENSIONS:CHC_DIMENSIONS) as any)[s.model]||{};
     headPoints=sampleFit(s.headFit,120,engine?.core);effPoints=sampleFit(s.effFit,120,engine?.core);
-    powerPoints=sampleFit(s.powerFit,180,engine?.core).map((p:any)=>({x:p.x,y:p.y*1.34102209}));
+    powerPoints=sampleSmoothPower(s.powerFit,180,1.34102209,engine?.core);
     npsPoints=sampleFit(s.npshFit,120,engine?.core);
     if(String(forcedModel||'').trim()){const minQ=headPoints.length?Math.min(...headPoints.map(p=>p.x)):0,maxQ=headPoints.length?Math.max(...headPoints.map(p=>p.x)):0,pred=(q>=minQ&&q<=maxQ)?interpolate(headPoints,q):NaN;if(s.out_of_curve||q<minQ-1e-9||q>maxQ+1e-9||!finite(pred)||h>pred*1.01)warning='Requested duty is outside this model\'s curve.';}
   }else if(isBfi){
@@ -710,7 +709,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     const s:any=enhanced?selectBfiEnhanced(q,h,forcedModel):selectBfi(q,h,forcedModel);if(!s)throw new Error(`No BFI${enhanced?' Enhanced':''} model can meet ${fmt(q)} m³/hr @ ${fmt(h)} Mtr.`);
     model=String(s.model).replace(/[TE]$/i,'');motorKw=Number(s.motor_kw||0);motorHp=Number(s.motor_hp||0);eff=Number(s.eff||0);npsh=Number(s.npsh||0);selectionShaft=Number(s.shaft||0);rpm=enhanced?BFI_ENHANCED_MAX_RPM:Number(s.rpm||2900);pole=2;hz=enhanced?BFI_ENHANCED_MAX_HZ:50;
     suction=String(s.inlet||s.connection||'-');discharge=String(s.outlet||s.connection||'-');stages=Number(s.stages||0);maxPressure=Number(s.max_pressure_bar||0);dim=s.dimensions||{};weightKg=Number(s.weight_kg||0);{const phases=Array.isArray(s.phases)&&s.phases.length?s.phases:['3Ph'],identityPhase=String(displayIdentity?.motor_phase||displayIdentity?.phase||'');phase=enhanced?'3Ph':(identityPhase==='1Ph'||identityPhase==='3Ph'?identityPhase:(/T$/i.test(identityModel)?'3Ph':(phases.includes('1Ph')?'1Ph':'3Ph')));if(!phases.includes(phase))phase=phases.includes('3Ph')?'3Ph':String(phases[0]||'1Ph')}
-    headPoints=sampleFit(s.headFit,120,BFI_CORE);effPoints=sampleFit(s.effFit,120,BFI_CORE);powerPoints=sampleFit(s.powerFit,180,BFI_CORE).map((p:any)=>({x:p.x,y:p.y*1.34102209}));npsPoints=sampleFit(s.npshFit,120,BFI_CORE);
+    headPoints=sampleFit(s.headFit,120,BFI_CORE);effPoints=sampleFit(s.effFit,120,BFI_CORE);powerPoints=sampleSmoothPower(s.powerFit,180,1.34102209,BFI_CORE);npsPoints=sampleFit(s.npshFit,120,BFI_CORE);
     if(enhanced){displayIdentity={...(displayIdentity||{}),enhanced:true,enhanced_curve:true,motor_phase:'3Ph'};}
   }else if(fam==='ES'){
     pole=Number(esPole);if(pole!==2&&pole!==4)throw new Error('ES selection requires 2 Pole or 4 Pole.');
@@ -723,7 +722,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     // V4.28.08: motor HP selects/forces an impeller diameter upstream. Never clip the hydraulic curve by power; show the complete curve for the selected trimmed impeller.
     const pts=trimEsTerminalCurvePoints(s.points||[]);
     const rawHead=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.headM)})),rawEff=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.efficiencyPct)})),rawPowerKw=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.shaftKw)})),rawNpsh=pts.map((p:any)=>({x:Number(p.flowM3h),y:Number(p.npshrM)}));
-    headPoints=sampleEsFit(rawHead,2,1);effPoints=sampleEsFit(rawEff,6,1);powerPoints=sampleEsFit(rawPowerKw,5,1/0.746);npsPoints=sampleEsFit(rawNpsh,3,1);esPs=esPumpset(s.pump.model,motorHp,motorKw,pole);
+    headPoints=sampleEsFit(rawHead,2,1);effPoints=sampleEsFit(rawEff,6,1);powerPoints=sampleSmoothPower({pts:rawPowerKw},180,1/0.746,{sampleFit:()=>sampleEsFit(rawPowerKw,3,1,180)});npsPoints=sampleEsFit(rawNpsh,3,1);esPs=esPumpset(s.pump.model,motorHp,motorKw,pole);
     if(String(forcedModel||'').trim()){const minQ=headPoints.length?Math.min(...headPoints.map(p=>p.x)):0,maxQ=headPoints.length?Math.max(...headPoints.map(p=>p.x)):0,pred=(q>=minQ&&q<=maxQ)?interpolate(headPoints,q):NaN;if(s.out_of_curve||q<minQ-1e-9||q>maxQ+1e-9||!finite(pred)||h>pred*1.01)warning='Requested duty is outside this model\'s curve.';}
   }else throw new Error('Unsupported pump family.');
 

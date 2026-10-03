@@ -1,4 +1,4 @@
-/* Shared display curve for CHC and ES. Does not modify hydraulic data or motor sizing. */
+/* Shared display curve for CHC, BFI and ES. Does not modify hydraulic data or motor sizing. */
 (function(root){
   'use strict';
   function fit(input){
@@ -6,13 +6,10 @@
     for(const p of input||[]){const x=Number(p.x),y=Number(p.y);if(!Number.isFinite(x)||x<0||!Number.isFinite(y)||y<0)continue;const g=groups.get(x)||[];g.push(y);groups.set(x,g)}
     const all=[...groups].map(([x,ys])=>({x,y:ys.reduce((a,b)=>a+b,0)/ys.length})).sort((a,b)=>a.x-b.x);
     const positive=all.filter(p=>p.x>1e-9);if(positive.length<2||!(positive[0].y>0))return null;
-    const [a,b,c]=positive,slope=(b.y-a.y)/(b.x-a.x);
-    let y0=a.y-slope*a.x;
-    // Extend the local curvature of the first three valid points back to shut-off.
-    // The old two-point extension forced the first two spans onto a straight line.
-    if(c){const curvature=((c.y-b.y)/(c.x-b.x)-slope)/(c.x-a.x);y0+=curvature*a.x*b.x}
-    const measured=all.find(p=>p.x===0&&p.y>0);
-    y0=measured?measured.y:Math.max(a.y*.15,Math.min(a.y*1.75,Number.isFinite(y0)?y0:a.y));
+    const [a]=positive;
+    // V4.28.56: Point 1 is display-only shut-off power and is always derived
+    // from Point 2. All positive-flow source values remain untouched.
+    const y0=a.y*.68;
     const pts=[{x:0,y:y0},...positive],n=pts.length,h=[],s=[],d=new Array(n).fill(0);
     for(let i=0;i<n-1;i++){h[i]=pts[i+1].x-pts[i].x;s[i]=(pts[i+1].y-pts[i].y)/h[i]}
     for(let i=1;i<n-1;i++){if(s[i-1]*s[i]>0){const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1];d[i]=(w1+w2)/(w1/s[i-1]+w2/s[i])}}
@@ -31,7 +28,7 @@
       const r0=pts[1].y-a0-a1-a2,r1=d[1]*h0-a1-2*a2,r2=endSecond*h0*h0-2*a2;
       return {x1:pts[1].x,h:h0,minY:Math.min(pts[0].y,pts[1].y),maxY:Math.max(pts[0].y,pts[1].y),a:[a0,a1,a2,10*r0-4*r1+r2/2,-15*r0+7*r1-r2,6*r0-3*r1+r2/2],endSecond};
     })();
-    return {pts,d,bridge,min:0,max:pts[n-1].x,y0,estimatedShutoff:!measured};
+    return {pts,d,bridge,min:0,max:pts[n-1].x,y0,estimatedShutoff:true,shutoffFactor:.68};
   }
   function value(curve,x){
     x=Number(x);if(!curve||!Number.isFinite(x)||x<0||x>curve.max+1e-9)return NaN;

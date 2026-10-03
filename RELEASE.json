@@ -1,8 +1,12 @@
 {
-  "version": "4.28.55",
+  "version": "4.28.56",
   "baseline": "4.28.41 FULL CLEAN",
   "upgrade_supported_from": "4.28.41",
   "changes": [
+    "sets generated zero-flow Power Point 1 to exactly 68% of Power Point 2 for every CHC C4/C6, BFI and ES curve",
+    "changes the Power polynomial from fifth order to third order across standard, enhanced, interactive and generated PDF curves",
+    "leaves Power Points 2-20 and all flow, head, efficiency, NPSH, interpolation, selection and motor-sizing data unchanged",
+    "applies the same Power Point 1 rule to interactive and generated PDF curves without changing the frozen PDF/print layout",
     "adds CR / CRS / CRN to the main Price List dashboard",
     "adds CR as a Category Pricing sector in Category Management and Company & Pricing",
     "adds owner-only CR category-rule persistence and per-category CR currency selection",
@@ -11,7 +15,7 @@
     "includes the workbook mechanical-seal add-on reference table",
     "adds independent CR USD and RMB multipliers and owner-only database save RPCs",
     "General Pricelist Effective Product Exchange Rates now includes CR and BFI",
-    "Power source calculations remain fifth-order polynomial fits",
+    "Power source calculations use third-order polynomial fits",
     "the displayed Power curve now uses a bounded quintic Hermite bridge from zero flow to the first positive-flow source point",
     "the zero-flow Power extension matches value, slope and curvature at the first source point for a visually smoother C2 join",
     "CHC C4/C6, BFI Selection/Product and ES share the same zero-flow Power smoothing implementation",
@@ -30,10 +34,10 @@
     "CHC C4 and CHC C6 now share the CHC Series heading",
     "Selection and Product BFI Power curves now show a positive shut-off value at zero flow",
     "Earlier ES/BFI shared-panel and BFI material/phase identity fixes remain included",
-    "Visible version is V4.28.55"
+    "Visible version is V4.28.56"
   ],
-  "new_database_migration_required": true,
-  "edge_function_deploy_required": false,
-  "edge_function": null,
-  "notes": "Upgrade V4.28.54 to V4.28.55. Run supabase/migrations/20261001203000_v42855_cr_category_pricing.sql, then upload the package. For an earlier installation, run the V4.28.54 CR migration first or use the Full Clean package."
+  "new_database_migration_required": false,
+  "edge_function_deploy_required": true,
+  "edge_function": "telegram-webhook",
+  "notes": "Upgrade V4.28.55 to V4.28.56 by uploading the package. No new database migration is required. Deploy the included telegram-webhook Edge Function so KeyBot-generated PDF curves use the same Point 1 rule. Existing V4.28.55 database migrations remain required."
 }
