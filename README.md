@@ -1,6 +1,16 @@
-# KeySuite V4.28.56 FULL CLEAN
+# KeySuite V4.28.57 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
+
+## V4.28.57 - CHC G1 update and editable Mechanical Seal Add-On
+
+- Updates CHC C4/G1 from `004 - CHC G1 261003 - V1.2 - CHC 32 Amend.xlsx`.
+- Replaces the CHC 32 flow, efficiency, NPSHr, head-per-stage and secondary-efficiency source series in both the shared and standalone selector data.
+- Adds a Mechanical Seal Add-On table to the CHC Price List for Ca SiC, SiC SiC and TC TC.
+- Keeps separate, owner-editable MYR add-on values for CHC C4/G1 and CHC C6/G2.
+- Uses the saved generation-specific add-on automatically when CHC quotation prices are calculated.
+- Requires `supabase/migrations/20261004190000_v42857_chc_mechanical_seal_addons.sql`.
+- Retains the V4.28.56 universal zero-flow Power rule and all earlier behavior/layout.
 
 ## V4.28.56 - universal zero-flow Power rule
 
@@ -66,7 +76,7 @@ Baseline: V4.28.41 FULL CLEAN.
 - The ES PDF sampler now pins the first and last points exactly to `fit.min` and `fit.max` and rejects `null` / `undefined` results rather than coercing them to zero.
 - The selected-impeller label therefore follows the real final Head point instead of being drawn near the x-axis.
 - Regression example: `ES 80-32H / 100 HP / 2P / 500 IGPM`, selected impeller Ø280 mm, now ends naturally near 231.88 m³/hr at approximately 84.08 m Head, 66.83% efficiency, 106.81 HP and 10.07 m NPSH.
-- V4.28.10/V4.28.11 originally used global Power = 5th order; V4.28.56 supersedes only that Power order with third order while preserving the curve-line widths and `500 IGPM (136.4 m³/hr) @ 103 mtr` duty display.
+- V4.28.10/V4.28.11 originally used global Power = 5th order; V4.28.57 supersedes only that Power order with third order while preserving the curve-line widths and `500 IGPM (136.4 m³/hr) @ 103 mtr` duty display.
 - No database migration is required.
 
 

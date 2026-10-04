@@ -87,6 +87,14 @@
       console.warn('CHC C4 independent Price List is not installed yet. Run V41410_CHC_G1_INDEPENDENT_PRICELIST.sql.',error);
       chcG1Products={data:[]};
     }
+    let chcSealAddons={data:[]};
+    try{
+      chcSealAddons=await client.from('ks_chc_mechanical_seal_addons').select('*').order('generation_code').order('min_series');
+      if(chcSealAddons.error)throw chcSealAddons.error;
+    }catch(error){
+      console.warn('Editable CHC Mechanical Seal Add-On values are not installed yet. Default values will be used until the V4.28.57 migration is run.',error);
+      chcSealAddons={data:[]};
+    }
     let bfiProducts={data:[]};
     try{
       bfiProducts=await client.from('ks_products_bfi').select('*').eq('status','active').order('source_row');
@@ -165,6 +173,7 @@
           MYR:{CHC:String(p.chc_rarity_myr||'common').toLowerCase(),CHCS:String(p.chcs_rarity_myr||'common').toLowerCase(),CHCN:String(p.chcn_rarity_myr||'common').toLowerCase()}
         }
       })),
+      chcSealAddons:(chcSealAddons.data||[]).map(row=>({generation:String(row.generation_code||'G2').toUpperCase(),groupCode:row.group_code,minSeries:Number(row.min_series),maxSeries:Number(row.max_series),sicSicMyr:Number(row.sic_sic_myr),tcTcMyr:Number(row.tc_tc_myr)})),
       bfiProducts:(()=>{
         const staticRows=window.KeySuiteBFIProductData?.models||[];
         const byModel=new Map((bfiProducts.data||[]).map(r=>[String(r.model||'').toLowerCase(),r]));

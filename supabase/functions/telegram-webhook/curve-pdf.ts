@@ -160,7 +160,7 @@ async function embedReportLogo(pdf:any,value:any,baseUrl:any,optimizePdf=true){
   return await embedPublicJpg(pdf,baseUrl,'assets/keybot-pdf/report-logo.jpg');
 }
 function sampleFit(f:any,count=120,core:any=CHC_CORE){return core.sampleFit(f,count)}
-// V4.28.56: Point 1 is display-only shut-off power and is always 68% of
+// V4.28.57: Point 1 is display-only shut-off power and is always 68% of
 // Point 2 (the first positive-flow source point). Selection, duty calculations,
 // motor sizing and every later source point remain unchanged.
 function keysuitePowerSmoothFit(fit:any){

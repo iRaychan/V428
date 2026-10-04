@@ -2,7 +2,7 @@
   'use strict';
 
   let access=null;
-  let secureData={products:[],chcG1Products:[],esProducts:[],gwsProducts:[],keyplcProducts:[],productMultipliers:{CHC:{USD:5.8,RMB:.65,MYR:1},CHC_G1:{USD:5.8,RMB:.65,MYR:1},CHC_G2:{USD:5.8,RMB:.65,MYR:1},BFI:{USD:1,RMB:1,MYR:1},ES:{USD:5.8,RMB:.65,MYR:1},GWS:{USD:5.8,RMB:.65,MYR:1},KEYPLC:{USD:5.8,RMB:.65,MYR:1}}};
+  let secureData={products:[],chcG1Products:[],chcSealAddons:[],esProducts:[],gwsProducts:[],keyplcProducts:[],productMultipliers:{CHC:{USD:5.8,RMB:.65,MYR:1},CHC_G1:{USD:5.8,RMB:.65,MYR:1},CHC_G2:{USD:5.8,RMB:.65,MYR:1},BFI:{USD:1,RMB:1,MYR:1},ES:{USD:5.8,RMB:.65,MYR:1},GWS:{USD:5.8,RMB:.65,MYR:1},KEYPLC:{USD:5.8,RMB:.65,MYR:1}}};
   let selectedChcGeneration='G2';
   let bound=false;
   const unlockedMultipliers=new Set();
@@ -34,6 +34,15 @@
   const normMaterial=value=>String(value||'').toUpperCase().replace(/[^A-Z0-9]+/g,'');
   const countId=prefix=>`${prefix}PriceListCount`;
   const isFilled=value=>value!==null&&value!==''&&Number.isFinite(Number(value))&&Number(value)>0;
+  const CHC_SEAL_DEFAULTS=[
+    {groupCode:'1_5',minSeries:1,maxSeries:5,sicSicMyr:250,tcTcMyr:350},
+    {groupCode:'8_20',minSeries:8,maxSeries:20,sicSicMyr:300,tcTcMyr:400},
+    {groupCode:'32_90',minSeries:32,maxSeries:90,sicSicMyr:500,tcTcMyr:600},
+    {groupCode:'120_200',minSeries:120,maxSeries:200,sicSicMyr:800,tcTcMyr:900}
+  ];
+  function sealRows(generation=selectedChcGeneration){
+    return CHC_SEAL_DEFAULTS.map(fallback=>{const saved=(secureData.chcSealAddons||[]).find(row=>String(row.generation||row.generation_code||'').toUpperCase()===generation&&String(row.groupCode||row.group_code||'')===fallback.groupCode);return {...fallback,...(saved||{}),generation,groupCode:saved?.groupCode||saved?.group_code||fallback.groupCode,minSeries:Number(saved?.minSeries??saved?.min_series??fallback.minSeries),maxSeries:Number(saved?.maxSeries??saved?.max_series??fallback.maxSeries),sicSicMyr:Number(saved?.sicSicMyr??saved?.sic_sic_myr??fallback.sicSicMyr),tcTcMyr:Number(saved?.tcTcMyr??saved?.tc_tc_myr??fallback.tcTcMyr)}});
+  }
 
   function storedInputValue(prefix,input,currency){
     if(prefix==='chc'){
@@ -179,6 +188,14 @@
         ?'CHC G1 has its own independent Price List, Currency Selection, USD multiplier and RMB multiplier. CHC G2 rates are not used.'
         :'CHC G2 has its own independent Currency Selection, USD multiplier and RMB multiplier. CHC G1 rates are not used.';
     }
+  }
+
+  function renderChcSealAddons(){
+    const body=el('chcSealAddonRows'),title=el('chcSealAddonTitle'),note=el('chcSealAddonNote');if(!body)return;
+    if(title)title.textContent=`CHC ${selectedChcGeneration} Mechanical Seal Add-On`;
+    if(note)note.textContent=`Independent ${selectedChcGeneration} add-on values in MYR. Ca SiC remains the standard seal at RM 0.00.`;
+    body.innerHTML=sealRows().map(row=>`<tr data-chc-seal-group="${esc(row.groupCode)}"><td><b>CHC ${row.minSeries}–${row.maxSeries}</b></td><td class="num">RM 0.00</td><td><div class="currency-price-input"><span>MYR</span><input type="number" min="0" step="0.01" value="${esc(row.sicSicMyr.toFixed(2))}" data-chc-seal-sic aria-label="CHC ${row.minSeries} to ${row.maxSeries} SiC SiC add-on"></div></td><td><div class="currency-price-input"><span>MYR</span><input type="number" min="0" step="0.01" value="${esc(row.tcTcMyr.toFixed(2))}" data-chc-seal-tc aria-label="CHC ${row.minSeries} to ${row.maxSeries} TC TC add-on"></div></td><td class="pricelist-row-actions"><button class="btn icon-save-button" type="button" data-save-chc-seal="${esc(row.groupCode)}" title="Save seal add-on" aria-label="Save CHC ${row.minSeries} to ${row.maxSeries} seal add-on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v14H5z"></path><path d="M8 4v6h8V4"></path><path d="M8 20v-6h8v6"></path></svg></button></td></tr>`).join('');
+    body.querySelectorAll('[data-save-chc-seal]').forEach(button=>button.addEventListener('click',()=>saveChcSealAddon(button.dataset.saveChcSeal,button)));
   }
 
   function syncEsScrollWidth(){
@@ -368,6 +385,21 @@
     finally{button.disabled=false;button.innerHTML=original}
   }
 
+  async function saveChcSealAddon(groupCode,button){
+    if(!isOwner()){message('chc','Your role is not allowed to maintain Mechanical Seal Add-On values.','error');return}
+    const row=document.querySelector(`[data-chc-seal-group="${CSS.escape(groupCode)}"]`),client=window.KeySuiteAuth?.getClient?.();if(!row||!client){message('chc','Supabase is not connected.','error');return}
+    let sic,tc;try{sic=nullablePrice(row.querySelector('[data-chc-seal-sic]')?.value,'SiC SiC Add-On');tc=nullablePrice(row.querySelector('[data-chc-seal-tc]')?.value,'TC TC Add-On');if(sic===null||tc===null)throw new Error('Mechanical Seal Add-On values cannot be blank.')}catch(error){message('chc',error.message,'error');return}
+    const original=button.innerHTML;button.disabled=true;button.textContent='…';message('chc','');
+    try{
+      const {data,error}=await client.rpc('keysuite_save_chc_mechanical_seal_addon_v42857',{p_generation:selectedChcGeneration,p_group_code:groupCode,p_sic_sic_myr:sic,p_tc_tc_myr:tc});if(error)throw error;
+      const saved=Array.isArray(data)?data[0]:data,defaults=CHC_SEAL_DEFAULTS.find(item=>item.groupCode===groupCode),normalized={generation:selectedChcGeneration,groupCode,minSeries:Number(saved?.min_series??defaults.minSeries),maxSeries:Number(saved?.max_series??defaults.maxSeries),sicSicMyr:Number(saved?.sic_sic_myr??sic),tcTcMyr:Number(saved?.tc_tc_myr??tc)};
+      secureData.chcSealAddons=(secureData.chcSealAddons||[]).filter(item=>!(String(item.generation||item.generation_code).toUpperCase()===selectedChcGeneration&&String(item.groupCode||item.group_code)===groupCode));secureData.chcSealAddons.push(normalized);
+      if(window.KEYSUITE_SECURE_DATA)window.KEYSUITE_SECURE_DATA.chcSealAddons=secureData.chcSealAddons;
+      window.KeySuitePricing?.syncPriceListSettings?.({chcSealAddons:secureData.chcSealAddons});message('chc',`${selectedChcGeneration} CHC ${normalized.minSeries}–${normalized.maxSeries} Mechanical Seal Add-On saved.`,'info');
+    }catch(error){console.error(error);message('chc',`${error.message||error}. Run the V4.28.57 database migration first.`,'error')}
+    finally{button.disabled=false;button.innerHTML=original}
+  }
+
   async function saveEsRow(productId,button){
     if(!isOwner()){message('es','Your role is not allowed to maintain ES prices.','error');return}
     const row=document.querySelector(`[data-es-pricelist-row="${CSS.escape(productId)}"]`);if(!row)return;
@@ -449,7 +481,7 @@
       ['G1','G2'].forEach(g=>['USD','RMB'].forEach(currency=>{unlockedMultipliers.delete(`chc:${g}:${currency}`);originalMultiplierValues.delete(`chc:${g}:${currency}`)}));
       selectedChcGeneration=String(event.target.value||'G2').toUpperCase()==='G1'?'G1':'G2';
       localStorage.setItem('ks_chc_price_generation',selectedChcGeneration);
-      message('chc','');renderSettings('chc');renderChcRows();applyAuthorityMode();applyChcGenerationMode();try{window.dispatchEvent(new CustomEvent('keysuite-chc-price-generation-changed',{detail:{generation:selectedChcGeneration}}))}catch(_){}
+      message('chc','');renderSettings('chc');renderChcRows();renderChcSealAddons();applyAuthorityMode();applyChcGenerationMode();try{window.dispatchEvent(new CustomEvent('keysuite-chc-price-generation-changed',{detail:{generation:selectedChcGeneration}}))}catch(_){}
     });
     el('chcPriceSearch')?.addEventListener('input',renderChcRows);
     el('gwsPriceSearch')?.addEventListener('input',renderGwsRows);
@@ -469,7 +501,7 @@
     ['chcPriceList','bfiPriceList','esPriceList','gwsPriceList','keyplcPriceList'].forEach(pageId=>{
       const page=el(pageId);if(!page)return;
       page.querySelectorAll('.pricelist-table input,.pricelist-table select').forEach(control=>control.disabled=!editable);
-      page.querySelectorAll('[data-save-chc-row],[data-bfi-save],[data-save-es-row],[data-save-gws-row],[data-save-keyplc-row]').forEach(button=>button.style.display=editable?'grid':'none');
+      page.querySelectorAll('[data-save-chc-row],[data-save-chc-seal],[data-bfi-save],[data-save-es-row],[data-save-gws-row],[data-save-keyplc-row]').forEach(button=>button.style.display=editable?'grid':'none');
       page.querySelectorAll('.multiplier-hold-input').forEach(input=>{if(!editable){input.readOnly=true;input.disabled=true}else input.disabled=false});
       page.querySelectorAll('.multiplier-actions').forEach(actions=>{if(!editable)actions.style.display='none'});
     });
@@ -491,13 +523,13 @@
         if(feedback&&!unlockedMultipliers.has(multiplierStateKey('chc',currency)))feedback.textContent='(Hold 3s to edit)';
       }
     });
-    page.querySelectorAll('[data-save-chc-row]').forEach(button=>button.style.display=isOwner()?'grid':'none');
-    page.querySelectorAll('#chcPriceRows input,#chcPriceRows select').forEach(control=>control.disabled=!isOwner());
+    page.querySelectorAll('[data-save-chc-row],[data-save-chc-seal]').forEach(button=>button.style.display=isOwner()?'grid':'none');
+    page.querySelectorAll('#chcPriceRows input,#chcPriceRows select,#chcSealAddonRows input').forEach(control=>control.disabled=!isOwner());
   }
 
   function render(){
     if(!canView())return;
-    renderSettings('chc');renderSettings('bfi');renderSettings('es');renderSettings('gws');renderSettings('keyplc');renderChcRows();renderEsRows();renderGwsRows();renderKeyplcRows();applyAuthorityMode();applyChcGenerationMode();
+    renderSettings('chc');renderSettings('bfi');renderSettings('es');renderSettings('gws');renderSettings('keyplc');renderChcRows();renderChcSealAddons();renderEsRows();renderGwsRows();renderKeyplcRows();applyAuthorityMode();applyChcGenerationMode();
     const notice=el('priceListAccessNotice');if(notice)notice.innerHTML=`Signed in as <b>${esc(access?.display_name||access?.email||'user')}</b>. Each product family keeps its own USD/RMB rates. CHC/GWS rarity is stored per currency; ES and KeyPLC rarity is stored once per model.${isOwner()?'':' View-only access.'}`;
   }
 

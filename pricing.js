@@ -3,7 +3,7 @@
 
   let secureData={
     companies:[],users:[],categories:[],products:[],bfiProducts:[],esProducts:[],gwsProducts:[],keyplcProducts:[],manifoldProducts:[],motorProducts:[],couplingProducts:[],
-    productMultipliers:{CHC:{USD:5.8,RMB:.65,MYR:1},CHC_G1:{USD:5.8,RMB:.65,MYR:1},CHC_G2:{USD:5.8,RMB:.65,MYR:1},BFI:{USD:1,RMB:1,MYR:1},ES:{USD:5.8,RMB:.65,MYR:1},GWS:{USD:5.8,RMB:.65,MYR:1},KEYPLC:{USD:5.8,RMB:.65,MYR:1},MANIFOLD:{USD:5.8,RMB:.65,MYR:1},MOTOR:{USD:5.8,RMB:.65,MYR:1},COUPLING:{USD:5.8,RMB:.65,MYR:1}},
+    productMultipliers:{CHC:{USD:5.8,RMB:.65,MYR:1},CHC_G1:{USD:5.8,RMB:.65,MYR:1},CHC_G2:{USD:5.8,RMB:.65,MYR:1},BFI:{USD:1,RMB:1,MYR:1},ES:{USD:5.8,RMB:.65,MYR:1},GWS:{USD:5.8,RMB:.65,MYR:1},KEYPLC:{USD:5.8,RMB:.65,MYR:1},MANIFOLD:{USD:5.8,RMB:.65,MYR:1},MOTOR:{USD:5.8,RMB:.65,MYR:1},COUPLING:{USD:5.8,RMB:.65,MYR:1}},chcSealAddons:[],
     fuel_price:2,fuel_base_price:2,customerPricing:null,customerPricingRows:[]
   };
   let access=null;
@@ -268,11 +268,13 @@
     if(n==='tc tc'||n==='tuc tic'||n.includes('tungsten'))return 'TC TC';
     return raw.replace(/[\/]+/g,' ').replace(/\s+/g,' ').trim();
   }
-  function chcSealAddon(model,seal){
+  function chcSealAddon(model,seal,generation='G2'){
     const series=chcSeriesNumber(model),faces=normalizeChcSealFaces(seal),g=CHC_SEAL_ADDONS.find(x=>series>=x.min&&series<=x.max);
     if(!g||faces==='Ca SiC')return 0;
-    if(faces==='SiC SiC')return g.sic;
-    if(faces==='TC TC')return g.tc;
+    const generationCode=String(generation||'G2').toUpperCase()==='G1'?'G1':'G2';
+    const saved=(secureData.chcSealAddons||[]).find(row=>String(row.generation||row.generation_code||'').toUpperCase()===generationCode&&series>=Number(row.minSeries??row.min_series)&&series<=Number(row.maxSeries??row.max_series));
+    if(faces==='SiC SiC')return Number(saved?.sicSicMyr??saved?.sic_sic_myr??g.sic);
+    if(faces==='TC TC')return Number(saved?.tcTcMyr??saved?.tc_tc_myr??g.tc);
     return 0;
   }
   function chcSealDescription(seal='Car/Cer',elastomer='Viton'){
@@ -283,7 +285,7 @@
     if(!calc||calc.fixedPrice)return calc;
     const seal=options.seal??options.keysuite_seal??options.sealFaces??'Car/Cer';
     const elastomer=options.elastomer??options.keysuite_elastomer??'Viton';
-    const addon=chcSealAddon(model,seal),baseFinal=Number(calc.finalPrice||0);
+    const addon=chcSealAddon(model,seal,options.generation_code||options.generation||'G2'),baseFinal=Number(calc.finalPrice||0);
     return {...calc,baseFinalPrice:baseFinal,sealAddon:addon,sealFaces:normalizeChcSealFaces(seal),sealElastomer:String(elastomer||'Viton'),sealDescription:chcSealDescription(seal,elastomer),finalPrice:baseFinal+addon};
   }
 
@@ -334,7 +336,7 @@
     // replaces the included motor through the independent MOTOR price table.
     const rawCalc=calculatePrice(product.pricesByCurrency||{},material,cat,pricingFamily,{...options,customer,rarityBook:product.rarityByCurrency||{}});
     const replacedCalc=applyPumpMotorReplacement(rawCalc,{...options,customer,category:cat,motor_hp:motorHp,motor_kw:motorKw,pole,motor_efficiency_class:selectedMotorEfficiency},defaultMotorEfficiency);
-    const calc=applyChcSealAddon(replacedCalc,base,options);
+    const calc=applyChcSealAddon(replacedCalc,base,{...options,generation_code:generation});
     const seal=options.seal??options.keysuite_seal??options.sealFaces??'Car/Cer',elastomer=options.elastomer??options.keysuite_elastomer??'Viton';
     const sourceExtra={seal_faces:normalizeChcSealFaces(seal),seal_elastomer:String(elastomer||'Viton'),seal_addon_myr:Number(calc?.sealAddon||0),base_final_price:Number(calc?.baseFinalPrice||calc?.finalPrice||0),seal_description:calc?.sealDescription,default_motor_efficiency_class:defaultMotorEfficiency,selected_motor_efficiency_class:selectedMotorEfficiency,motor_hp:motorHp,motor_kw:motorKw,motor_pole:pole,bare_shaft:!!(options.bareShaft||options.keysuite_bare_shaft),package_price_includes_motor:true,...(calc?.motorReplacement?{motor_replacement:calc.motorReplacement}: {})};
     sourceExtra.generation_code=generation;

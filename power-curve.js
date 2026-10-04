@@ -7,7 +7,7 @@
     const all=[...groups].map(([x,ys])=>({x,y:ys.reduce((a,b)=>a+b,0)/ys.length})).sort((a,b)=>a.x-b.x);
     const positive=all.filter(p=>p.x>1e-9);if(positive.length<2||!(positive[0].y>0))return null;
     const [a]=positive;
-    // V4.28.56: Point 1 is display-only shut-off power and is always derived
+    // V4.28.57: Point 1 is display-only shut-off power and is always derived
     // from Point 2. All positive-flow source values remain untouched.
     const y0=a.y*.68;
     const pts=[{x:0,y:y0},...positive],n=pts.length,h=[],s=[],d=new Array(n).fill(0);
