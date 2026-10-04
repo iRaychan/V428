@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#17365d">
-  <title>KeySuite V4.28.57</title>
-  <script>window.KEYSUITE_VERSION='4.28.57';window.KEYSUITE_BUILD='V4.28.57';</script>
+  <title>KeySuite V4.28.58</title>
+  <script>window.KEYSUITE_VERSION='4.28.58';window.KEYSUITE_BUILD='V4.28.58';</script>
   <link rel="manifest" href="manifest.json">
   <style>
     :root{--navy:#17365d;--blue:#2f75b5;--light:#eef3f8;--line:#cbd5e1;--text:#172033;--muted:#64748b;--ok:#15803d}
@@ -278,6 +278,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
     .category-hold-button{width:100%;margin-top:8px;border:1px dashed #d6a400;background:#fff9db;color:#7a5b00;border-radius:7px;padding:7px 9px;font-size:11px;font-weight:800;cursor:pointer}.category-hold-button.holding{box-shadow:inset 0 0 0 3px #f2c94c}.category-hold-button.hidden{display:none}
     .multiplier-actions{display:none;gap:8px;margin-top:8px}.multiplier-actions.show{display:flex}.multiplier-actions .btn{flex:1;padding:7px 9px}
     .pricelist-table thead .group-head{text-align:center;background:#eef3f8}.pricelist-table thead .sub-head{text-align:center;font-size:11px;color:#526275}.pricelist-table select{min-width:92px}.pricelist-table .currency-price-input{min-width:118px}
+    .seal-price-table th:not(:first-child):not(:last-child){width:78px;max-width:78px;white-space:normal}.seal-price-table .seal-price-cell{width:78px;max-width:78px;padding-left:5px;padding-right:5px}.seal-price-table .currency-price-input{width:66px;min-width:66px}.seal-price-table .currency-price-input span{padding-left:4px;font-size:9px}.seal-price-table .currency-price-input input{width:40px;min-width:40px;max-width:40px;padding-left:3px;padding-right:3px;font-size:12px}
     .role-row-actions{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}.role-invite-option{margin-top:14px;padding:11px 12px;border:1px solid #dbe3ec;border-radius:9px;background:#f8fafc}.role-invite-option label{display:flex;align-items:center;gap:9px;margin:0}.role-invite-option input{width:auto}
     .gws-product-toolbar{grid-template-columns:minmax(190px,300px) minmax(220px,420px)}
 
@@ -638,7 +639,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <body>
 <div id="loginView" class="auth-shell">
   <form id="loginForm" class="auth-card" novalidate>
-    <div class="auth-brand">KeySuite<small>V4.28.57</small></div>
+    <div class="auth-brand">KeySuite<small>V4.28.58</small></div>
     <h1>Sign in</h1>
     <p>Only approved Keylargo users can enter KeySuite.</p>
     <div id="loginMessage" class="auth-message"></div>
@@ -654,7 +655,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <div id="loadingView" class="loading-screen hidden"><div class="loading-card"><div class="spinner"></div><div id="loadingText">Checking secure access…</div></div></div>
 <div id="appView" class="app hidden">
   <aside>
-    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.28.57</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
+    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.28.58</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
     <nav>
       <button data-page="dashboard" class="active">Dashboard</button>
       <button data-page="customers">Customers</button>
@@ -664,7 +665,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       </div>
       <div class="nav-group" data-nav-group="productMenu">
         <button type="button" class="nav-toggle" data-nav-toggle="productMenu"><span>Product</span><span class="nav-chevron">⌄</span></button>
-        <div class="nav-submenu"><div class="v391-brand-tree"><details class="v391-direct-brand-root v391-bgreich-root"><summary>B.G.Reich</summary><div class="v391-bgreich-list"><button data-page="productChc" data-generation="G1">CHC C4</button><button data-page="productChc" data-generation="G2">CHC C6</button><button data-page="crPriceList">CR</button><button data-page="productBfi">BFI</button><button data-page="productEs">End Suction</button><button data-page="productMotor">Motor</button></div></details></div></div>
+        <div class="nav-submenu"><div class="v391-brand-tree"><details class="v391-direct-brand-root v391-bgreich-root"><summary>B.G.Reich</summary><div class="v391-bgreich-list"><button data-page="productChc" data-generation="G1">CHC C4</button><button data-page="productChc" data-generation="G2">CHC C6</button><button data-page="productCr">CR</button><button data-page="productBfi">BFI</button><button data-page="productEs">End Suction</button><button data-page="productMotor">Motor</button></div></details></div></div>
       </div>
       <button data-page="keyLab">KeyLab</button>
       <button data-page="quotation">Quotation</button>
@@ -679,7 +680,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       <button id="settingsButton" type="button" class="settings-button">⚙ Settings</button>
       <button id="logoutButton" type="button">Sign out</button>
     </div>
-    <div class="suite-version">KeySuite V4.28.57</div>
+    <div class="suite-version">KeySuite V4.28.58</div>
   </aside>
 
   <main>
@@ -878,6 +879,23 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         <div class="card"><div class="page-title-row" style="margin-bottom:12px"><div><h2 id="productSeriesTitle" style="margin:0">Models</h2><div id="productModelCount" class="muted"></div></div></div><div id="productModelGrid" class="product-model-grid"></div></div>
       </div>
       <iframe id="productSelectorFrame" src="about:blank" data-src="selector/product.html?product=1&v=42854" data-g2-src="selector/product.html?product=1&v=42854" data-g1-src="selector-g1/product.html?product=1&v=42854" title="CHC Product Curve" style="display:none"></iframe>
+    </section>
+
+    <section id="productCr" class="page">
+      <div class="page-title-row"><div><h1>Product · CR</h1><div class="muted">B.G.Reich CR vertical multistage pump range. Search by series or model, then open the curve or route the configured pump to Assembly / Quote.</div></div></div>
+      <div class="card product-toolbar">
+        <div><label>Model</label><input id="crProductModelInput" list="crProductModelOptions" placeholder="Example: CR 32-4"><datalist id="crProductModelOptions"></datalist></div>
+        <div><label>Material</label><select id="crProductMaterial" data-default-value="CR"><option value="CR" selected>CR</option><option value="CRS">CRS</option><option value="CRN">CRN</option></select></div>
+        <div><label>Mechanical Seal</label><select id="crProductSeal" data-default-value="Car / Sic"><option value="Car / Sic" selected>Carbon V Silicon Carbide (Ca SiC)</option><option value="Sic / Sic">Silicon Carbide V Silicon Carbide (SiC SiC)</option><option value="TC / TC">Tungsten V Tungsten (TC TC)</option></select></div>
+        <div><label>Elastomer</label><select id="crProductElastomer" data-default-value="Viton"><option value="Viton" selected>Viton</option><option value="EPDM">EPDM</option><option value="NBR">NBR</option></select></div>
+        <div><label>Connection</label><select id="crProductConnection" data-default-value="round"><option value="round" selected>Round Flange</option><option value="oval">Oval Flange</option></select></div>
+        <div><label>Supply</label><label class="default-choice-control"><input id="crProductBareShaft" type="checkbox" data-default-checked="false"> Bare Shaft Pump</label></div>
+      </div>
+      <div class="product-layout">
+        <div class="card"><h2>CR Series</h2><div id="crProductSeriesList" class="product-series-list"></div></div>
+        <div class="card"><div class="page-title-row" style="margin-bottom:12px"><div><h2 id="crProductSeriesTitle" style="margin:0">CR Models</h2><div id="crProductModelCount" class="muted"></div></div></div><div id="crProductModelGrid" class="product-model-grid"></div></div>
+      </div>
+      <iframe id="productCrSelectorFrame" src="about:blank" data-src="selector-cr/product.html?product=1&amp;v=42858" title="CR Product Curve" style="display:none"></iframe>
     </section>
 
     <section id="productBfi" class="page">
@@ -1566,7 +1584,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       </div>
       <div class="card" style="margin-top:16px">
         <div class="page-title-row" style="margin-bottom:12px"><div><h2 id="chcSealAddonTitle" style="margin:0">CHC G2 Mechanical Seal Add-On</h2><div id="chcSealAddonNote" class="muted">Independent G2 add-on values in MYR. Ca SiC remains the standard seal at RM 0.00.</div></div></div>
-        <div class="table-wrap"><table class="pricelist-table"><thead><tr><th>CHC Series</th><th>Ca SiC</th><th>SiC SiC Add-On</th><th>TC TC Add-On</th><th></th></tr></thead><tbody id="chcSealAddonRows"></tbody></table></div>
+        <div class="table-wrap"><table class="pricelist-table seal-price-table"><thead><tr><th>CHC Series</th><th>Ca SiC</th><th>SiC SiC Add-On</th><th>TC TC Add-On</th><th></th></tr></thead><tbody id="chcSealAddonRows"></tbody></table></div>
       </div>
     </section>
 
@@ -1588,7 +1606,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         <div class="page-title-row" style="margin-bottom:12px"><div><h2 style="margin:0">CR Models</h2><div id="crPriceListCount" class="muted"></div></div><div class="price-list-search"><label>Search Model</label><input id="crPriceSearch" placeholder="Example: CR 32-4"></div></div>
         <div class="table-wrap" style="max-height:650px"><table class="pricelist-table"><thead><tr><th rowspan="2">Model</th><th class="group-head" colspan="2">CR</th><th class="group-head" colspan="2">CRS</th><th class="group-head" colspan="2">CRN</th><th rowspan="2"></th></tr><tr><th class="sub-head">Price</th><th class="sub-head">Rarity</th><th class="sub-head">Price</th><th class="sub-head">Rarity</th><th class="sub-head">Price</th><th class="sub-head">Rarity</th></tr></thead><tbody id="crPriceRows"></tbody></table></div>
       </div>
-      <div class="card" style="margin-top:16px"><h2>CR Mechanical Seal Add-on</h2><div class="muted" style="margin-bottom:10px">Reference prices imported from the workbook.</div><div class="table-wrap"><table class="pricelist-table"><thead><tr id="crSealHead"></tr></thead><tbody id="crSealRows"></tbody></table></div></div>
+      <div class="card" style="margin-top:16px"><h2>CR Mechanical Seal Add-on</h2><div class="muted" style="margin-bottom:10px">Add-on values in MYR. Owners can edit and save each mechanical-seal row.</div><div class="table-wrap"><table class="pricelist-table seal-price-table"><thead><tr id="crSealHead"></tr></thead><tbody id="crSealRows"></tbody></table></div></div>
     </section>
 
 
@@ -2040,6 +2058,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <script src="assembly.js?v=42821"></script>
 <script src="bfi-data-v42302.js?v=42821"></script>
 <script src="cr-price-data-v42854.js?v=42854"></script>
+<script src="supabase/functions/shared-cr/cr-data.js?v=42858"></script>
 <script src="pdf-optimization.js?v=42821"></script>
 <script src="app.js?v=42824"></script>
 <script src="pricing.js?v=42824"></script>
@@ -2048,8 +2067,9 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <script src="chc-g1-price-map-v41409.js?v=42821"></script>
 <script src="pricelist.js?v=42821"></script>
 <script src="cr-pricelist-v42854.js?v=42854"></script>
-<script src="chc-g1-product-data-v41411.js?v=42857"></script>
+<script src="chc-g1-product-data-v41411.js?v=42858"></script>
 <script src="product.js?v=42821"></script>
+<script src="cr-product.js?v=42858"></script>
 <script src="bfi-v42302.js?v=42821"></script>
 <script src="manifold.js?v=42821"></script>
 <script src="roles.js?v=42821"></script>
@@ -2153,7 +2173,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 </script>
 <script src="v42853-chc-first-open.js?v=42854"></script>
 <script src="v41200-bootstrap.js?v=42826"></script>
-<script src="v42857-version-lock.js?v=42857"></script>
+<script src="v42858-version-lock.js?v=42858"></script>
 
 <script id="v41412-static-product-generation">
 document.addEventListener('click',event=>{
@@ -2169,8 +2189,8 @@ document.addEventListener('click',event=>{
 <script id="v42317-product-action-navigation">
 (()=>{
   'use strict';
-  const ACTION_SECTION_SELECTOR='#selector,#selectorBfi,#productChc,#productBfi';
-  const FRAME_IDS=['selectorFrame','selectorBfiFrame','productSelectorFrame','productBfiSelectorFrame'];
+  const ACTION_SECTION_SELECTOR='#selector,#selectorBfi,#productChc,#productCr,#productBfi';
+  const FRAME_IDS=['selectorFrame','selectorBfiFrame','productSelectorFrame','productCrSelectorFrame','productBfiSelectorFrame'];
   let navigationTimer=0;
 
   function actionOfButton(button){

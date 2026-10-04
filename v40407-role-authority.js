@@ -6,7 +6,7 @@
 
   const VERSION='4.22.03';
   const FAMILIES=['CHC','CR','BFI','ES'];
-  const PRODUCT_PAGE_FAMILY={productChc:'CHC',crPriceList:'CR',productBfi:'BFI',productEs:'ES'};
+  const PRODUCT_PAGE_FAMILY={productChc:'CHC',productCr:'CR',crPriceList:'CR',productBfi:'BFI',productEs:'ES'};
   // V4.17.02: Product → Keylargo is an Owner-assigned role scope.
   const KEYLARGO_PRODUCT_PAGE_FAMILY={
     productBaseplate:'BASEPLATE',

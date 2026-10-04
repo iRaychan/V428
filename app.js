@@ -130,7 +130,7 @@ if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAg
   if(!document.getElementById(styleId)){
    const style=document.createElement('style');style.id=styleId;style.textContent=css;document.head.appendChild(style);
   }
-  const version=window.KEYSUITE_VERSION||'4.28.57';
+  const version=window.KEYSUITE_VERSION||'4.28.58';
   document.title='KeySuite V'+version;
   document.querySelectorAll('.auth-brand small').forEach(node=>node.textContent='V'+version);
   document.querySelectorAll('.brand small').forEach(node=>node.textContent='Full Suite V'+version);
@@ -205,6 +205,7 @@ function showPage(id){
  window.KeySuitePriceList?.pageShown?.(id);
  window.KeySuiteCRPriceList?.pageShown?.(id);
  window.KeySuiteProduct?.pageShown?.(id);
+ window.KeySuiteCRProduct?.pageShown?.(id);
  window.KeySuiteBFI?.pageShown?.(id);
  window.KeySuiteManifold?.pageShown?.(id);
  window.KeySuiteMotor?.pageShown?.(id);
@@ -1438,6 +1439,7 @@ window.addEventListener('message',function(event){
  if(!event.data)return;
  const fromEs=event.source===$('selectorEsFrame')?.contentWindow||String(event.data.product||'').toUpperCase()==='ES';
  const fromBfi=event.source===$('selectorBfiFrame')?.contentWindow||event.source===$('productBfiSelectorFrame')?.contentWindow||String(event.data.product||event.data.family||'').toUpperCase()==='BFI';
+ const fromCr=event.source===$('productCrSelectorFrame')?.contentWindow||String(event.data.product||event.data.family||'').toUpperCase()==='CR';
  if(event.data.type==='KEYSUITE_SELECTOR_HEIGHT'&&(fromEs||fromBfi)){const frame=$(fromBfi?'selectorBfiFrame':'selectorEsFrame'),height=Math.max(1200,Math.min(6000,Number(event.data.height)||(fromBfi?1900:2600)));if(frame)frame.style.height=`${Math.ceil(height+8)}px`;return}
  if(event.data.type==='KEYSUITE_SELECTION_CHANGED'){
    if(!fromEs&&!fromBfi)updateConnectionAvailabilityFromSelection(event.data.payload||{});
@@ -1448,6 +1450,7 @@ window.addEventListener('message',function(event){
  const rawPayload=event.data.payload||{};
  const p={...rawPayload};
  const route=event.data.route||pendingSelectionRoute||'quotation';pendingSelectionRoute='quotation';
+ if(fromCr||String(p.family||p.product||p.productFamily||'').toUpperCase()==='CR'){window.KeySuiteCRProduct?.routeSelection?.(p,route);return}
  if(fromBfi||String(p.family||p.product||p.productFamily||'').toUpperCase()==='BFI'){window.KeySuiteBFI?.routeSelection?.(p,route);return}
  if(fromEs||isEsSelectionPayload(p)){void routeEsSelection(p,route).catch(error=>{console.error('ES selection routing failed',error);alert(error?.message||'Unable to route the ES selection.');});return}
  // V4.21.15: never let CHC C4/G1 silently fall back to C6/G2 pricing.

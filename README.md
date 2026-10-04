@@ -1,11 +1,21 @@
-# KeySuite V4.28.57 FULL CLEAN
+# KeySuite V4.28.58 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
 
+## V4.28.58 - CHC G1 refresh and CR selector/pricing upgrade
+
+- Includes the amended CHC C4/G1 V1.3 hydraulic data and CHC G1 price updates.
+- Replaces Product → CR Price List with a CHC-style CR/CRS/CRN product search and selector using `004 - CR 261003 - V1.0.xlsx`.
+- Keeps the CR Price List editor available separately under Price List.
+- Makes all CR Mechanical Seal Add-On values owner-editable and uses the saved MYR values in CR quotation pricing.
+- Reduces the Mechanical Seal Add-On input columns to approximately half width for both CHC and CR.
+- Requires `supabase/migrations/20261005090000_v42858_cr_mechanical_seal_addons.sql` when upgrading from V4.28.57.
+- Retains all V4.28.57 behavior outside these requested CHC/CR changes.
+
 ## V4.28.57 - CHC G1 update and editable Mechanical Seal Add-On
 
-- Updates CHC C4/G1 from `004 - CHC G1 261003 - V1.2 - CHC 32 Amend.xlsx`.
-- Replaces the CHC 32 flow, efficiency, NPSHr, head-per-stage and secondary-efficiency source series in both the shared and standalone selector data.
+- Updates CHC C4/G1 from `004 - CHC G1 261003 - V1.3 - CHC 32 Amend.xlsx`.
+- Replaces the CHC 32 flow, efficiency, NPSHr, head-per-stage, secondary-efficiency and secondary-head source series in both the shared and standalone selector data.
 - Adds a Mechanical Seal Add-On table to the CHC Price List for Ca SiC, SiC SiC and TC TC.
 - Keeps separate, owner-editable MYR add-on values for CHC C4/G1 and CHC C6/G2.
 - Uses the saved generation-specific add-on automatically when CHC quotation prices are calculated.

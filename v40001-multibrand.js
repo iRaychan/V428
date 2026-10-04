@@ -4,7 +4,7 @@
   if (window.__KEYSUITE_V394410_MULTIBRAND__) return;
   window.__KEYSUITE_V394410_MULTIBRAND__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.57';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.58';
   const $=id=>document.getElementById(id);
   const clone=v=>JSON.parse(JSON.stringify(v??{}));
   const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -163,7 +163,7 @@
   function pumpDataOfRow(row){try{return JSON.parse(row?.dataset?.pumpData||'{}')}catch(_){return {}}}
   function sourceFamily(source,row=null){return String(source?.product_family||source?.family||source?.productFamily||row?.dataset?.productFamily||'').toUpperCase()}
   function inferFamilyFromPage(page=''){
-    const map={productChc:'CHC',productBfi:'BFI',productEs:'ES',productMotor:'MOTOR',productGws:'GWS',productKeyplc:'KEYPLC',productManifold:'MANIFOLD',productCoupling:'COUPLING',productBaseplate:'BASEPLATE',selector:'CHC',selectorBfi:'BFI',selectorEs:'ES'};
+    const map={productChc:'CHC',productCr:'CR',productBfi:'BFI',productEs:'ES',productMotor:'MOTOR',productGws:'GWS',productKeyplc:'KEYPLC',productManifold:'MANIFOLD',productCoupling:'COUPLING',productBaseplate:'BASEPLATE',selector:'CHC',selectorBfi:'BFI',selectorEs:'ES'};
     return map[page]||'';
   }
   function inferSeries(model,source={}){
@@ -565,7 +565,7 @@
   function isSystemBrand(brand){return String(brand?.brand_key||'').toLowerCase()==='b.g.reich';}
   function currentSystemBrandLogo(){
     try{const saved=String(window.KeySuiteSelectorBrand?.getDefaultLogo?.()||'');if(saved)return saved;}catch(_){}
-    for(const id of ['selectorFrame','selectorBfiFrame','selectorEsFrame','productSelectorFrame','productBfiSelectorFrame','productEsSelectorFrame']){
+    for(const id of ['selectorFrame','selectorBfiFrame','selectorEsFrame','productSelectorFrame','productCrSelectorFrame','productBfiSelectorFrame','productEsSelectorFrame']){
       try{const doc=$(id)?.contentDocument;if(!doc)continue;const imgs=[...doc.querySelectorAll('header img,.brand-wrap img,.brand img,img.brand-logo,img.tds-logo')];const img=imgs.find(x=>/reich|brand|logo/i.test(`${x.alt||''} ${x.getAttribute('src')||''}`))||imgs[0];if(img?.src)return img.src;}catch(_){}
     }
     return '';
@@ -733,7 +733,7 @@
     'b.g.reich':[
       {label:'CHC C4',family:'CHC',productGroup:'CHC_G1',page:'productChc',generation:'G1'},
       {label:'CHC C6',family:'CHC',productGroup:'CHC_G2',page:'productChc',generation:'G2'},
-      {label:'CR',family:'CR',productGroup:'CR',page:'crPriceList'},
+    {label:'CR',family:'CR',productGroup:'CR',page:'productCr'},
       {label:'BFI',family:'BFI',productGroup:'BFI',page:'productBfi'},
       {label:'End Suction',family:'ES',page:'productEs'},
       {label:'Motor',family:'MOTOR',page:'productMotor'}
@@ -747,7 +747,7 @@
     try{sessionStorage.setItem('keysuite-v41412-product-chc-generation',code)}catch(_){}
     window.KeySuiteProduct?.setChcGeneration?.(code);
   }
-  function familyPage(fam){return ({CHC:'productChc',CR:'crPriceList',BFI:'productBfi',ES:'productEs',MOTOR:'productMotor',GWS:'productGws',KEYPLC:'productKeyplc',MANIFOLD:'productManifold',COUPLING:'productCoupling',BASEPLATE:'productBaseplate'})[baseFamily(fam)]||''}
+  function familyPage(fam){return ({CHC:'productChc',CR:'productCr',BFI:'productBfi',ES:'productEs',MOTOR:'productMotor',GWS:'productGws',KEYPLC:'productKeyplc',MANIFOLD:'productManifold',COUPLING:'productCoupling',BASEPLATE:'productBaseplate'})[baseFamily(fam)]||''}
   function brandFamilies(brand){
     const key=String(brand.brand_key||'').toLowerCase(),built=isMasterBrand(brand)?BUILTIN_FAMILIES['b.g.reich']:BUILTIN_FAMILIES[key];
     if(built)return built.map(f=>{
