@@ -46,7 +46,7 @@ const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const curve=fs.readFileSync(path.join(root,'v394411-product-curve.js'),'utf8');
 const baseplate=fs.readFileSync(path.join(root,'baseplate.js'),'utf8');
 const pricing=fs.readFileSync(path.join(root,'pricing.js'),'utf8');
-assert(index.includes('width:288px;min-width:288px'),'Mechanical Seal Add-On editable input width is 288px');
+assert(index.includes('max-width:288px;min-width:0'),'Mechanical Seal Add-On editable inputs retain a responsive 288px maximum');
 assert(curve.includes('>PDF</button>')&&curve.includes('>Assembly</button>')&&curve.includes('>Add to Quote</button>'),'curve action group contains PDF, Assembly and Add to Quote');
 assert(index.includes('id="productBaseplateAssembly"')&&baseplate.includes("section:'baseplate'"),'Product Baseplate routes to the Pumpset Baseplate section');
 assert(pricing.includes("repriceSource(source,'quotation'")&&pricing.includes('set_discount_retained=true'),'Assembly/System leaves retain each component quotation Set Discount');

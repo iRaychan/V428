@@ -130,7 +130,7 @@ if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAg
   if(!document.getElementById(styleId)){
    const style=document.createElement('style');style.id=styleId;style.textContent=css;document.head.appendChild(style);
   }
-  const version=window.KEYSUITE_VERSION||'4.28.59';
+  const version=window.KEYSUITE_VERSION||'4.28.60';
   document.title='KeySuite V'+version;
   document.querySelectorAll('.auth-brand small').forEach(node=>node.textContent='V'+version);
   document.querySelectorAll('.brand small').forEach(node=>node.textContent='Full Suite V'+version);
@@ -444,7 +444,11 @@ const historyExpandedYears=new Set();
 let historyYearAccordionInitialized=false;
 function checkedHistoryPeriods(){return [...document.querySelectorAll('#historyYearMonthOptions input[data-history-period]:checked')].map(input=>String(input.dataset.historyPeriod||''))}
 function historyPeriodSummary(){const values=checkedHistoryPeriods(),summary=$('historyYearMonthSummary');if(!summary)return;if(!values.length){summary.textContent='All Dates';return}const grouped=new Map();values.sort().forEach(value=>{const [year,month]=value.split('-');if(!grouped.has(year))grouped.set(year,[]);grouped.get(year).push(HISTORY_MONTHS.find(row=>row[0]===month)?.[1]||month)});const text=[...grouped.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([year,months])=>`${year}: ${months.join(', ')}`).join(' · ');summary.textContent=text.length>72?`${values.length} months selected`:text}
-function quotationHistoryFilters(){return {periods:checkedHistoryPeriods(),customer:String($('historyCustomer')?.value||'').trim().toLowerCase(),user:canManageQuotationHistory()?String($('historyUser')?.value||'').trim().toLowerCase():currentEmail()}}
+function quotationHistoryFilters(){return {periods:checkedHistoryPeriods(),search:String($('historySearch')?.value||'').trim().toLowerCase(),customer:String($('historyCustomer')?.value||'').trim().toLowerCase(),user:canManageQuotationHistory()?String($('historyUser')?.value||'').trim().toLowerCase():currentEmail()}}
+function quotationHistorySearchText(q){
+ const models=(Array.isArray(q?.items)?q.items:[]).flatMap(item=>[item?.model,item?.product,item?.productFamily,item?.product_family]).filter(Boolean);
+ return [q?.project,q?.project2,q?.projectName,q?.project_name,q?.no,q?.quotationNo,q?.quotation_no,quoteDisplayCustomerName(q),q?.model,q?.product,q?.productFamily,...models].filter(Boolean).join(' ').toLowerCase()
+}
 function quotationHistoryTimestamp(q){const raw=q?.createdAt||q?.created_at||q?.updatedAt||q?.updated_at||q?.date||'';const value=Date.parse(raw);return Number.isFinite(value)?value:0}
 function quotationHistoryUpdatedTimestamp(q){const raw=q?.updatedAt||q?.updated_at||q?.createdAt||q?.created_at||q?.date||'';const value=Date.parse(raw);return Number.isFinite(value)?value:0}
 function quotationHistoryDateTimestamp(q){const raw=String(q?.date||'').slice(0,10);const value=Date.parse(raw?`${raw}T00:00:00Z`:'');return Number.isFinite(value)?value:0}
@@ -456,7 +460,7 @@ function compareQuotationHistoryNewest(a,b){
  return quotationHistoryUpdatedTimestamp(b)-quotationHistoryUpdatedTimestamp(a)
 }
 function filteredQuotes(rows=quotes()){
- const filter=quotationHistoryFilters();return rows.filter(q=>{const period=String(q.date||'').slice(0,7),customer=quoteDisplayCustomerName(q).toLowerCase(),creator=quoteCreatorEmail(q);return (!filter.periods.length||filter.periods.includes(period))&&(!filter.customer||customer.includes(filter.customer))&&(!filter.user||creator===filter.user)}).slice().sort(compareQuotationHistoryNewest)
+ const filter=quotationHistoryFilters();return rows.filter(q=>{const period=String(q.date||'').slice(0,7),customer=quoteDisplayCustomerName(q).toLowerCase(),creator=quoteCreatorEmail(q),searchText=quotationHistorySearchText(q);return (!filter.periods.length||filter.periods.includes(period))&&(!filter.search||searchText.includes(filter.search))&&(!filter.customer||customer.includes(filter.customer))&&(!filter.user||creator===filter.user)}).slice().sort(compareQuotationHistoryNewest)
 }
 function historyYearMonthGroup(year,selected){
  const selectedCount=HISTORY_MONTHS.reduce((count,[month])=>count+(selected.has(`${year}-${month}`)?1:0),0);
@@ -1439,7 +1443,7 @@ window.addEventListener('message',function(event){
  if(!event.data)return;
  const fromEs=event.source===$('selectorEsFrame')?.contentWindow||String(event.data.product||'').toUpperCase()==='ES';
  const fromBfi=event.source===$('selectorBfiFrame')?.contentWindow||event.source===$('productBfiSelectorFrame')?.contentWindow||String(event.data.product||event.data.family||'').toUpperCase()==='BFI';
- const fromCr=event.source===$('productCrSelectorFrame')?.contentWindow||String(event.data.product||event.data.family||'').toUpperCase()==='CR';
+ const fromCr=event.source===$('selectorCrFrame')?.contentWindow||event.source===$('productCrSelectorFrame')?.contentWindow||String(event.data.product||event.data.family||'').toUpperCase()==='CR';
  if(event.data.type==='KEYSUITE_SELECTOR_HEIGHT'&&(fromEs||fromBfi)){const frame=$(fromBfi?'selectorBfiFrame':'selectorEsFrame'),height=Math.max(1200,Math.min(6000,Number(event.data.height)||(fromBfi?1900:2600)));if(frame)frame.style.height=`${Math.ceil(height+8)}px`;return}
  if(event.data.type==='KEYSUITE_SELECTION_CHANGED'){
    if(!fromEs&&!fromBfi)updateConnectionAvailabilityFromSelection(event.data.payload||{});
@@ -1753,11 +1757,11 @@ $('cancelCustomerEdit').onclick=cancelCustomerEdit;
 $('deleteCustomerBtn').onclick=()=>deleteCustomer($('customerId').value);
 $('editDetailCustomer').onclick=()=>editCustomer(viewedCustomerId);
 $('customerSearch').addEventListener('input',refreshCustomerList);
-['historyCustomer','historyUser'].forEach(id=>$(id)?.addEventListener(id==='historyCustomer'?'input':'change',refreshQuotes));
+['historySearch','historyCustomer','historyUser'].forEach(id=>$(id)?.addEventListener(id==='historyUser'?'change':'input',refreshQuotes));
 $('historyYearMonthOptions')?.addEventListener('change',event=>{if(!event.target.matches('input[data-history-period]'))return;historyPeriodSummary();refreshQuotes()});
 $('historyYearMonthOptions')?.addEventListener('click',event=>{const button=event.target.closest('[data-history-year-action]');if(!button)return;event.preventDefault();const checked=button.dataset.historyYearAction==='select',year=button.dataset.historyYear;document.querySelectorAll(`#historyYearMonthOptions input[data-history-year="${year}"]`).forEach(input=>input.checked=checked);historyPeriodSummary();refreshQuotes()});
 document.querySelectorAll('[data-history-period-action]').forEach(button=>button.addEventListener('click',()=>{const checked=button.dataset.historyPeriodAction==='select';document.querySelectorAll('#historyYearMonthOptions input[data-history-period]').forEach(input=>input.checked=checked);historyPeriodSummary();refreshQuotes()}));
-$('clearHistoryFilters')?.addEventListener('click',()=>{document.querySelectorAll('#historyYearMonthOptions input[data-history-period]').forEach(input=>input.checked=false);['historyCustomer','historyUser'].forEach(id=>{const node=$(id);if(node)node.value=''});historyPeriodSummary();refreshQuotes()});
+$('clearHistoryFilters')?.addEventListener('click',()=>{document.querySelectorAll('#historyYearMonthOptions input[data-history-period]').forEach(input=>input.checked=false);['historySearch','historyCustomer','historyUser'].forEach(id=>{const node=$(id);if(node)node.value=''});historyPeriodSummary();refreshQuotes()});
 $('qCustomer').addEventListener('change',()=>{
  if(!canEditQuotation(true)){syncStartCustomer(quotationPricingCustomerId||'');return}
  if(quoteHasItems()){alert('Remove all quotation items before changing the customer.');$('qCustomer').value=quotationPricingCustomerId||'';syncStartCustomer(quotationPricingCustomerId||'');return}
@@ -1981,7 +1985,7 @@ $('startProject')?.addEventListener('input',()=>syncProjectFields('dashboard'));
 $('project')?.addEventListener('input',()=>syncProjectFields('quotation'));
 
 syncOwnerKeyVisibility();newQuote();refreshAll();updateQuotationStateUi();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js?v=42853');
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js?v=42860');
 
 
 // Two-line popup editor for Project and Delivery.

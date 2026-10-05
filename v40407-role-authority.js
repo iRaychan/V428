@@ -18,7 +18,7 @@
   const HOUSE_PRODUCT_PAGES=new Set(['keyLab']);
   const MOTOR_PRODUCT_PAGES=new Set(['productMotor']);
   const OTHER_PRODUCT_PAGES=new Set([]);
-  const SELECTOR_PAGE_FAMILY={selector:'CHC',selectorBfi:'BFI',selectorEs:'ES'};
+  const SELECTOR_PAGE_FAMILY={selector:'CHC',selectorCr:'CR',selectorBfi:'BFI',selectorEs:'ES'};
   const state={access:null,scope:{keys:[]},loaded:false,loadError:''};
   const norm=v=>String(v??'').trim();
   const upper=v=>norm(v).toUpperCase();

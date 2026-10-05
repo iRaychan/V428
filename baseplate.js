@@ -169,6 +169,11 @@
   function clearProductCalculator(){PRODUCT_CALC_IDS.forEach(id=>{const el=$(id);if(el){el.value='';el.dataset.defaultValue='';delete el.dataset.touched;el.classList.remove('baseplate-calc-modified')}});setProductFixedFields()}
   function esReferenceData(){return window.KeySuiteMotorBaseplateV40205?.data||window.KeySuiteMotorBaseplateDataV40205||{}}
   function esDimensionMap(){return esReferenceData()?.es?.dimensions||{}}
+  function frameForChannel(channel){
+    const wanted=normalizeChannel(channel),frames=esReferenceData()?.baseplate?.frames||{};
+    const match=Object.entries(frames).find(([,row])=>normalizeChannel(row?.cChannel)===wanted);
+    return match?Number(match[0]):0
+  }
   function normalizeEsReferenceModel(value){return String(value||'').replace(/^ES\s+/i,'').trim()}
   function naturalModelSort(a,b){return String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:'base'})}
   function esReferenceModels(){
@@ -265,7 +270,8 @@
     if(toggle){toggle.textContent=productRecommendationCollapsed?'▼':'▲';toggle.setAttribute('aria-expanded',productRecommendationCollapsed?'false':'true');toggle.title=productRecommendationCollapsed?'Expand recommendation guide':'Collapse recommendation guide'}
   }
   function productBaseplateConfiguration(){
-    return {cChannel:normalizeChannel($('productBaseplateCalcChannel')?.value),L3:number($('productBaseplateCalcL3')?.value),W1:number($('productBaseplateCalcW1')?.value),drillingQty:number(settings.general.defaultDrillingQty),boltNutQty:number(settings.general.defaultBoltNutQty)};
+    const cChannel=normalizeChannel($('productBaseplateCalcChannel')?.value),frame=frameForChannel(cChannel);
+    return {family:'ES',frame,baseplateFrame:frame,cChannel,L3:number($('productBaseplateCalcL3')?.value),W1:number($('productBaseplateCalcW1')?.value),drillingQty:number(settings.general.defaultDrillingQty),boltNutQty:number(settings.general.defaultBoltNutQty),manualFrame:false};
   }
   function buildProductBaseplateItem(pricingMode='quotation'){
     if(!productCalcReady()){alert('Select the Baseplate Size and enter both Length and Width before adding the ES Baseplate.');return}
@@ -273,7 +279,7 @@
     if(!found){alert('No ES Baseplate price is available for the selected customer. Check the Baseplate costing and Pricing Category.');return}
     if(window.KeySuitePricing?.ensureQuoteableCalculation&&!window.KeySuitePricing.ensureQuoteableCalculation(found.calc,'ES Baseplate'))return;
     const channel=config.cChannel.replace(/ x /g,' × '),length=Number.isInteger(config.L3)?config.L3:Math.round(config.L3*10)/10,width=Number.isInteger(config.W1)?config.W1:Math.round(config.W1*10)/10;
-    return {model:`ES Baseplate ${channel}`,bomDescription:`ES Baseplate ${channel}`,description:`ES Baseplate\nC-Channel: ${channel}\nBaseplate Size: ${length} mm (L) × ${width} mm (W)`,qty:1,unitPrice:Number(found.calc?.finalPrice||0),pricingSource:window.KeySuitePricing?.sourceSnapshot?.(found)||{},productFamily:'BASEPLATE',assemblyLevel:'PUMPSET_COMPONENT',assemblySection:'baseplate',baseplateData:{configuration:config}};
+    return {model:`ES Baseplate ${channel}`,bomDescription:`ES Baseplate ${channel}`,description:`ES Baseplate\nC-Channel: ${channel}\nBaseplate Size: ${length} mm (L) × ${width} mm (W)`,qty:1,unitPrice:Number(found.calc?.finalPrice||0),pricingSource:window.KeySuitePricing?.sourceSnapshot?.(found)||{},productFamily:'BASEPLATE',assemblyLevel:'PUMPSET_COMPONENT',assemblySection:'baseplate',baseplateData:{...config,defaultFrame:config.frame,configuration:config}};
   }
   function quoteProductBaseplate(){
     if(!window.KeySuiteApp?.ensureQuotationPricingContext?.('add the ES Baseplate to the quotation'))return;

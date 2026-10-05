@@ -1,24 +1,20 @@
 {
-  "version": "4.28.59",
-  "baseline": "4.28.58 FULL CLEAN",
-  "upgrade_supported_from": "4.28.58",
+  "version": "4.28.60",
+  "baseline": "4.28.59 FULL CLEAN",
+  "upgrade_supported_from": "4.28.59",
   "changes": [
-    "widens CHC and CR Mechanical Seal Add-On editable inputs to 288px",
-    "restores PDF, Assembly and Add to Quote in the shared Product curve header, including CR",
-    "restores Product > Keylargo > Baseplate Assembly routing into the Pumpset Baseplate section",
-    "retains each Assembly/System component's own Set Discount, sums Transport and applies only the highest Fuel Charge",
-    "flattens nested Assembly BOM pricing inside System to prevent wrapper and component double-counting",
-    "includes the amended CHC C4/G1 V1.3 hydraulic and pricing data",
-    "adds a CHC-style CR product search and selector from workbook 004 - CR 261003 - V1.0.xlsx",
-    "keeps CR price editing available in the Price List module",
-    "makes CR Mechanical Seal Add-On MYR values owner-editable and persistent",
-    "uses saved CR Mechanical Seal Add-On values in quotation pricing",
-    "keeps owner-editable CHC and CR Mechanical Seal Add-On persistence from V4.28.58",
-    "visible version is V4.28.59"
+    "keeps CHC and CR Mechanical Seal Add-On inputs editable with a responsive 288px maximum and no forced horizontal overflow",
+    "places ES Baseplate Assembly and Add to Quote together and moves the helper text below the action row",
+    "maps ES Baseplate 2 x 4 to frame 100 and carries the mapped frame through Assembly pricing and BOM data",
+    "resets and isolates CHC and CR Product curve frames during navigation",
+    "adds B.G.Reich CR to Selection using the independent CR hydraulic data and selector workflow",
+    "adds live partial case-insensitive Quotation History search across project, customer, quotation number and available model/product fields",
+    "keeps frozen PDF and quotation print layouts unchanged",
+    "visible version is V4.28.60"
   ],
   "new_database_migration_required": false,
   "database_migration": "supabase/migrations/20261005090000_v42858_cr_mechanical_seal_addons.sql",
   "database_verification": "supabase/migrations/20261005090001_v42858_verify_cr_mechanical_seal_addons.sql",
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.58 to V4.28.59 by uploading the package. No new V4.28.59 database migration is required. Installations upgrading from V4.28.57 or older still require the included V4.28.58 CR and V4.28.57 CHC seal migrations. Frozen PDF/print layouts are unchanged; the restored PDF action is wiring only."
+  "notes": "Upgrade V4.28.59 to V4.28.60 by uploading the package. No new V4.28.60 database migration is required. Frozen PDF and quotation print layouts are unchanged."
 }

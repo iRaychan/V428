@@ -12,7 +12,7 @@ const verify=read('supabase/migrations/20261005090001_v42858_verify_cr_mechanica
 
 assert(/id="crSealRows"/.test(html),'CR seal table must remain visible');
 assert(/seal-price-table/.test(html),'CHC and CR seal tables must retain their shared layout');
-assert(/\.seal-price-table \.currency-price-input input\{width:288px;min-width:288px;max-width:288px/.test(html),'CHC and CR seal inputs must be exactly 288px wide');
+assert(/\.seal-price-table \.currency-price-input input\{width:100%;max-width:288px;min-width:0/.test(html),'CHC and CR seal inputs must remain editable with a responsive 288px maximum');
 assert(/data-cr-seal-group/.test(editor),'CR seal prices must render as inputs');
 assert(/data-save-cr-seal/.test(editor),'CR seal rows must have save actions');
 assert(/keysuite_save_cr_mechanical_seal_addons_v42858/.test(editor),'CR seal editor must call its save RPC');

@@ -4,7 +4,7 @@
   if (window.__KEYSUITE_V394410_MULTIBRAND__) return;
   window.__KEYSUITE_V394410_MULTIBRAND__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.59';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.60';
   const $=id=>document.getElementById(id);
   const clone=v=>JSON.parse(JSON.stringify(v??{}));
   const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -163,7 +163,7 @@
   function pumpDataOfRow(row){try{return JSON.parse(row?.dataset?.pumpData||'{}')}catch(_){return {}}}
   function sourceFamily(source,row=null){return String(source?.product_family||source?.family||source?.productFamily||row?.dataset?.productFamily||'').toUpperCase()}
   function inferFamilyFromPage(page=''){
-    const map={productChc:'CHC',productCr:'CR',productBfi:'BFI',productEs:'ES',productMotor:'MOTOR',productGws:'GWS',productKeyplc:'KEYPLC',productManifold:'MANIFOLD',productCoupling:'COUPLING',productBaseplate:'BASEPLATE',selector:'CHC',selectorBfi:'BFI',selectorEs:'ES'};
+    const map={productChc:'CHC',productCr:'CR',productBfi:'BFI',productEs:'ES',productMotor:'MOTOR',productGws:'GWS',productKeyplc:'KEYPLC',productManifold:'MANIFOLD',productCoupling:'COUPLING',productBaseplate:'BASEPLATE',selector:'CHC',selectorCr:'CR',selectorBfi:'BFI',selectorEs:'ES'};
     return map[page]||'';
   }
   function inferSeries(model,source={}){

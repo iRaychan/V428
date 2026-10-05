@@ -1,8 +1,15 @@
-# KeySuite V4.28.59 FULL CLEAN
+# KeySuite V4.28.60 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
 
-## V4.28.59 - CHC G1 refresh and CR selector/pricing upgrade
+## V4.28.60 - Selection, navigation, Baseplate and history refinements
+
+- Responsive CHC/CR Mechanical Seal Add-On editors with a 288px maximum input width.
+- ES Baseplate action-row cleanup and correct 2\" × 4\" → frame 100 BOM mapping.
+- Isolated CR/CHC Product curve route state.
+- B.G.Reich CR Selection with flow/head duty, hydraulic matching, curve and Assembly/Quote actions.
+- Live Quotation History search for project, customer, quotation number and available model/product values.
+- Frozen PDF and quotation print layouts remain unchanged.
 
 - Includes the amended CHC C4/G1 V1.3 hydraulic data and CHC G1 price updates.
 - Replaces Product → CR Price List with a CHC-style CR/CRS/CRN product search and selector using `004 - CR 261003 - V1.0.xlsx`.
