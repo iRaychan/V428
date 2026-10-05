@@ -473,13 +473,34 @@
     return findPrice(model,{...options,customer,category:cat,pricingMode,generation_code:generation,seal:source.seal_faces||source.seal||'Car/Cer',elastomer:source.seal_elastomer||source.elastomer||'Viton',motor_hp:Number(source.motor_hp||0),pole:Number(source.motor_pole||2),motor_efficiency_class:source.selected_motor_efficiency_class||source.default_motor_efficiency_class});
   }
 
+  function flattenAssemblyItems(items=[],multiplier=1,result=[]){
+    for(const item of items||[]){
+      const source=typeof item?.pricingSource==='string'?(()=>{try{return JSON.parse(item.pricingSource)}catch(_){return {}}})():item?.pricingSource||item?.pricing_source||{};
+      const qty=Math.max(0,Number(item?.qty??1))*Math.max(0,Number(multiplier)||0),nested=source.assembly_items||source.items||[];
+      if(nested.length){flattenAssemblyItems(nested.map(entry=>({id:entry?.id,model:entry?.model,qty:entry?.qty??1,unitPrice:entry?.unitPrice,pricingSource:entry?.pricingSource||entry?.pricing_source||entry?.source||entry})),qty,result);continue}
+      result.push({...item,qty,pricingSource:source});
+    }
+    return result;
+  }
+
+  function consolidateAssemblyPricing(components=[]){
+    let beforeFuelTotal=0,transportTotal=0,maxFuelCharge=0;
+    for(const component of components||[]){
+      const qty=Math.max(0,Number(component?.qty||0)),calc=component?.calc||{},fixed=calc.fixedPrice===true;
+      const beforeFuel=Number(fixed?calc.finalPrice:(calc.beforeFuel??calc.unroundedPrice??calc.finalPrice)||0);
+      beforeFuelTotal+=qty*Math.max(0,beforeFuel);transportTotal+=qty*Math.max(0,Number(calc.transport)||0);maxFuelCharge=Math.max(maxFuelCharge,Math.max(0,Number(calc.fuelCharge)||0));
+    }
+    const unroundedPrice=beforeFuelTotal+maxFuelCharge;
+    return {beforeFuelTotal,transportTotal,maxFuelCharge,unroundedPrice,total:roundUp10(unroundedPrice)};
+  }
+
   function priceAssemblyForQuotation(items=[],options={}){
     const customer=options.customer||quotationCustomer(),cat=options.category||categoryForCustomer(customer);if(!customer||!cat)return {error:'Select a quotation customer with a Pricing Category first.',total:0,items:[]};
-    const priced=[];let total=0;
-    for(const item of items||[]){
+    const priced=[],components=[];
+    for(const item of flattenAssemblyItems(items)){
       const source=typeof item?.pricingSource==='string'?(()=>{try{return JSON.parse(item.pricingSource)}catch(_){return {}}})():item?.pricingSource||{};
       if(!source.product_family||String(source.product_family).toUpperCase()==='MANUAL'){
-        const qty=Math.max(0,Number(item?.qty||0)),unitPrice=Math.max(0,Number(item?.unitPrice||0));priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice,pricingSource:{product_family:'MANUAL',pricing_mode:'quotation'}});total+=qty*unitPrice;continue;
+        const qty=Math.max(0,Number(item?.qty||0)),unitPrice=Math.max(0,Number(item?.unitPrice||0));priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice,pricingSource:{product_family:'MANUAL',pricing_mode:'quotation'}});components.push({qty,calc:{fixedPrice:true,finalPrice:unitPrice,transport:0,fuelCharge:0}});continue;
       }
       const found=repriceSource(source,'quotation',{...options,customer,category:cat});
       if(!found)return {error:`No Quotation price is available for ${item?.model||'a BOM item'}.`,total:0,items:priced};
@@ -489,9 +510,11 @@ BOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
       const qty=Math.max(0,Number(item?.qty||0));const snapshot=sourceSnapshot(found);
       if(String(snapshot.product_family).toUpperCase()==='ES'){snapshot.seal_material=source.seal_material||ES_DEFAULT_SEAL;snapshot.elastomer=source.elastomer||ES_DEFAULT_ELASTOMER}
       if(source.auto_sized_panel)snapshot.auto_sized_panel=true;if(source.auto_sized_manifold)snapshot.auto_sized_manifold=true;if(source.auto_sized_tank)snapshot.auto_sized_tank=true;
-      priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice:found.calc.finalPrice,pricingSource:snapshot});total+=qty*Number(found.calc.finalPrice||0);
+      snapshot.consolidated_fuel_excluded=true;snapshot.set_discount_retained=true;
+      priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice:Number(found.calc.fixedPrice?found.calc.finalPrice:found.calc.beforeFuel||0),pricingSource:snapshot});components.push({qty,calc:found.calc});
     }
-    return {total,items:priced,source:{product_family:'ASSEMBLY',pricing_mode:'quotation',customer_id:customer.id||'',category_id:cat.id||'',assembly_items:priced,calculated_price:total}};
+    const consolidated=consolidateAssemblyPricing(components),total=consolidated.total;
+    return {total,items:priced,transportTotal:consolidated.transportTotal,fuelCharge:consolidated.maxFuelCharge,source:{product_family:'ASSEMBLY',pricing_mode:'quotation',customer_id:customer.id||'',category_id:cat.id||'',assembly_items:priced,transport_total:consolidated.transportTotal,fuel_charge:consolidated.maxFuelCharge,before_fuel_total:consolidated.beforeFuelTotal,unrounded_price:consolidated.unroundedPrice,calculated_price:total,pricing_rule:'COMPONENT_SET_DISCOUNT_SUM_TRANSPORT_MAX_FUEL'}};
   }
 
   function applyPriceToQuoteRow(row,model,options={}){if(window.KeySuiteApp?.canEditQuotation&&!window.KeySuiteApp.canEditQuotation(true))return false;const found=options.productFamily==='GWS'?findGwsPrice(model,options.pressure,options):findPrice(model,options);if(!found){if(options.productFamily!=='GWS')alert(chcPriceProblem(model,options));return false}if(!row||!ensureQuoteableCalculation(found.calc,model))return false;const input=row.querySelector('.item-price');if(!input)return false;input.value=found.calc.finalPrice.toFixed(2);row.dataset.pricingSource=JSON.stringify(sourceSnapshot(found));if(typeof calcTotal==='function')calcTotal();return true}
@@ -695,5 +718,5 @@ ${indent}Wiring for pumps & pressure transmitter within pump skid @ 1 Lot`;
     const row=window.KeySuiteApp?.addExternalQuoteItem?.(item);if(row)showPage('quotation');
   }
 
-  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,priceAssemblyForQuotation,findPrice,chcPriceProblem,findCrPrice,crSealAddon,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildCrAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
+  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,flattenAssemblyItems,consolidateAssemblyPricing,priceAssemblyForQuotation,findPrice,chcPriceProblem,findCrPrice,crSealAddon,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildCrAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
 })();

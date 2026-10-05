@@ -1,8 +1,8 @@
-# KeySuite V4.28.58 FULL CLEAN
+# KeySuite V4.28.59 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
 
-## V4.28.58 - CHC G1 refresh and CR selector/pricing upgrade
+## V4.28.59 - CHC G1 refresh and CR selector/pricing upgrade
 
 - Includes the amended CHC C4/G1 V1.3 hydraulic data and CHC G1 price updates.
 - Replaces Product → CR Price List with a CHC-style CR/CRS/CRN product search and selector using `004 - CR 261003 - V1.0.xlsx`.
