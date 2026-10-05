@@ -1,6 +1,15 @@
-# KeySuite V4.28.61 FULL CLEAN
+# KeySuite V4.28.62 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
+
+## V4.28.62 - CR selector desktop-scale repair
+
+- Keeps the embedded CR Selection page at the same desktop scale as CHC.
+- Applies the proven visible-width first-open stabilization to both CHC and CR.
+- Prevents Safari text inflation and stale hidden-iframe sizing from making CR appear zoomed.
+- Constrains the CR header, duty panel, result cards and curve grid to the available KeySuite width.
+- Preserves CR hydraulic data, ranking, models, pricing routes, PDF output and actions.
+- Requires no database migration.
 
 ## V4.28.61 - CR Selection alignment with CHC
 
