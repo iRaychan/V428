@@ -1,21 +1,20 @@
 {
-  "version": "4.28.63",
-  "baseline": "4.28.62 FULL CLEAN",
-  "upgrade_supported_from": "4.28.62",
+  "version": "4.28.64",
+  "baseline": "4.28.63 FULL CLEAN",
+  "upgrade_supported_from": "4.28.63",
   "changes": [
-    "uses consolidated pre-Set-Discount leaf pricing for displayed Assembly and System totals",
-    "calculates a separate consolidated quotation price and audit snapshot with each leaf's Set Discount",
-    "retains per-component Set Discount and normal Final Discount quotation logic",
-    "sums all underlying Transport contributions and applies only the highest Fuel Charge once",
-    "flattens nested Assembly-to-System BOMs without double-counting wrapper prices or leaves",
-    "uses saved component pricing snapshots rather than silently falling back to a simple displayed-price sum when live catalogue resolution fails",
-    "preserves individual BOM component price displays",
+    "divides the single highest Fuel Charge equally by the number of visible Assembly/System BOM lines",
+    "uses a dynamic divisor matching two, three, four or any other positive BOM line count",
+    "recalculates and rounds each displayed BOM unit price after adding its allocated Fuel share",
+    "makes displayed BOM line totals add exactly to the displayed Consolidated Total",
+    "shows the allocated Fuel share per BOM line without changing the saved standalone component price",
+    "retains V4.28.63 quotation Set/Final Discount consolidation and nested System leaf pricing",
     "keeps frozen PDF and quotation print layouts unchanged",
-    "visible version is V4.28.63"
+    "visible version is V4.28.64"
   ],
   "new_database_migration_required": false,
   "database_migration": "supabase/migrations/20261005090000_v42858_cr_mechanical_seal_addons.sql",
   "database_verification": "supabase/migrations/20261005090001_v42858_verify_cr_mechanical_seal_addons.sql",
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.62 to V4.28.63 by uploading the package. No new V4.28.63 database migration is required. Frozen PDF and quotation print layouts are unchanged."
+  "notes": "Upgrade V4.28.63 to V4.28.64 by uploading the package. No new V4.28.64 database migration is required. Frozen PDF and quotation print layouts are unchanged."
 }

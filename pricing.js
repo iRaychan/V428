@@ -554,6 +554,18 @@ BOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
     return {total,items:priced,displayedComponentTotal,transportTotal:consolidated.transportTotal,fuelCharge:consolidated.maxFuelCharge,source:{product_family:'ASSEMBLY',pricing_mode:'assembly',customer_id:customer.id||'',category_id:cat.id||'',assembly_items:priced,displayed_component_total:displayedComponentTotal,transport_total:consolidated.transportTotal,fuel_charge:consolidated.maxFuelCharge,before_fuel_total:consolidated.beforeFuelTotal,unrounded_price:consolidated.unroundedPrice,calculated_price:total,pricing_rule:'COMPONENT_BEFORE_SET_DISCOUNT_SUM_TRANSPORT_MAX_FUEL'}};
   }
 
+  function priceAssemblyRowsForDisplay(items=[],options={}){
+    const roots=[],bomCount=(items||[]).filter(item=>Math.max(0,Number(item?.qty||0))>0).length;
+    for(const item of items||[]){
+      const result=priceAssemblyForDisplay([item],options);if(result.error)return result;
+      const qty=Math.max(0,Number(item?.qty||0));roots.push({id:item?.id||'',model:item?.model||'',qty,beforeFuelLine:Number(result.source?.before_fuel_total||0),fuelCharge:Number(result.fuelCharge||0),transportTotal:Number(result.transportTotal||0)});
+    }
+    const fuelCharge=roots.reduce((max,row)=>Math.max(max,row.fuelCharge),0),fuelSharePerBom=bomCount>0?fuelCharge/bomCount:0,rows={},transportTotal=roots.reduce((sum,row)=>sum+row.transportTotal,0);
+    let total=0;
+    for(const row of roots){const unitBeforeFuel=row.qty>0?row.beforeFuelLine/row.qty:0,fuelSharePerUnit=row.qty>0?fuelSharePerBom/row.qty:0,unitPrice=roundUp10(unitBeforeFuel+fuelSharePerUnit),lineTotal=row.qty*unitPrice;rows[row.id]={...row,unitBeforeFuel,fuelShare:fuelSharePerBom,fuelSharePerUnit,unitPrice,lineTotal};total+=lineTotal}
+    return {total,rows,fuelCharge,fuelSharePerBom,bomCount,transportTotal,pricingRule:'VISIBLE_BOM_EQUAL_FUEL_SHARE_ROUND_EACH_UNIT'};
+  }
+
   function applyPriceToQuoteRow(row,model,options={}){if(window.KeySuiteApp?.canEditQuotation&&!window.KeySuiteApp.canEditQuotation(true))return false;const found=options.productFamily==='GWS'?findGwsPrice(model,options.pressure,options):findPrice(model,options);if(!found){if(options.productFamily!=='GWS')alert(chcPriceProblem(model,options));return false}if(!row||!ensureQuoteableCalculation(found.calc,model))return false;const input=row.querySelector('.item-price');if(!input)return false;input.value=found.calc.finalPrice.toFixed(2);row.dataset.pricingSource=JSON.stringify(sourceSnapshot(found));if(typeof calcTotal==='function')calcTotal();return true}
 
   function refreshQuotePrices(){
@@ -755,5 +767,5 @@ ${indent}Wiring for pumps & pressure transmitter within pump skid @ 1 Lot`;
     const row=window.KeySuiteApp?.addExternalQuoteItem?.(item);if(row)showPage('quotation');
   }
 
-  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,flattenAssemblyItems,consolidateAssemblyPricing,priceAssemblyForDisplay,priceAssemblyForQuotation,findPrice,chcPriceProblem,findCrPrice,crSealAddon,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildCrAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
+  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,flattenAssemblyItems,consolidateAssemblyPricing,priceAssemblyForDisplay,priceAssemblyRowsForDisplay,priceAssemblyForQuotation,findPrice,chcPriceProblem,findCrPrice,crSealAddon,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildCrAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
 })();

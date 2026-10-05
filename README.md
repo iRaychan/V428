@@ -1,6 +1,16 @@
-# KeySuite V4.28.63 FULL CLEAN
+# KeySuite V4.28.64 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
+
+## V4.28.64 - shared Fuel across visible BOM prices
+
+- Divides the single highest Assembly/System Fuel Charge equally by the number of visible BOM lines.
+- Uses a dynamic divisor: four BOM lines divide Fuel by four, three divide by three, and two divide by two.
+- Recalculates and rounds each displayed BOM unit price after adding its shared Fuel allocation.
+- Makes the visible BOM line totals add exactly to the displayed Consolidated Total.
+- Shows each line's allocated Fuel share without changing the saved standalone component price.
+- Keeps quotation Set/Final Discount consolidation and nested System leaf pricing unchanged.
+- Preserves frozen PDF/quotation print layouts and requires no database migration.
 
 ## V4.28.63 - Assembly/System consolidated pricing correction
 
@@ -9,7 +19,7 @@ Baseline: V4.28.41 FULL CLEAN.
 - Sums all Transport contributions and applies only the single highest Fuel Charge.
 - Flattens nested Pumpset/Assembly BOMs once so System pricing cannot double-count wrapper and leaf values.
 - Uses the saved component pricing snapshot when a catalogue/configuration record cannot be re-resolved, instead of silently reverting to a displayed-price sum.
-- Preserves BOM component price displays and frozen PDF/quotation print layouts.
+- Preserves frozen PDF/quotation print layouts.
 - Requires no database migration.
 
 ## V4.28.62 - CR selector desktop-scale repair
