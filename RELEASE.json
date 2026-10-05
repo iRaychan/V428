@@ -1,20 +1,20 @@
 {
-  "version": "4.28.60",
-  "baseline": "4.28.59 FULL CLEAN",
-  "upgrade_supported_from": "4.28.59",
+  "version": "4.28.61",
+  "baseline": "4.28.60 FULL CLEAN",
+  "upgrade_supported_from": "4.28.60",
   "changes": [
-    "keeps CHC and CR Mechanical Seal Add-On inputs editable with a responsive 288px maximum and no forced horizontal overflow",
-    "places ES Baseplate Assembly and Add to Quote together and moves the helper text below the action row",
-    "maps ES Baseplate 2 x 4 to frame 100 and carries the mapped frame through Assembly pricing and BOM data",
-    "resets and isolates CHC and CR Product curve frames during navigation",
-    "adds B.G.Reich CR to Selection using the independent CR hydraulic data and selector workflow",
-    "adds live partial case-insensitive Quotation History search across project, customer, quotation number and available model/product fields",
+    "moves CR Selection under the B.G.Reich navigation group beside CHC C4, CHC C6, BFI and ES",
+    "uses the CHC Selection page structure for CR, including Material, Mechanical Seal, Elastomer, Connection and Supply controls",
+    "routes CR through the CR selector page and presentation context instead of inheriting the active CHC context",
+    "keeps CR model names, alternatives, hydraulic curves and routed payloads tied to the independent CR engineering database",
+    "fits the CR selector to the KeySuite content width without the previous clipped actions, cards or horizontal overflow",
+    "standardizes the CR action row to PDF, Assembly and Quote",
     "keeps frozen PDF and quotation print layouts unchanged",
-    "visible version is V4.28.60"
+    "visible version is V4.28.61"
   ],
   "new_database_migration_required": false,
   "database_migration": "supabase/migrations/20261005090000_v42858_cr_mechanical_seal_addons.sql",
   "database_verification": "supabase/migrations/20261005090001_v42858_verify_cr_mechanical_seal_addons.sql",
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.59 to V4.28.60 by uploading the package. No new V4.28.60 database migration is required. Frozen PDF and quotation print layouts are unchanged."
+  "notes": "Upgrade V4.28.60 to V4.28.61 by uploading the package. No new V4.28.61 database migration is required. Frozen PDF and quotation print layouts are unchanged."
 }

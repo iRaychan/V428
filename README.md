@@ -1,6 +1,16 @@
-# KeySuite V4.28.60 FULL CLEAN
+# KeySuite V4.28.61 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
+
+## V4.28.61 - CR Selection alignment with CHC
+
+- Moves CR into Selection → B.G.Reich beside CHC C4, CHC C6, BFI and ES.
+- Reuses the CHC Selection page structure and configuration workflow for CR.
+- Keeps selected models, alternatives, curves and routed payloads in CR context using the independent CR engineering data.
+- Fits the CR selector to the KeySuite content width without clipped actions, cards or horizontal overflow.
+- Standardises the CR action row to PDF, Assembly and Quote.
+- Keeps frozen PDF and quotation print layouts unchanged.
+- Requires no new database migration.
 
 ## V4.28.60 - Selection, navigation, Baseplate and history refinements
 

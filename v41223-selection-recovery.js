@@ -17,10 +17,12 @@
   function ensureFallback(){
     const host=submenu();if(!host)return false;
     let chc=host.querySelector('button[data-v41223-selector-fallback="CHC"]')||host.querySelector(':scope > button[data-page="selector"]');
+    let cr=host.querySelector('button[data-v41223-selector-fallback="CR"]')||host.querySelector(':scope > button[data-page="selectorCr"]');
     let es=host.querySelector('button[data-v41223-selector-fallback="ES"]')||host.querySelector(':scope > button[data-page="selectorEs"]');
     if(!chc)chc=makeButton(host,'selector','CHC','CHC');
+    if(!cr)cr=makeButton(host,'selectorCr','CR','CR');
     if(!es)es=makeButton(host,'selectorEs','ES','ES');
-    chc.dataset.v41223SelectorFallback='CHC';es.dataset.v41223SelectorFallback='ES';
+    chc.dataset.v41223SelectorFallback='CHC';cr.dataset.v41223SelectorFallback='CR';es.dataset.v41223SelectorFallback='ES';
     return true;
   }
 
