@@ -134,6 +134,7 @@
   }
 
   function quoteBlockReason(calc){
+    if(calc?.snapshotFallback&&Number(calc.beforeFuel)>0)return '';
     if(!calc||!(Number(calc.baseMyr)>0))return 'Cannot quote: No valid USD, RMB or MYR cost is available.';
     if(calc.fixedPrice||normalizeRarity(calc.rarity)==='fixed')return '';
     if(!(Number(calc.margin)>0))return 'Cannot quote: Category Margin is 0%.';
@@ -483,6 +484,20 @@
     return result;
   }
 
+  function quotationCalculationFromSnapshot(item={},source={},cat,customer){
+    const family=String(source.product_family||source.family||'').toUpperCase(),fixed=source.fixed_price===true||normalizeRarity(source.rarity)==='fixed';
+    const storedFuel=Math.max(0,Number(source.fuel_charge)||0),storedUnrounded=Number(source.unrounded_price),storedFinal=Math.max(0,Number(source.calculated_price??item.unitPrice)||0);
+    if(fixed)return {family,variant:source.variant||source.material||'',rarity:'fixed',pricingMode:'quotation',fixedPrice:true,transport:0,commission:0,setDiscount:0,finalDiscount:0,includeCommission:false,includeSetDiscount:false,includeFinalDiscount:false,includeFuelCharge:false,beforeFuel:storedFinal,fuelCharge:0,unroundedPrice:storedFinal,finalPrice:storedFinal,snapshotFallback:true};
+    let withTransport=(Number.isFinite(storedUnrounded)&&storedUnrounded>0?storedUnrounded-storedFuel:storedFinal-storedFuel);if(!(withTransport>0))return null;
+    if(source.include_final_discount===true)withTransport*=Math.max(.0001,1-Number(source.final_discount||0));
+    if(source.include_set_discount===true)withTransport*=Math.max(.0001,1-Number(source.set_discount||0));
+    if(source.include_commission===true)withTransport*=Math.max(.0001,1-Number(source.commission||0));
+    const factors=companyFactors('quotation',cat,family,customer),afterCommission=factors.includeCommission?withTransport/Math.max(.0001,1-factors.commission):withTransport;
+    const afterSetDiscount=factors.includeSetDiscount?afterCommission/Math.max(.0001,1-factors.setDiscount):afterCommission,beforeFuel=factors.includeFinalDiscount?afterSetDiscount/Math.max(.0001,1-factors.finalDiscount):afterSetDiscount;
+    const priceContext=context({customer}),fuelCharge=factors.includeFuelCharge?priceContext.distanceKm*Math.max(priceContext.fuelPrice-priceContext.fuelBasePrice,0):0,unroundedPrice=beforeFuel+fuelCharge;
+    return {family,variant:source.variant||source.material||'',rarity:normalizeRarity(source.rarity),pricingMode:'quotation',fixedPrice:false,transport:Number(source.transport||0),commission:factors.commission,setDiscount:factors.setDiscount,finalDiscount:factors.finalDiscount,includeCommission:factors.includeCommission,includeSetDiscount:factors.includeSetDiscount,includeFinalDiscount:factors.includeFinalDiscount,includeFuelCharge:factors.includeFuelCharge,beforeFuel,fuelCharge,unroundedPrice,finalPrice:roundUp10(unroundedPrice),snapshotFallback:true};
+  }
+
   function consolidateAssemblyPricing(components=[]){
     let beforeFuelTotal=0,transportTotal=0,maxFuelCharge=0;
     for(const component of components||[]){
@@ -503,12 +518,13 @@
       if(!source.product_family||String(source.product_family).toUpperCase()==='MANUAL'){
         const qty=Math.max(0,Number(item?.qty||0)),unitPrice=Math.max(0,Number(item?.unitPrice||0));priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice,pricingSource:{product_family:'MANUAL',pricing_mode:'quotation'}});components.push({qty,calc:{fixedPrice:true,finalPrice:unitPrice,transport:0,fuelCharge:0}});continue;
       }
-      const found=repriceSource(source,'quotation',{...options,customer,category:cat});
+      let found=repriceSource(source,'quotation',{...options,customer,category:cat});
+      if(!found){const calc=quotationCalculationFromSnapshot(item,source,cat,customer);if(calc)found={product:{id:source.product_id||item?.id||'',model:item?.model||''},material:source.material||source.variant||'',variant:source.variant||source.material||'',calc,category:cat,customer,family:String(source.product_family||source.family||''),sourceExtra:{snapshot_fallback:true}}}
       if(!found)return {error:`No Quotation price is available for ${item?.model||'a BOM item'}.`,total:0,items:priced};
       const blocked=quoteBlockReason(found.calc);if(blocked)return {error:`${blocked}
 
 BOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
-      const qty=Math.max(0,Number(item?.qty||0));const snapshot=sourceSnapshot(found);
+      const qty=Math.max(0,Number(item?.qty||0));const snapshot={...source,...sourceSnapshot(found)};
       if(String(snapshot.product_family).toUpperCase()==='ES'){snapshot.seal_material=source.seal_material||ES_DEFAULT_SEAL;snapshot.elastomer=source.elastomer||ES_DEFAULT_ELASTOMER}
       if(source.auto_sized_panel)snapshot.auto_sized_panel=true;if(source.auto_sized_manifold)snapshot.auto_sized_manifold=true;if(source.auto_sized_tank)snapshot.auto_sized_tank=true;
       snapshot.consolidated_fuel_excluded=true;snapshot.set_discount_retained=true;

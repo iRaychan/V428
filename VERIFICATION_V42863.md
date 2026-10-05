@@ -14,6 +14,7 @@
 - System display and quotation use the same rule.
 - Nested Pumpset in System is flattened to leaf components once; wrapper price is excluded.
 - Set Discount and Final Discount are resolved per leaf through normal quotation repricing.
+- A missing live catalogue record is recovered from the saved pricing snapshot with current quotation factors; the UI does not revert to a simple component sum.
 - Transport is summed by leaf quantity; Fuel is the single maximum regardless of nesting.
 
 ## Layout protection

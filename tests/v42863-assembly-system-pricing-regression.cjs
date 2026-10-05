@@ -36,6 +36,10 @@ assert.strictEqual(assemblyPrice.source.before_fuel_total,expectedBeforeFuel,'ea
 assert.strictEqual(assemblyPrice.transportTotal,200,'Assembly sums Transport from all four leaves');
 assert.strictEqual(assemblyPrice.fuelCharge,100,'Assembly applies one highest Fuel Charge, not four');
 assert.strictEqual(assemblyPrice.total,Math.ceil((expectedBeforeFuel+100-1e-9)/10)*10,'Assembly total is SUM before Fuel plus MAX Fuel, rounded once');
+const unavailableCatalogueItems=assemblyItems.map((item,index)=>index?item:{...item,pricingSource:{...item.pricingSource,product_id:'removed-catalogue-record'}});
+const snapshotFallbackPrice=api.priceAssemblyForQuotation(unavailableCatalogueItems,{customer,category});
+assert.strictEqual(snapshotFallbackPrice.total,assemblyPrice.total,'a saved component pricing snapshot prevents fallback to the old displayed-price sum when catalogue resolution fails');
+assert.strictEqual(snapshotFallbackPrice.source.assembly_items[0].pricingSource.snapshot_fallback,true,'quotation audit identifies the saved-snapshot fallback');
 
 const nestedSystem=[{model:'Pumpset',qty:2,unitPrice:assemblyPrice.total,pricingSource:{product_family:'ASSEMBLY',assembly_items:assemblyItems}},{...assemblyItems[0],model:'Panel'}];
 const systemPrice=api.priceAssemblyForQuotation(nestedSystem,{customer,category});

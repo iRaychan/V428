@@ -8,6 +8,7 @@ Baseline: V4.28.41 FULL CLEAN.
 - Retains each leaf component's Set Discount and normal Final Discount logic.
 - Sums all Transport contributions and applies only the single highest Fuel Charge.
 - Flattens nested Pumpset/Assembly BOMs once so System pricing cannot double-count wrapper and leaf values.
+- Uses the saved component pricing snapshot when a catalogue/configuration record cannot be re-resolved, instead of silently reverting to a displayed-price sum.
 - Preserves BOM component price displays and frozen PDF/quotation print layouts.
 - Requires no database migration.
 
