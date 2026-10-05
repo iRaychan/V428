@@ -69,7 +69,14 @@ function normalize(input){
 }
 function localLoad(){try{return (JSON.parse(localStorage.getItem(key())||'[]')||[]).map(normalize)}catch(_){return []}}
 function localSave(){localStorage.setItem(key(),JSON.stringify(drafts))}
-function total(d=current){return (d?.items||[]).reduce((n,x)=>n+Number(x.qty||0)*Number(x.unitPrice||0),0)}
+function componentDisplayedTotal(d=current){return (d?.items||[]).reduce((n,x)=>n+Number(x.qty||0)*Number(x.unitPrice||0),0)}
+function consolidatedPricing(d=current){
+ const pricing=window.KeySuitePricing,customer=customers().find(row=>String(row.id)===String(d?.customer_id||quoteCustomerId()));
+ if(!pricing?.priceAssemblyForQuotation||!customer||!(d?.items||[]).length)return null;
+ const result=pricing.priceAssemblyForQuotation(d.items,{customer});
+ return result&&!result.error?result:null;
+}
+function total(d=current){return Number(consolidatedPricing(d)?.total??componentDisplayedTotal(d))}
 function quoteUnitPrice(d=current){const value=Number(d?.quote_unit_price);return d?.quote_price_manual&&Number.isFinite(value)?Math.max(0,value):total(d)}
 function syncQuoteUnitPrice(d=current){if(!d)return;if(!d.quote_price_manual)d.quote_unit_price=total(d)}
 function sourceCostAvailable(item){
@@ -626,26 +633,21 @@ async function quotePumpsetSelection(items=[],meta={}){
  const d=blank('pumpset');d.customer_id=customerId;d.quote_session_id=quoteSessionId();d.model_item=String(meta.model||items.find(item=>item.section==='pump')?.model||'ES Pumpset');d.name=d.model_item;d.quote_qty=Math.max(.01,Number(meta.qty||1)||1);
  d.items=items.map(item=>normalizeItem({...item,id:item.id||uid()},'pumpset')).filter(item=>sections.pumpset.includes(item.section));
  const capacity=meta.capacity||null;if(capacity){const flow=String(capacity.capacityValue??capacity.capacity_value??'').trim(),head=String(capacity.headValue??capacity.head_value??'').trim();if(flow||head){copyCapacity(d,capacity);d.display_capacity=true}}
- syncAutomaticComponents(d);const requiredSections=['pump','motor','coupling','baseplate'],missingSections=requiredSections.filter(section=>!(d.items||[]).some(item=>item.section===section));if(missingSections.length){alert(`Unable to create a complete ES Pumpset automatically. Missing: ${missingSections.map(section=>labels[section]||section).join(', ')}. Move to Pumpset to review the selection.`);return false}if(blockMissingPumpsetSourceCosts(d.items||[]))return false;if(blockAssemblyMargin(d.items||[]))return false;rebuildDescription(d);d.quote_unit_price=quoteUnitPrice(d);
- const missing=[];
- const pricingSource={product_family:'MANUAL',source_kind:'PUMPSET_DIRECT_ES',pricing_mode:'quotation',missing_bom_prices:missing,calculated_price:Number(d.quote_unit_price||0),assembly_items:JSON.parse(JSON.stringify(d.items||[]))};
+ syncAutomaticComponents(d);const requiredSections=['pump','motor','coupling','baseplate'],missingSections=requiredSections.filter(section=>!(d.items||[]).some(item=>item.section===section));if(missingSections.length){alert(`Unable to create a complete ES Pumpset automatically. Missing: ${missingSections.map(section=>labels[section]||section).join(', ')}. Move to Pumpset to review the selection.`);return false}if(blockMissingPumpsetSourceCosts(d.items||[]))return false;if(blockAssemblyMargin(d.items||[]))return false;rebuildDescription(d);
+ const repriced=consolidatedPricing(d);if(!repriced){alert('Quotation pricing is not available for this Pumpset.');return false}d.quote_unit_price=Number(repriced.total||0);
+ const pricingSource={...repriced.source,source_kind:'PUMPSET_DIRECT_ES'};
  window.KeySuiteApp?.selectCustomerForQuotation?.(customerId);window.KeySuiteApp?.showPage?.('quotation');
  const pumpData=meta.pumpData||items.find(item=>item.section==='pump'&&item.pumpData)?.pumpData||null;
  const row=window.KeySuiteApp?.addExternalQuoteItem?.({model:d.model_item,qty:d.quote_qty,unitPrice:Number(d.quote_unit_price||0),description:d.description,unit:'set',sourceType:'pumpset',pricingSource,pumpData,displayCapacity:!!d.display_capacity,capacityValue:d.capacity_value||'',capacityUnit:d.capacity_unit||'m³/hr',headValue:d.head_value||'',headUnit:d.head_unit||'Mtr'});
  if(!row){alert('Unable to add the ES Pumpset to Quotation.');return false}
- if(missing.length)alert(`Pumpset added to Quotation. ${missing.length} BOM component price${missing.length===1?' is':'s are'} missing; complete the quotation Unit Price before sealing.`);
  return true;
 }
 async function toQuotation(){
  read();if(!current?.items?.length){alert('Add at least one component first.');return}if(!current.customer_id){alert('Select a customer for this assembly.');return}if(blockAssemblyMargin(current.items||[]))return;
  window.KeySuiteApp?.selectCustomerForQuotation?.(current.customer_id);const description=normalizeDescriptionIndentation(String(current.description||'')).trim();let unitPrice=0,pricingSource=null;
- if(type==='pumpset'){
-   if(blockMissingPumpsetSourceCosts(current.items||[]))return;
-   unitPrice=quoteUnitPrice(current);const missing=[];
-   pricingSource={product_family:'MANUAL',source_kind:'PUMPSET',pricing_mode:'quotation',source_assembly_id:current.id,missing_bom_prices:missing,calculated_price:unitPrice};
- }else{
-   const repriced=window.KeySuitePricing?.priceAssemblyForQuotation?.(current.items)||{error:'Quotation pricing is not available.'};if(repriced.error){alert(repriced.error);return}unitPrice=Number(repriced.total||0);pricingSource=repriced.source;
- }
+ if(type==='pumpset'&&blockMissingPumpsetSourceCosts(current.items||[]))return;
+ const repriced=consolidatedPricing(current)||{error:'Quotation pricing is not available.'};if(repriced.error){alert(repriced.error);return}
+ unitPrice=current.quote_price_manual?quoteUnitPrice(current):Number(repriced.total||0);pricingSource={...repriced.source,source_kind:type==='pumpset'?'PUMPSET':'SYSTEM',source_assembly_id:current.id,calculated_price:unitPrice};
  current.quote_unit_price=Number(unitPrice||0);window.KeySuiteApp?.showPage?.('quotation');
  const row=window.KeySuiteApp?.addExternalQuoteItem?.({model:current.model_item||current.name||'',qty:Number(current.quote_qty||1),unitPrice:Number(unitPrice||0),description,unit:'set',sourceType:type,pricingSource,displayCapacity:!!current.display_capacity,capacityValue:current.capacity_value||'',capacityUnit:current.capacity_unit||'m³/hr',headValue:current.head_value||'',headUnit:current.head_unit||'Mtr'});if(!row){alert('Unable to add the assembly to Quotation.');return}
  current.status='quoted';dirtyDraftIds.delete(current.id);try{await persist(current)}catch(e){alert(`Assembly quotation was created, but the assembly status could not be saved: ${e.message||e}`)}

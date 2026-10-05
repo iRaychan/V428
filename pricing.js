@@ -496,8 +496,9 @@
 
   function priceAssemblyForQuotation(items=[],options={}){
     const customer=options.customer||quotationCustomer(),cat=options.category||categoryForCustomer(customer);if(!customer||!cat)return {error:'Select a quotation customer with a Pricing Category first.',total:0,items:[]};
-    const priced=[],components=[];
-    for(const item of flattenAssemblyItems(items)){
+    const priced=[],components=[],leaves=flattenAssemblyItems(items);
+    const displayedComponentTotal=leaves.reduce((sum,item)=>sum+Math.max(0,Number(item?.qty||0))*Math.max(0,Number(item?.unitPrice||0)),0);
+    for(const item of leaves){
       const source=typeof item?.pricingSource==='string'?(()=>{try{return JSON.parse(item.pricingSource)}catch(_){return {}}})():item?.pricingSource||{};
       if(!source.product_family||String(source.product_family).toUpperCase()==='MANUAL'){
         const qty=Math.max(0,Number(item?.qty||0)),unitPrice=Math.max(0,Number(item?.unitPrice||0));priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice,pricingSource:{product_family:'MANUAL',pricing_mode:'quotation'}});components.push({qty,calc:{fixedPrice:true,finalPrice:unitPrice,transport:0,fuelCharge:0}});continue;
@@ -514,7 +515,7 @@ BOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
       priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice:Number(found.calc.fixedPrice?found.calc.finalPrice:found.calc.beforeFuel||0),pricingSource:snapshot});components.push({qty,calc:found.calc});
     }
     const consolidated=consolidateAssemblyPricing(components),total=consolidated.total;
-    return {total,items:priced,transportTotal:consolidated.transportTotal,fuelCharge:consolidated.maxFuelCharge,source:{product_family:'ASSEMBLY',pricing_mode:'quotation',customer_id:customer.id||'',category_id:cat.id||'',assembly_items:priced,transport_total:consolidated.transportTotal,fuel_charge:consolidated.maxFuelCharge,before_fuel_total:consolidated.beforeFuelTotal,unrounded_price:consolidated.unroundedPrice,calculated_price:total,pricing_rule:'COMPONENT_SET_DISCOUNT_SUM_TRANSPORT_MAX_FUEL'}};
+    return {total,items:priced,displayedComponentTotal,transportTotal:consolidated.transportTotal,fuelCharge:consolidated.maxFuelCharge,source:{product_family:'ASSEMBLY',pricing_mode:'quotation',customer_id:customer.id||'',category_id:cat.id||'',assembly_items:priced,displayed_component_total:displayedComponentTotal,transport_total:consolidated.transportTotal,fuel_charge:consolidated.maxFuelCharge,before_fuel_total:consolidated.beforeFuelTotal,unrounded_price:consolidated.unroundedPrice,calculated_price:total,pricing_rule:'COMPONENT_SET_DISCOUNT_SUM_TRANSPORT_MAX_FUEL'}};
   }
 
   function applyPriceToQuoteRow(row,model,options={}){if(window.KeySuiteApp?.canEditQuotation&&!window.KeySuiteApp.canEditQuotation(true))return false;const found=options.productFamily==='GWS'?findGwsPrice(model,options.pressure,options):findPrice(model,options);if(!found){if(options.productFamily!=='GWS')alert(chcPriceProblem(model,options));return false}if(!row||!ensureQuoteableCalculation(found.calc,model))return false;const input=row.querySelector('.item-price');if(!input)return false;input.value=found.calc.finalPrice.toFixed(2);row.dataset.pricingSource=JSON.stringify(sourceSnapshot(found));if(typeof calcTotal==='function')calcTotal();return true}

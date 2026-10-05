@@ -1,19 +1,20 @@
 {
-  "version": "4.28.62",
-  "baseline": "4.28.61 FULL CLEAN",
-  "upgrade_supported_from": "4.28.61",
+  "version": "4.28.63",
+  "baseline": "4.28.62 FULL CLEAN",
+  "upgrade_supported_from": "4.28.62",
   "changes": [
-    "keeps CR Selection at the same visible desktop scale as CHC instead of appearing zoomed",
-    "stabilizes the CR iframe only after its live KeySuite host has a measurable visible width",
-    "reflows CR after navigation, first load, resize and page restoration before revealing the frame",
-    "prevents Safari text inflation and constrains all CR selector columns and charts to the available width",
-    "preserves CR hydraulic data, ranking, model identity, actions and routed payloads",
+    "uses consolidated leaf-component pricing for displayed Assembly and System totals",
+    "passes the same consolidated price and audit snapshot into Quotation",
+    "retains per-component Set Discount and normal Final Discount quotation logic",
+    "sums all underlying Transport contributions and applies only the highest Fuel Charge once",
+    "flattens nested Assembly-to-System BOMs without double-counting wrapper prices or leaves",
+    "preserves individual BOM component price displays",
     "keeps frozen PDF and quotation print layouts unchanged",
-    "visible version is V4.28.62"
+    "visible version is V4.28.63"
   ],
   "new_database_migration_required": false,
   "database_migration": "supabase/migrations/20261005090000_v42858_cr_mechanical_seal_addons.sql",
   "database_verification": "supabase/migrations/20261005090001_v42858_verify_cr_mechanical_seal_addons.sql",
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.61 to V4.28.62 by uploading the package. No new V4.28.62 database migration is required. Frozen PDF and quotation print layouts are unchanged."
+  "notes": "Upgrade V4.28.62 to V4.28.63 by uploading the package. No new V4.28.63 database migration is required. Frozen PDF and quotation print layouts are unchanged."
 }

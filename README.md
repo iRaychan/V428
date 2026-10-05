@@ -1,6 +1,15 @@
-# KeySuite V4.28.62 FULL CLEAN
+# KeySuite V4.28.63 FULL CLEAN
 
 Baseline: V4.28.41 FULL CLEAN.
+
+## V4.28.63 - Assembly/System consolidated pricing correction
+
+- Uses the component quotation calculation for both the displayed Assembly/System total and Quotation handoff.
+- Retains each leaf component's Set Discount and normal Final Discount logic.
+- Sums all Transport contributions and applies only the single highest Fuel Charge.
+- Flattens nested Pumpset/Assembly BOMs once so System pricing cannot double-count wrapper and leaf values.
+- Preserves BOM component price displays and frozen PDF/quotation print layouts.
+- Requires no database migration.
 
 ## V4.28.62 - CR selector desktop-scale repair
 
