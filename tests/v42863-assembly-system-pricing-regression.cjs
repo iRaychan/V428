@@ -28,6 +28,13 @@ const assemblyItems=products.map(product=>{
   const found=api.findGwsPrice(product.id,null,{customer,category,pricingMode:'assembly'});
   return {model:product.model,qty:1,unitPrice:found.calc.finalPrice,pricingSource:api.sourceSnapshot(found)};
 });
+const assemblyDisplay=api.priceAssemblyForDisplay(assemblyItems,{customer,category});
+const assemblyCalcs=products.map(product=>api.findGwsPrice(product.id,null,{customer,category,pricingMode:'assembly'}).calc);
+const expectedDisplayBeforeFuel=assemblyCalcs.reduce((sum,calc)=>sum+calc.beforeFuel,0);
+assert.strictEqual(assemblyDisplay.source.pricing_mode,'assembly','displayed Assembly total remains before Set Discount');
+assert.strictEqual(assemblyDisplay.source.before_fuel_total,expectedDisplayBeforeFuel,'displayed Assembly total sums pre-fuel Assembly component values');
+assert.strictEqual(assemblyDisplay.fuelCharge,100,'displayed Assembly total adds MAX Fuel once');
+assert.strictEqual(assemblyDisplay.total,Math.ceil((expectedDisplayBeforeFuel+100-1e-9)/10)*10,'displayed Assembly total rounds once without Set Discount');
 const assemblyPrice=api.priceAssemblyForQuotation(assemblyItems,{customer,category});
 const quotationCalcs=products.map(product=>api.findGwsPrice(product.id,null,{customer,category,pricingMode:'quotation'}).calc);
 const expectedBeforeFuel=quotationCalcs.reduce((sum,calc)=>sum+calc.beforeFuel,0);
@@ -52,16 +59,16 @@ assert.strictEqual(systemPrice.total,Math.ceil((expectedSystemBeforeFuel+100-1e-
 // Regression clue: these are the four displayed component selling prices seen by the user.
 const observedDisplayed=[2770,1430,450,970];
 assert.strictEqual(observedDisplayed.reduce((sum,value)=>sum+value,0),5620,'old UI simple sum reproduces RM5,620');
-const observedConsolidated=api.consolidateAssemblyPricing([
-  {qty:1,calc:{beforeFuel:2690,transport:100,fuelCharge:80,finalPrice:2770}},
-  {qty:1,calc:{beforeFuel:1370,transport:80,fuelCharge:60,finalPrice:1430}},
-  {qty:1,calc:{beforeFuel:410,transport:30,fuelCharge:40,finalPrice:450}},
-  {qty:1,calc:{beforeFuel:920,transport:60,fuelCharge:50,finalPrice:970}},
+const observedFuel=156.96,observedConsolidated=api.consolidateAssemblyPricing([
+  {qty:1,calc:{beforeFuel:2770-observedFuel,transport:100,fuelCharge:observedFuel,finalPrice:2770}},
+  {qty:1,calc:{beforeFuel:1430-observedFuel,transport:80,fuelCharge:observedFuel,finalPrice:1430}},
+  {qty:1,calc:{beforeFuel:450-observedFuel,transport:30,fuelCharge:observedFuel,finalPrice:450}},
+  {qty:1,calc:{beforeFuel:970-observedFuel,transport:60,fuelCharge:observedFuel,finalPrice:970}},
 ]);
-assert.strictEqual(observedConsolidated.beforeFuelTotal,5390,'component quotation prices excluding fuel are summed');
+assert(Math.abs(observedConsolidated.beforeFuelTotal-4992.16)<1e-9,'component displayed prices excluding four Fuel Charges are summed');
 assert.strictEqual(observedConsolidated.transportTotal,270,'all component Transport contributions remain summed');
-assert.strictEqual(observedConsolidated.maxFuelCharge,80,'only the highest component Fuel Charge is retained');
-assert.strictEqual(observedConsolidated.total,5470,'RM5,620 simple sum becomes RM5,470 when duplicate fuel is removed in this concrete scenario');
+assert.strictEqual(observedConsolidated.maxFuelCharge,156.96,'only one RM156.96 Fuel Charge is retained');
+assert.strictEqual(observedConsolidated.total,5150,'RM5,620 simple sum minus three duplicate RM156.96 Fuel Charges rounds once to RM5,150');
 
 const nested=[
   {model:'Pumpset',qty:2,pricingSource:{product_family:'MANUAL',assembly_items:[
@@ -77,9 +84,9 @@ assert.deepStrictEqual(Array.from(leaves,item=>item.model),['Pump','Motor','Coup
 assert.deepStrictEqual(Array.from(leaves,item=>item.qty),[2,2,2,2,1],'nested quantities are expanded exactly once');
 
 const assembly=read('assembly.js');
-assert(assembly.includes('function total(d=current){return Number(consolidatedPricing(d)?.total??componentDisplayedTotal(d))}'),'displayed Assembly/System total uses consolidated pricing');
-assert(assembly.includes("const repriced=consolidatedPricing(current)||{error:'Quotation pricing is not available.'}"),'Assembly and System quotation handoff share consolidated pricing');
-assert(assembly.includes("const repriced=consolidatedPricing(d);if(!repriced){alert('Quotation pricing is not available for this Pumpset.')"),'direct ES Pumpset quotation uses consolidated pricing');
+assert(assembly.includes('function total(d=current){return Number(consolidatedPricing(d)?.total??componentDisplayedTotal(d))}'),'displayed Assembly/System total uses pre-Set-Discount consolidated pricing');
+assert(assembly.includes("const repriced=consolidatedPricing(current,'quotation')||{error:'Quotation pricing is not available.'}"),'Assembly and System quotation handoff uses quotation-mode consolidated pricing');
+assert(assembly.includes("const repriced=consolidatedPricing(d,'quotation');if(!repriced){alert('Quotation pricing is not available for this Pumpset.')"),'direct ES Pumpset quotation uses consolidated quotation pricing');
 assert(!assembly.includes("pricingSource={product_family:'MANUAL',source_kind:'PUMPSET'"),'Pumpset quotation no longer stores a simple-sum manual pricing source');
 
 const pricing=read('pricing.js');

@@ -484,18 +484,19 @@
     return result;
   }
 
-  function quotationCalculationFromSnapshot(item={},source={},cat,customer){
+  function calculationFromSnapshot(item={},source={},cat,customer,mode='quotation'){
+    const pricingMode=normalizePricingMode(mode);
     const family=String(source.product_family||source.family||'').toUpperCase(),fixed=source.fixed_price===true||normalizeRarity(source.rarity)==='fixed';
     const storedFuel=Math.max(0,Number(source.fuel_charge)||0),storedUnrounded=Number(source.unrounded_price),storedFinal=Math.max(0,Number(source.calculated_price??item.unitPrice)||0);
-    if(fixed)return {family,variant:source.variant||source.material||'',rarity:'fixed',pricingMode:'quotation',fixedPrice:true,transport:0,commission:0,setDiscount:0,finalDiscount:0,includeCommission:false,includeSetDiscount:false,includeFinalDiscount:false,includeFuelCharge:false,beforeFuel:storedFinal,fuelCharge:0,unroundedPrice:storedFinal,finalPrice:storedFinal,snapshotFallback:true};
+    if(fixed)return {family,variant:source.variant||source.material||'',rarity:'fixed',pricingMode,fixedPrice:true,transport:0,commission:0,setDiscount:0,finalDiscount:0,includeCommission:false,includeSetDiscount:false,includeFinalDiscount:false,includeFuelCharge:false,beforeFuel:storedFinal,fuelCharge:0,unroundedPrice:storedFinal,finalPrice:storedFinal,snapshotFallback:true};
     let withTransport=(Number.isFinite(storedUnrounded)&&storedUnrounded>0?storedUnrounded-storedFuel:storedFinal-storedFuel);if(!(withTransport>0))return null;
     if(source.include_final_discount===true)withTransport*=Math.max(.0001,1-Number(source.final_discount||0));
     if(source.include_set_discount===true)withTransport*=Math.max(.0001,1-Number(source.set_discount||0));
     if(source.include_commission===true)withTransport*=Math.max(.0001,1-Number(source.commission||0));
-    const factors=companyFactors('quotation',cat,family,customer),afterCommission=factors.includeCommission?withTransport/Math.max(.0001,1-factors.commission):withTransport;
+    const factors=companyFactors(pricingMode,cat,family,customer),afterCommission=factors.includeCommission?withTransport/Math.max(.0001,1-factors.commission):withTransport;
     const afterSetDiscount=factors.includeSetDiscount?afterCommission/Math.max(.0001,1-factors.setDiscount):afterCommission,beforeFuel=factors.includeFinalDiscount?afterSetDiscount/Math.max(.0001,1-factors.finalDiscount):afterSetDiscount;
     const priceContext=context({customer}),fuelCharge=factors.includeFuelCharge?priceContext.distanceKm*Math.max(priceContext.fuelPrice-priceContext.fuelBasePrice,0):0,unroundedPrice=beforeFuel+fuelCharge;
-    return {family,variant:source.variant||source.material||'',rarity:normalizeRarity(source.rarity),pricingMode:'quotation',fixedPrice:false,transport:Number(source.transport||0),commission:factors.commission,setDiscount:factors.setDiscount,finalDiscount:factors.finalDiscount,includeCommission:factors.includeCommission,includeSetDiscount:factors.includeSetDiscount,includeFinalDiscount:factors.includeFinalDiscount,includeFuelCharge:factors.includeFuelCharge,beforeFuel,fuelCharge,unroundedPrice,finalPrice:roundUp10(unroundedPrice),snapshotFallback:true};
+    return {family,variant:source.variant||source.material||'',rarity:normalizeRarity(source.rarity),pricingMode,fixedPrice:false,transport:Number(source.transport||0),commission:factors.commission,setDiscount:factors.setDiscount,finalDiscount:factors.finalDiscount,includeCommission:factors.includeCommission,includeSetDiscount:factors.includeSetDiscount,includeFinalDiscount:factors.includeFinalDiscount,includeFuelCharge:factors.includeFuelCharge,beforeFuel,fuelCharge,unroundedPrice,finalPrice:roundUp10(unroundedPrice),snapshotFallback:true};
   }
 
   function consolidateAssemblyPricing(components=[]){
@@ -519,7 +520,7 @@
         const qty=Math.max(0,Number(item?.qty||0)),unitPrice=Math.max(0,Number(item?.unitPrice||0));priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice,pricingSource:{product_family:'MANUAL',pricing_mode:'quotation'}});components.push({qty,calc:{fixedPrice:true,finalPrice:unitPrice,transport:0,fuelCharge:0}});continue;
       }
       let found=repriceSource(source,'quotation',{...options,customer,category:cat});
-      if(!found){const calc=quotationCalculationFromSnapshot(item,source,cat,customer);if(calc)found={product:{id:source.product_id||item?.id||'',model:item?.model||''},material:source.material||source.variant||'',variant:source.variant||source.material||'',calc,category:cat,customer,family:String(source.product_family||source.family||''),sourceExtra:{snapshot_fallback:true}}}
+      if(!found){const calc=calculationFromSnapshot(item,source,cat,customer,'quotation');if(calc)found={product:{id:source.product_id||item?.id||'',model:item?.model||''},material:source.material||source.variant||'',variant:source.variant||source.material||'',calc,category:cat,customer,family:String(source.product_family||source.family||''),sourceExtra:{snapshot_fallback:true}}}
       if(!found)return {error:`No Quotation price is available for ${item?.model||'a BOM item'}.`,total:0,items:priced};
       const blocked=quoteBlockReason(found.calc);if(blocked)return {error:`${blocked}
 
@@ -532,6 +533,25 @@ BOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
     }
     const consolidated=consolidateAssemblyPricing(components),total=consolidated.total;
     return {total,items:priced,displayedComponentTotal,transportTotal:consolidated.transportTotal,fuelCharge:consolidated.maxFuelCharge,source:{product_family:'ASSEMBLY',pricing_mode:'quotation',customer_id:customer.id||'',category_id:cat.id||'',assembly_items:priced,displayed_component_total:displayedComponentTotal,transport_total:consolidated.transportTotal,fuel_charge:consolidated.maxFuelCharge,before_fuel_total:consolidated.beforeFuelTotal,unrounded_price:consolidated.unroundedPrice,calculated_price:total,pricing_rule:'COMPONENT_SET_DISCOUNT_SUM_TRANSPORT_MAX_FUEL'}};
+  }
+
+  function priceAssemblyForDisplay(items=[],options={}){
+    const customer=options.customer||quotationCustomer(),cat=options.category||categoryForCustomer(customer);if(!customer||!cat)return {error:'Select a customer with a Pricing Category first.',total:0,items:[]};
+    const priced=[],components=[],leaves=flattenAssemblyItems(items),displayedComponentTotal=leaves.reduce((sum,item)=>sum+Math.max(0,Number(item?.qty||0))*Math.max(0,Number(item?.unitPrice||0)),0);
+    for(const item of leaves){
+      const source=typeof item?.pricingSource==='string'?(()=>{try{return JSON.parse(item.pricingSource)}catch(_){return {}}})():item?.pricingSource||{};
+      if(!source.product_family||String(source.product_family).toUpperCase()==='MANUAL'){
+        const qty=Math.max(0,Number(item?.qty||0)),unitPrice=Math.max(0,Number(item?.unitPrice||0));priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice,pricingSource:{product_family:'MANUAL',pricing_mode:'assembly'}});components.push({qty,calc:{fixedPrice:true,finalPrice:unitPrice,transport:0,fuelCharge:0}});continue;
+      }
+      let found=repriceSource(source,'assembly',{...options,customer,category:cat});
+      if(!found){const calc=calculationFromSnapshot(item,source,cat,customer,'assembly');if(calc)found={product:{id:source.product_id||item?.id||'',model:item?.model||''},material:source.material||source.variant||'',variant:source.variant||source.material||'',calc,category:cat,customer,family:String(source.product_family||source.family||''),sourceExtra:{snapshot_fallback:true}}}
+      if(!found)return {error:`No Assembly price is available for ${item?.model||'a BOM item'}.`,total:0,items:priced};
+      const blocked=quoteBlockReason(found.calc);if(blocked)return {error:`${blocked}\n\nBOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
+      const qty=Math.max(0,Number(item?.qty||0)),snapshot={...source,...sourceSnapshot(found),consolidated_fuel_excluded:true};
+      priced.push({id:item?.id||'',model:item?.model||'',qty,unitPrice:Number(found.calc.fixedPrice?found.calc.finalPrice:found.calc.beforeFuel||0),pricingSource:snapshot});components.push({qty,calc:found.calc});
+    }
+    const consolidated=consolidateAssemblyPricing(components),total=consolidated.total;
+    return {total,items:priced,displayedComponentTotal,transportTotal:consolidated.transportTotal,fuelCharge:consolidated.maxFuelCharge,source:{product_family:'ASSEMBLY',pricing_mode:'assembly',customer_id:customer.id||'',category_id:cat.id||'',assembly_items:priced,displayed_component_total:displayedComponentTotal,transport_total:consolidated.transportTotal,fuel_charge:consolidated.maxFuelCharge,before_fuel_total:consolidated.beforeFuelTotal,unrounded_price:consolidated.unroundedPrice,calculated_price:total,pricing_rule:'COMPONENT_BEFORE_SET_DISCOUNT_SUM_TRANSPORT_MAX_FUEL'}};
   }
 
   function applyPriceToQuoteRow(row,model,options={}){if(window.KeySuiteApp?.canEditQuotation&&!window.KeySuiteApp.canEditQuotation(true))return false;const found=options.productFamily==='GWS'?findGwsPrice(model,options.pressure,options):findPrice(model,options);if(!found){if(options.productFamily!=='GWS')alert(chcPriceProblem(model,options));return false}if(!row||!ensureQuoteableCalculation(found.calc,model))return false;const input=row.querySelector('.item-price');if(!input)return false;input.value=found.calc.finalPrice.toFixed(2);row.dataset.pricingSource=JSON.stringify(sourceSnapshot(found));if(typeof calcTotal==='function')calcTotal();return true}
@@ -735,5 +755,5 @@ ${indent}Wiring for pumps & pressure transmitter within pump skid @ 1 Lot`;
     const row=window.KeySuiteApp?.addExternalQuoteItem?.(item);if(row)showPage('quotation');
   }
 
-  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,flattenAssemblyItems,consolidateAssemblyPricing,priceAssemblyForQuotation,findPrice,chcPriceProblem,findCrPrice,crSealAddon,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildCrAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
+  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,flattenAssemblyItems,consolidateAssemblyPricing,priceAssemblyForDisplay,priceAssemblyForQuotation,findPrice,chcPriceProblem,findCrPrice,crSealAddon,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildCrAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
 })();

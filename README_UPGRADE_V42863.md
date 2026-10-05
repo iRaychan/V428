@@ -4,8 +4,8 @@ Upgrade from V4.28.62 by replacing the files in this package.
 
 ## Assembly/System consolidated pricing correction
 
-- Assembly and System totals now use the same consolidated calculation as Quotation.
-- Every underlying component is repriced through its normal quotation path, retaining its own Set Discount and Final Discount behavior.
+- Assembly and System displayed totals consolidate the pre-Set-Discount component values shown in the BOM.
+- Quotation handoff is calculated separately through each underlying component's normal quotation path, retaining its own Set Discount and Final Discount behavior.
 - Transport contributions from every included component are summed.
 - Fuel Charge is applied once using only the highest underlying component Fuel Charge.
 - Nested Pumpset/Assembly items inside a System are flattened to their leaf components once, preventing duplicate components, Transport, and Fuel.

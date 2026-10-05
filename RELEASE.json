@@ -3,8 +3,8 @@
   "baseline": "4.28.62 FULL CLEAN",
   "upgrade_supported_from": "4.28.62",
   "changes": [
-    "uses consolidated leaf-component pricing for displayed Assembly and System totals",
-    "passes the same consolidated price and audit snapshot into Quotation",
+    "uses consolidated pre-Set-Discount leaf pricing for displayed Assembly and System totals",
+    "calculates a separate consolidated quotation price and audit snapshot with each leaf's Set Discount",
     "retains per-component Set Discount and normal Final Discount quotation logic",
     "sums all underlying Transport contributions and applies only the highest Fuel Charge once",
     "flattens nested Assembly-to-System BOMs without double-counting wrapper prices or leaves",

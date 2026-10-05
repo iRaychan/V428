@@ -9,13 +9,14 @@
 
 ## Pricing cases
 
-- Assembly/Pumpset display total uses component quotation prices excluding Fuel, plus MAX Fuel once.
-- Assembly/Pumpset quotation receives the same consolidated total and an auditable ASSEMBLY pricing snapshot.
+- Assembly/Pumpset display total uses pre-Set-Discount component prices excluding Fuel, plus MAX Fuel once.
+- Assembly/Pumpset quotation is separately consolidated with each component's Set/Final Discount logic and an auditable ASSEMBLY pricing snapshot.
 - System display and quotation use the same rule.
 - Nested Pumpset in System is flattened to leaf components once; wrapper price is excluded.
 - Set Discount and Final Discount are resolved per leaf through normal quotation repricing.
 - A missing live catalogue record is recovered from the saved pricing snapshot with current quotation factors; the UI does not revert to a simple component sum.
 - Transport is summed by leaf quantity; Fuel is the single maximum regardless of nesting.
+- Observed display example: RM5,620 − (3 × RM156.96 duplicate Fuel) = RM5,149.12, rounded once to RM5,150.
 
 ## Layout protection
 

@@ -4,8 +4,8 @@ Baseline: V4.28.41 FULL CLEAN.
 
 ## V4.28.63 - Assembly/System consolidated pricing correction
 
-- Uses the component quotation calculation for both the displayed Assembly/System total and Quotation handoff.
-- Retains each leaf component's Set Discount and normal Final Discount logic.
+- Displays the consolidated Assembly/System price before Set Discount, matching the component prices shown in the BOM.
+- Reprices the Quotation handoff separately so each leaf retains its Set Discount and normal Final Discount logic.
 - Sums all Transport contributions and applies only the single highest Fuel Charge.
 - Flattens nested Pumpset/Assembly BOMs once so System pricing cannot double-count wrapper and leaf values.
 - Uses the saved component pricing snapshot when a catalogue/configuration record cannot be re-resolved, instead of silently reverting to a displayed-price sum.
