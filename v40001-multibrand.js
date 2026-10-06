@@ -4,7 +4,7 @@
   if (window.__KEYSUITE_V394410_MULTIBRAND__) return;
   window.__KEYSUITE_V394410_MULTIBRAND__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.67';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.68';
   const $=id=>document.getElementById(id);
   const clone=v=>JSON.parse(JSON.stringify(v??{}));
   const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -714,7 +714,7 @@
     document.querySelectorAll('#productSeriesList [data-product-series]').forEach(btn=>{const master=btn.dataset.productSeries||btn.textContent||'',next=displayModelAlias(master,ctx);if(btn.textContent!==next)btn.textContent=next;});
     document.querySelectorAll('#productModelGrid .product-model-row').forEach(row=>{const master=row.querySelector('[data-product-view]')?.dataset.productView||row.querySelector('[data-product-g1-view]')?.dataset.productG1View||row.querySelector('[data-product-add]')?.dataset.productAdd||row.querySelector('[data-product-g1-add]')?.dataset.productG1Add||row.querySelector('h3')?.textContent||'';const h=row.querySelector('h3'),next=displayModelAlias(master,ctx);if(h&&h.textContent!==next)h.textContent=next;});
     const title=$('productSeriesTitle');if(title){const active=document.querySelector('#productSeriesList [data-product-series].active');const master=active?.dataset.productSeries||title.dataset.v393MasterText||title.textContent||'';title.dataset.v393MasterText=master;const next=displayModelAlias(master,ctx);if(title.textContent!==next)title.textContent=next;}
-    const curveTitle=$('productCurveTitle');if(curveTitle){if(!curveTitle.dataset.v393MasterText||/^(CHC|CHCS|CHCN|ES)\b/i.test(curveTitle.textContent||''))curveTitle.dataset.v393MasterText=curveTitle.textContent||'';const next=displayModelAlias(curveTitle.dataset.v393MasterText,ctx);if(curveTitle.textContent!==next)curveTitle.textContent=next;}
+    const curveTitle=$('productCurveTitle');if(curveTitle){const dlg=$('productCurveDialog'),selectorTitle=dlg?.dataset?.ksSelectionBfiInline==='1'?'Selector · BFI':dlg?.dataset?.ksSelectionEsInline==='1'?'Selector · ES':'';if(selectorTitle){curveTitle.dataset.v393MasterText=selectorTitle;if(curveTitle.textContent!==selectorTitle)curveTitle.textContent=selectorTitle}else{if(!curveTitle.dataset.v393MasterText||/^(CHC|CHCS|CHCN|ES)\b/i.test(curveTitle.textContent||''))curveTitle.dataset.v393MasterText=curveTitle.textContent||'';const next=displayModelAlias(curveTitle.dataset.v393MasterText,ctx);if(curveTitle.textContent!==next)curveTitle.textContent=next;}}
     {const fam=String(ctx.family||'').toUpperCase();if(['CHC','ES'].includes(fam)){const main=String(ctx.brandSeries||brandSeriesFor(currentBrand(),fam)||fam).trim(),root=fam==='CHC'?'#productChc':'#productEs',h1=document.querySelector(`${root} h1`);if(h1)h1.textContent=`Product · ${main}`;if(fam==='CHC'){const c4=productChcGeneration()==='G1',help=document.querySelector(`${root} .page-title-row .muted`),seriesHeading=document.querySelector(`${root} .product-layout > .card:first-child h2`);if(help)help.textContent=c4?`${main} hydraulic/product range. Curve, duty points, PDF, Quote and Assembly use the C4 hydraulic master data and IE2 motors.`:`${main} current product range. Curve uses the C6 Product curve path.`;if(seriesHeading)seriesHeading.textContent=`${main} Series`;}else{document.querySelectorAll(`${root} h2,${root} h3`).forEach(h=>{if(/\b(?:SVMT|SVM|ES)\s+Series\b/i.test(h.textContent||''))h.textContent=`${main} Series`;});}}}
   }
 

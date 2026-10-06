@@ -576,7 +576,7 @@ BOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
     for(const row of [...document.querySelectorAll('.quote-item[data-pricing-source]')]){
       let source={};try{source=JSON.parse(row.dataset.pricingSource||'{}')}catch(_){ }
       if(String(source.product_family||'').toUpperCase()==='ASSEMBLY'){
-        // V4.28.67 Assembly/System quotations carry the already-final assembly
+        // V4.28.68 Assembly/System quotations carry the already-final assembly
         // unit price. Customer/category refresh must not re-run leaf pricing or Fuel.
         if(source.carried_final_price===true||String(source.pricing_mode||'').toLowerCase()==='carried_final'){
           delete row.dataset.pricingValidationError;continue;

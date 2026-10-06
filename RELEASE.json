@@ -1,16 +1,16 @@
 {
-  "version": "4.28.67",
-  "baseline": "4.28.66",
-  "upgrade_supported_from": "4.28.66",
+  "version": "4.28.68",
+  "baseline": "4.28.67",
+  "upgrade_supported_from": "4.28.67",
   "changes": [
-    "makes the macOS CR Selector use the same responsive geometry and scale as Windows",
-    "keeps the quotation filename locked while Safari creates the native PDF download",
-    "prevents restored quotation-customer state from hiding permitted CHC C6 navigation on macOS",
-    "loads CR Page 3 dimension drawings from explicit cached assets and waits for decode before printing",
-    "prepares the requested CHC generation before Windows reveals the Selector frame, removing the KeyCHC flash",
-    "visible version is V4.28.67"
+    "loads CR-specific Page 3 drawings for Selector and Product without a CHC fallback",
+    "restores the verified macOS CR Selector geometry and text sizing",
+    "keeps BFI and ES outer Selector headers series-specific",
+    "opens Product CR PDF synchronously on macOS Safari to avoid the delayed blocked-print warning",
+    "removes redundant completed-image decode waits and reduces the readiness safety timeout",
+    "visible version is V4.28.68"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.66 to V4.28.67 by uploading the package. No database migration or edge-function deployment is required. Frozen PDF geometry and unrelated V4.28.66 behavior are preserved."
+  "notes": "Upgrade V4.28.67 to V4.28.68 by uploading the package. No database migration or edge-function deployment is required. Frozen PDF geometry and unrelated V4.28.67 behavior are preserved."
 }

@@ -1,17 +1,16 @@
-# KeySuite V4.28.67 FULL CLEAN
+# KeySuite V4.28.68 FULL CLEAN
 
-Complete clean source package, including the V4.28.67 changes and all retained KeySuite modules.
+Complete clean source package, including the V4.28.68 changes and all retained KeySuite modules.
 
-## V4.28.67 - eight-point quotation, curve and selector repair
+## V4.28.68 - CR PDF and Selector presentation repair
 
-- Persists independent CR/BFI display settings across model changes, navigation and refresh.
-- Applies the actual quotation download filename rule, including revisions.
-- Shares CR Selector/Product dimension mapping and repairs missing drawing fallback.
-- Speeds Product PDFs with default-on shared and in-flight image caching.
-- Shows D1 Shaft Power as primary HP with secondary kW in all curve layouts.
-- Corrects CR motor class display to IE3 without changing efficiency percentages.
-- Removes repeated C4/C6 iframe reload/hide behavior that caused flicker.
-- Links KeyCore Quotation to current company saved/sealed records.
+- Uses CR-specific workbook drawings on CR PDF Page 3 for both Selector and Product; a missing CR drawing never falls back to CHC.
+- Restores the verified macOS CR Selector geometry: 340 px duty sidebar, 27 px title, 100% browser scale and no horizontal overflow.
+- Keeps the outer Selector header series-specific for BFI and ES instead of reverting to `CHC Curve`.
+- Opens Product CR PDF synchronously on macOS Safari, avoiding the delayed print-blocked warning caused by the hidden-frame path.
+- Removes the redundant completed-image decode wait and shortens only the safety fallback while retaining the report's own image/font readiness checks.
+- Preserves CR data, models, curves, dimensions, pricing, Assembly and Quote behavior.
+- Requires no database migration or edge-function deployment.
 
 ## V4.28.64 - shared Fuel across visible BOM prices
 
