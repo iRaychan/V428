@@ -647,7 +647,7 @@ async function toQuotation(){
  read();if(!current?.items?.length){alert('Add at least one component first.');return}if(!current.customer_id){alert('Select a customer for this assembly.');return}if(blockAssemblyMargin(current.items||[]))return;
  window.KeySuiteApp?.selectCustomerForQuotation?.(current.customer_id);const description=normalizeDescriptionIndentation(String(current.description||'')).trim();let unitPrice=0,pricingSource=null;
  if(type==='pumpset'&&blockMissingPumpsetSourceCosts(current.items||[]))return;
- // V4.28.68: Assembly/System already owns the final unit price shown to the user.
+ // V4.28.69: Assembly/System already owns the final unit price shown to the user.
  // Carry that exact value into Quotation; repricing the BOM here applies Fuel again.
  syncQuoteUnitPrice(current);unitPrice=quoteUnitPrice(current);if(!(unitPrice>0)){alert('Quotation pricing is not available.');return}
  const displayPricing=consolidatedPricing(current,'assembly');pricingSource={...(displayPricing?.source||{}),product_family:'ASSEMBLY',pricing_mode:'carried_final',source_kind:type==='pumpset'?'PUMPSET':'SYSTEM',source_assembly_id:current.id,carried_final_price:true,calculated_price:unitPrice};
