@@ -130,7 +130,7 @@ if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAg
   if(!document.getElementById(styleId)){
    const style=document.createElement('style');style.id=styleId;style.textContent=css;document.head.appendChild(style);
   }
-  const version=window.KEYSUITE_VERSION||'4.28.65';
+  const version=window.KEYSUITE_VERSION||'4.28.66';
   document.title='KeySuite V'+version;
   document.querySelectorAll('.auth-brand small').forEach(node=>node.textContent='V'+version);
   document.querySelectorAll('.brand small').forEach(node=>node.textContent='Full Suite V'+version);
@@ -1014,11 +1014,17 @@ function restorePrintState(){
  document.body.classList.remove('export-single');
  document.querySelectorAll('.quote-item.export-target').forEach(x=>x.classList.remove('export-target'));
  if(window.__ksOldTitle){document.title=window.__ksOldTitle;window.__ksOldTitle=''}
+ window.__KEYSUITE_LOCKED_QUOTATION_PDF_TITLE__='';
+}
+function lockQuotationPdfTitle(filename){
+ const title=safePdfName(filename);window.__KEYSUITE_LOCKED_QUOTATION_PDF_TITLE__=title;document.title=title;
+ const relock=()=>{if(window.__KEYSUITE_LOCKED_QUOTATION_PDF_TITLE__)document.title=window.__KEYSUITE_LOCKED_QUOTATION_PDF_TITLE__};
+ window.addEventListener('beforeprint',relock,{once:true});return title;
 }
 function printWithFilename(filename,targetRow=null){
  restorePrintState();
  window.__ksOldTitle=document.title;
- document.title=safePdfName(filename);
+ lockQuotationPdfTitle(filename);
  if(targetRow){document.body.classList.add('export-single');targetRow.classList.add('export-target')}
  window.addEventListener('afterprint',restorePrintState,{once:true});
  window.print();
@@ -1756,7 +1762,7 @@ async function printCompleteQuotation(options={}){
  let restorePdfImages=()=>{};
  try{if(window.KeySuitePdfOptimization)restorePdfImages=await window.KeySuitePdfOptimization.optimizeDocument(document.getElementById('printQuotationDocument'),{profile:'quotation'});}catch(error){console.warn('Quotation PDF optimization:',error)}
  const customer=$('qPrintedCompany')?.value.trim()||selectedQuotationCustomer()?.company||'';const pdfName=quotationPdfFilename(customer,$('qDate').value,$('quoteNo').value||'Quotation');
- restorePrintState();window.__ksOldTitle=document.title;document.title=safePdfName(pdfName);document.body.classList.add('print-complete');
+ restorePrintState();window.__ksOldTitle=document.title;lockQuotationPdfTitle(pdfName);document.body.classList.add('print-complete');
  window.addEventListener('afterprint',()=>{try{restorePdfImages()}catch(_){}document.body.classList.remove('print-complete');restorePrintState()},{once:true});
  requestAnimationFrame(()=>setTimeout(()=>window.print(),80));
  setTimeout(()=>document.body.classList.remove('print-complete'),1800);
@@ -2004,7 +2010,7 @@ $('startProject')?.addEventListener('input',()=>syncProjectFields('dashboard'));
 $('project')?.addEventListener('input',()=>syncProjectFields('quotation'));
 
 syncOwnerKeyVisibility();newQuote();refreshAll();updateQuotationStateUi();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js?v=42865');
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js?v=42866');
 
 
 // Two-line popup editor for Project and Delivery.

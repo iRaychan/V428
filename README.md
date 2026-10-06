@@ -1,14 +1,17 @@
-# KeySuite V4.28.65 Upgrade
+# KeySuite V4.28.66 FULL CLEAN
 
-Baseline: V4.28.64.
+Complete clean source package, including the V4.28.66 changes and all retained KeySuite modules.
 
-## V4.28.65 - quotation and curve output corrections
+## V4.28.66 - eight-point quotation, curve and selector repair
 
-- Carries the final Assembly/System price into Quotation without repricing or duplicate Fuel.
-- Prints optional Capacity once and tightens only the model-to-Capacity gap.
-- Applies the approved quotation and curve PDF filename rules.
-- Shows whole-number auto-generated Product duty values without changing calculation precision.
-- Reuses CHC/CR PDF image preparation results for faster subsequent exports.
+- Persists independent CR/BFI display settings across model changes, navigation and refresh.
+- Applies the actual quotation download filename rule, including revisions.
+- Shares CR Selector/Product dimension mapping and repairs missing drawing fallback.
+- Speeds Product PDFs with default-on shared and in-flight image caching.
+- Shows D1 Shaft Power as primary HP with secondary kW in all curve layouts.
+- Corrects CR motor class display to IE3 without changing efficiency percentages.
+- Removes repeated C4/C6 iframe reload/hide behavior that caused flicker.
+- Links KeyCore Quotation to current company saved/sealed records.
 
 ## V4.28.64 - shared Fuel across visible BOM prices
 

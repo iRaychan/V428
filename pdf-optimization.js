@@ -1,10 +1,11 @@
-/* KeySuite V4.28.65 reversible PDF image optimization. Source assets are never modified. */
+/* KeySuite V4.28.66 reversible PDF image optimization. Source assets are never modified. */
 (()=>{
   'use strict';
   const STORAGE_KEY='keysuite_pdf_optimized_v42320';
   // Reuse optimized logos/dimension drawings across the short-lived print iframe.
   // This removes repeated canvas encode work without changing source pixels or PDF layout.
-  const cache=(()=>{try{const host=window.top||window;return host.__KEYSUITE_PDF_IMAGE_CACHE_V42865||(host.__KEYSUITE_PDF_IMAGE_CACHE_V42865=new Map())}catch(_){return new Map()}})();
+  const cache=(()=>{try{const host=window.top||window;return host.__KEYSUITE_PDF_IMAGE_CACHE_V42866||(host.__KEYSUITE_PDF_IMAGE_CACHE_V42866=new Map())}catch(_){return new Map()}})();
+  const inflight=(()=>{try{const host=window.top||window;return host.__KEYSUITE_PDF_IMAGE_INFLIGHT_V42866||(host.__KEYSUITE_PDF_IMAGE_INFLIGHT_V42866=new Map())}catch(_){return new Map()}})();
 
   function isEnabled(){
     try{
@@ -12,8 +13,8 @@
       if(query==='0'||query==='false')return false;
       if(query==='1'||query==='true')return true;
       const raw=localStorage.getItem(STORAGE_KEY);
-      return raw===null?false:raw==='1';
-    }catch(_){return false}
+      return raw===null?true:raw==='1';
+    }catch(_){return true}
   }
   function setEnabled(value){
     const enabled=!!value;
@@ -59,7 +60,8 @@
     const tw=Math.max(1,Math.round(nw*ratio)),th=Math.max(1,Math.round(nh*ratio));
     const key=cacheKey(src,tw,th,p.quality);
     if(cache.has(key))return cache.get(key);
-    try{
+    if(inflight.has(key))return inflight.get(key);
+    const work=(async()=>{try{
       const doc=img.ownerDocument||document,canvas=doc.createElement('canvas');
       canvas.width=tw;canvas.height=th;
       const ctx=canvas.getContext('2d',{alpha:false});
@@ -71,7 +73,8 @@
       // Data URLs can be compared directly. Keep the original if optimization somehow grew it.
       if(/^data:image\//i.test(src)&&out.length>=src.length*.98){cache.set(key,'');return ''}
       cache.set(key,out);return out;
-    }catch(_){cache.set(key,'');return ''}
+    }catch(_){cache.set(key,'');return ''}finally{inflight.delete(key)}})();
+    inflight.set(key,work);return work;
   }
   async function optimizeDocument(root=document,options={}){
     if(!isEnabled())return ()=>{};
@@ -94,7 +97,7 @@
   }
   function labelHtml(){return '<label class="keysuite-pdf-optimize-label"><input type="checkbox" data-keysuite-pdf-optimize>Optimized PDF</label>'}
 
-  const api={version:'4.28.65',storageKey:STORAGE_KEY,isEnabled,setEnabled,syncCheckboxes,optimizeDocument,labelHtml};
+  const api={version:'4.28.66',storageKey:STORAGE_KEY,isEnabled,setEnabled,syncCheckboxes,optimizeDocument,labelHtml};
   window.KeySuitePdfOptimization=api;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>syncCheckboxes(),{once:true});
   else syncCheckboxes();

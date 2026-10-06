@@ -3,7 +3,7 @@
   if(window.__KEYSUITE_KEYCORE_V383__)return;
   window.__KEYSUITE_KEYCORE_V383__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.65';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.66';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
@@ -199,7 +199,18 @@
   }
 
   async function loadQuotes(){
-    try{const result=await window.KeySuiteQuotationStore?.load?.();if(Array.isArray(result))return result}catch(_){/* fall through */}
+    try{const result=await window.KeySuiteQuotationStore?.load?.();if(Array.isArray(result)&&result.length)return result}catch(_){/* fall through */}
+    // KeyCore can initialise before app.js has exposed the quotation store. Read the
+    // same company-scoped saved/sealed quotation RPCs directly instead of reporting 0.
+    try{
+      const client=window.KeySuiteAuth?.getClient?.(),companyId=window.KEYSUITE_ACCESS?.company_id||window.KEYSUITE_PROFILE?.company_id;
+      if(client&&companyId){
+        for(const rpc of ['keysuite_list_quotations_v409','keysuite_list_quotations_v408','keysuite_list_quotations_v236']){
+          const {data,error}=await client.rpc(rpc,{p_company_id:companyId});
+          if(!error&&Array.isArray(data))return data;
+        }
+      }
+    }catch(_){/* retain local compatibility fallback */}
     let best=[];
     for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i)||'';if(!/quote/i.test(key))continue;const v=safeJson(localStorage.getItem(key),null);if(Array.isArray(v)&&v.length>best.length)best=v}
     return best;

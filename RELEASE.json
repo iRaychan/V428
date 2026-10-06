@@ -1,18 +1,19 @@
 {
-  "version": "4.28.65",
-  "baseline": "4.28.64",
-  "upgrade_supported_from": "4.28.64",
+  "version": "4.28.66",
+  "baseline": "4.28.65",
+  "upgrade_supported_from": "4.28.65",
   "changes": [
-    "carries the already-final Assembly/System unit price into Quotation without component repricing or duplicate Fuel",
-    "reduces only model-to-Capacity spacing in quotation PDF output",
-    "keeps Capacity in the collapsed UI title and prints it once as a separate optional row",
-    "uses company, document date, reference digits, and revision in quotation PDF filenames",
-    "preserves the original searched duty unit and value in curve PDF filenames",
-    "shows auto-generated Product duty flow and head as rounded whole numbers while preserving calculation precision",
-    "reuses CHC/CR dimension scan and image optimization results to reduce PDF preparation latency",
-    "visible version is V4.28.65"
+    "persists independent CR and BFI selector/Product display settings with newest-save conflict handling",
+    "locks the browser print-job title to the quotation download filename rule",
+    "uses shared CR dimension resolution and drawing fallback for Selector and Product PDFs",
+    "enables shared cached PDF image preparation by default and de-duplicates in-flight work",
+    "displays D1 shaft power as primary HP with secondary kW across curve layouts",
+    "reports CR motor efficiency class as IE3 without changing efficiency values",
+    "removes repeated CHC/CR selector reload/hide stabilization that caused C4/C6 flicker",
+    "links KeyCore quotation count to current company saved/sealed quotation RPC data",
+    "visible version is V4.28.66"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.64 to V4.28.65 by uploading the package. No database migration is required. PDF/print layout remains frozen except the approved model-to-Capacity spacing change."
+  "notes": "Upgrade V4.28.65 to V4.28.66 by uploading the package. No database migration or edge-function deployment is required. Frozen PDF geometry is preserved."
 }
