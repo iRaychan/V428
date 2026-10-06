@@ -52,13 +52,13 @@ assert(es.includes('shownFlow=Math.round(autoFlow),shownHead=Math.round(autoHead
 
 // Requirement 7: expensive image work is shared, with no curve-point reduction shortcut.
 const pdfOpt=read('pdf-optimization.js'),chc=read('selector/product.html'),cr=read('selector-cr/product.html');
-assert(pdfOpt.includes('__KEYSUITE_PDF_IMAGE_CACHE_V42865'),'optimized raster results are shared across print frames');
+assert(pdfOpt.includes('__KEYSUITE_PDF_IMAGE_CACHE_V42867'),'optimized raster results are shared across print frames');
 for(const [name,source] of [['CHC',chc],['CR',cr]]){
-  assert(source.includes('__KEYSUITE_DIMENSION_VISIBLE_RATIO_V42865'),`${name} dimension scan is cached`);
+  assert(source.includes('__KEYSUITE_DIMENSION_VISIBLE_RATIO_V42867'),`${name} dimension scan is cached`);
   assert(source.includes('(window.top&&window.top.KeySuitePdfOptimization)'),`${name} reuses the parent optimizer cache`);
   assert.strictEqual((source.match(/<script src="\.\.\/pdf-optimization\.js\?v=42510">/g)||[]).length,1,`${name} does not reload the optimizer inside the print iframe`);
   assert(!/\.slice\(0\s*,\s*\d+\).*headFit\.pts/.test(source),`${name} does not reduce curve points`);
   assert(source.includes('grid-template-rows:75mm 60mm 60mm 63mm'),`${name} PDF chart geometry remains frozen`);
 }
 
-console.log('V4.28.65 functional regression: PASS');
+console.log('V4.28.67 functional regression: PASS');

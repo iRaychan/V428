@@ -1,8 +1,8 @@
-# KeySuite V4.28.66 FULL CLEAN
+# KeySuite V4.28.67 FULL CLEAN
 
-Complete clean source package, including the V4.28.66 changes and all retained KeySuite modules.
+Complete clean source package, including the V4.28.67 changes and all retained KeySuite modules.
 
-## V4.28.66 - eight-point quotation, curve and selector repair
+## V4.28.67 - eight-point quotation, curve and selector repair
 
 - Persists independent CR/BFI display settings across model changes, navigation and refresh.
 - Applies the actual quotation download filename rule, including revisions.

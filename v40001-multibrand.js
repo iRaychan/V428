@@ -4,7 +4,7 @@
   if (window.__KEYSUITE_V394410_MULTIBRAND__) return;
   window.__KEYSUITE_V394410_MULTIBRAND__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.66';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.67';
   const $=id=>document.getElementById(id);
   const clone=v=>JSON.parse(JSON.stringify(v??{}));
   const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -56,7 +56,10 @@
   const keylargoContextBrand=()=>brandByKey('keylargo')||virtualKeylargo();
   const customerId=()=>String($('companySettingsCompanySelect')?.value||window.KeySuiteApp?.getPricingCustomerId?.()||$('qCustomer')?.value||'');
   const quoteCustomerId=()=>String(window.KeySuiteApp?.getPricingCustomerId?.()||$('qCustomer')?.value||'');
-  const navigationCustomerId=()=>String($('startCustomer')?.value||window.KeySuiteApp?.getPricingCustomerId?.()||$('qCustomer')?.value||'');
+  // Navigation is filtered only by the customer explicitly selected on the
+  // Dashboard. Safari restores form values more aggressively than Windows;
+  // a restored quotation customer must not silently remove permitted series.
+  const navigationCustomerId=()=>String($('startCustomer')?.value||'');
   const customerPreferenceApi=()=>window.KeySuiteV40001CustomerBrandSettings||window.KeySuiteV3964CustomerBrandSettings||null;
   const customerPriceGroup=(productGroup='',family='')=>{
     const group=normalizeProductGroup(productGroup||family);

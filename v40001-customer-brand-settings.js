@@ -13,7 +13,7 @@
   if(window.top!==window.self||window.__KEYSUITE_V40001_CUSTOMER_BRAND_SETTINGS__)return;
   window.__KEYSUITE_V40001_CUSTOMER_BRAND_SETTINGS__=true;
 
-  const VERSION=window.KEYSUITE_VERSION||'4.28.66';
+  const VERSION=window.KEYSUITE_VERSION||'4.28.67';
   const $=id=>document.getElementById(id);
   const norm=v=>String(v??'').trim();
   const low=v=>norm(v).toLowerCase();

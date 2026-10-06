@@ -1,19 +1,16 @@
 {
-  "version": "4.28.66",
-  "baseline": "4.28.65",
-  "upgrade_supported_from": "4.28.65",
+  "version": "4.28.67",
+  "baseline": "4.28.66",
+  "upgrade_supported_from": "4.28.66",
   "changes": [
-    "persists independent CR and BFI selector/Product display settings with newest-save conflict handling",
-    "locks the browser print-job title to the quotation download filename rule",
-    "uses shared CR dimension resolution and drawing fallback for Selector and Product PDFs",
-    "enables shared cached PDF image preparation by default and de-duplicates in-flight work",
-    "displays D1 shaft power as primary HP with secondary kW across curve layouts",
-    "reports CR motor efficiency class as IE3 without changing efficiency values",
-    "removes repeated CHC/CR selector reload/hide stabilization that caused C4/C6 flicker",
-    "links KeyCore quotation count to current company saved/sealed quotation RPC data",
-    "visible version is V4.28.66"
+    "makes the macOS CR Selector use the same responsive geometry and scale as Windows",
+    "keeps the quotation filename locked while Safari creates the native PDF download",
+    "prevents restored quotation-customer state from hiding permitted CHC C6 navigation on macOS",
+    "loads CR Page 3 dimension drawings from explicit cached assets and waits for decode before printing",
+    "prepares the requested CHC generation before Windows reveals the Selector frame, removing the KeyCHC flash",
+    "visible version is V4.28.67"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.65 to V4.28.66 by uploading the package. No database migration or edge-function deployment is required. Frozen PDF geometry is preserved."
+  "notes": "Upgrade V4.28.66 to V4.28.67 by uploading the package. No database migration or edge-function deployment is required. Frozen PDF geometry and unrelated V4.28.66 behavior are preserved."
 }

@@ -4,7 +4,7 @@ const path=require('path');
 const vm=require('vm');
 const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
-const files={app:read('app.js'),universe:read('universe.js'),pdf:read('pdf-optimization.js'),first:read('v42866-selector-first-open.js'),crProduct:read('cr-product.js')};
+const files={app:read('app.js'),universe:read('universe.js'),pdf:read('pdf-optimization.js'),first:read('v42867-selector-first-open.js'),crProduct:read('cr-product.js')};
 const curves=['selector/index.html','selector/product.html','selector-g1/index.html','selector-g1/product.html','selector-cr/index.html','selector-cr/product.html','selector-bfi/index.html','selector-bfi/product.html'];
 const cr=['selector-cr/index.html','selector-cr/product.html'].map(read),bfi=['selector-bfi/index.html','selector-bfi/product.html'].map(read);
 
@@ -24,7 +24,7 @@ for(const source of cr){assert(source.includes('function keycrDimensionData(best
 assert(cr[1].includes("getElementById('selectorCrFrame')?.contentWindow?.KeySuiteCRDimensionData"));
 
 // 4. Product PDF preparation is automatic, shared and does not reduce curve data.
-assert(files.pdf.includes('raw===null?true'));assert(files.pdf.includes('__KEYSUITE_PDF_IMAGE_INFLIGHT_V42866'));assert(files.pdf.includes('if(inflight.has(key))return inflight.get(key)'));
+assert(files.pdf.includes('raw===null?true'));assert(files.pdf.includes('__KEYSUITE_PDF_IMAGE_INFLIGHT_V42867'));assert(files.pdf.includes('if(inflight.has(key))return inflight.get(key)'));
 for(const file of curves.filter(x=>x.includes('product'))){const source=read(file);assert(source.includes('KeySuitePdfOptimization'));assert(!/headFit\.pts\s*=\s*headFit\.pts\.slice/.test(source))}
 
 // 5. Every series uses primary HP and secondary kW for D1 Shaft Power.
@@ -35,11 +35,12 @@ const es=read('selector-es/index.html');assert(es.includes("kpi('D1 shaft power'
 assert(files.crProduct.includes("motor_efficiency_class:'IE3'"));assert(files.crProduct.includes("payload.motor_efficiency_class||'IE3'"));
 for(const source of cr){assert(source.includes("function keysuiteAutoPumpMotorEff(hp,normal='IE3'){motorEff.value='IE3';return 'IE3'}"));assert(source.includes('<option value="IE3" selected>IE3</option>'))}
 
-// 7. Visible selector stabilization is single pass: no iframe reload/hide loop.
-assert(!files.first.includes('.reload('));assert(!files.first.includes("style.visibility='hidden'"));assert(!files.first.includes('[0,40,120,280]'));assert(files.first.includes('requestAnimationFrame'));
+// 7. Visible selector stabilization is single pass. The only hide is the
+// Windows-only stale-generation guard introduced in V4.28.67; no reload/timer loop.
+assert(!files.first.includes('.reload('));assert(files.first.includes("const isWindows="));assert(files.first.includes("target.style.visibility='hidden'"));assert(files.first.includes("target.style.visibility='visible'"));assert(!files.first.includes('[0,40,120,280]'));assert(files.first.includes('requestAnimationFrame'));
 
 // 8. KeyCore follows the current company quotation RPC compatibility chain.
 for(const rpc of ['keysuite_list_quotations_v409','keysuite_list_quotations_v408','keysuite_list_quotations_v236'])assert(files.universe.includes(rpc));
 assert(files.universe.includes('p_company_id:companyId'));assert(files.universe.includes('Array.isArray(result)&&result.length'));
 
-console.log('V4.28.66 eight-point functional regression: PASS');
+console.log('V4.28.67 eight-point functional regression: PASS');
