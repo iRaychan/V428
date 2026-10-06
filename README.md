@@ -1,6 +1,14 @@
-# KeySuite V4.28.64 FULL CLEAN
+# KeySuite V4.28.65 Upgrade
 
-Baseline: V4.28.41 FULL CLEAN.
+Baseline: V4.28.64.
+
+## V4.28.65 - quotation and curve output corrections
+
+- Carries the final Assembly/System price into Quotation without repricing or duplicate Fuel.
+- Prints optional Capacity once and tightens only the model-to-Capacity gap.
+- Applies the approved quotation and curve PDF filename rules.
+- Shows whole-number auto-generated Product duty values without changing calculation precision.
+- Reuses CHC/CR PDF image preparation results for faster subsequent exports.
 
 ## V4.28.64 - shared Fuel across visible BOM prices
 

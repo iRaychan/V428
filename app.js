@@ -130,7 +130,7 @@ if(/Macintosh/i.test(navigator.userAgent||'')&&/Safari\//i.test(navigator.userAg
   if(!document.getElementById(styleId)){
    const style=document.createElement('style');style.id=styleId;style.textContent=css;document.head.appendChild(style);
   }
-  const version=window.KEYSUITE_VERSION||'4.28.64';
+  const version=window.KEYSUITE_VERSION||'4.28.65';
   document.title='KeySuite V'+version;
   document.querySelectorAll('.auth-brand small').forEach(node=>node.textContent='V'+version);
   document.querySelectorAll('.brand small').forEach(node=>node.textContent='Full Suite V'+version);
@@ -248,10 +248,10 @@ function capacityStateFromData(data={},description=''){
 function capacityLine(state={}){const capacity=String(state.capacityValue??'').trim(),head=String(state.headValue??'').trim();if(!state.displayCapacity||!capacity||!head)return '';const flowUnit=normalizeCapacityUnit(state.capacityUnit),headUnit=normalizeHeadUnit(state.headUnit),flowText=`${capacityNumber(capacity,2)} ${capacityFlowLabel(flowUnit)}`,headText=`${capacityNumber(head,2)} ${capacityHeadLabel(headUnit)}`,metricFlow=flowUnit==='m³/hr'?'':` (${capacityNumber(flowM3h(capacity,flowUnit),1)} m³/hr)`,metricHead=headUnit==='Mtr'?'':` (${capacityNumber(headMtr(head,headUnit),1)} Mtr)`;return `Capacity: ${flowText}${metricFlow} @ ${headText}${metricHead}`}
 function capacityText(description,state){const body=stripCapacityDescription(description),line=capacityLine(state);return [line,body].filter(Boolean).join('\n')}
 function splitCapacityModel(value){
- const raw=stripQuotationBrand(value);const marker=' — ',index=raw.lastIndexOf(marker);if(index<=0)return {base:raw,capacity:null};
- const suffix=raw.slice(index+marker.length).trim(),parsed=parseCapacityDescription(`Capacity: ${suffix}`);return parsed?{base:raw.slice(0,index).trim(),capacity:parsed}:{base:raw,capacity:null};
+ const raw=stripQuotationBrand(value),match=raw.match(/^(.*?)(?:\s+--\s+|\s+—\s+)(.+)$/);if(!match)return {base:raw,capacity:null};
+ const parsed=parseCapacityDescription(`Capacity: ${match[2].trim()}`);return parsed?{base:match[1].trim(),capacity:parsed}:{base:raw,capacity:null};
 }
-function capacityModelText(value,state={}){const parts=splitCapacityModel(value),line=capacityLine(state).replace(/^Capacity:\s*/i,'');return line?`${parts.base} — ${line}`:parts.base}
+function capacityModelText(value,state={}){const parts=splitCapacityModel(value),line=capacityLine(state).replace(/^Capacity:\s*/i,'');return line?`${parts.base} -- ${line}`:parts.base}
 function quoteCapacityState(row){return {displayCapacity:!!row?.querySelector('.item-display-capacity')?.checked,capacityValue:row?.querySelector('.item-capacity-value')?.value||'',capacityUnit:row?.querySelector('.item-capacity-unit')?.value||'m³/hr',headValue:row?.querySelector('.item-head-value')?.value||'',headUnit:row?.querySelector('.item-head-unit')?.value||'Mtr'}}
 function setQuoteCapacityEnabled(row){const enabled=!!row?.querySelector('.item-display-capacity')?.checked;row?.querySelectorAll('.item-capacity-value,.item-capacity-unit,.item-head-value,.item-head-unit').forEach(control=>control.disabled=!enabled);row?.querySelector('.quote-capacity-row')?.classList.toggle('capacity-disabled',!enabled)}
 function syncQuoteCapacityDescription(row){if(!row)return;const state=quoteCapacityState(row),area=row.querySelector('.item-description'),model=row.querySelector('.item-model');if(area)area.value=capacityText(area.value,state);if(model)model.value=capacityModelText(model.value,state);setQuoteCapacityEnabled(row);calcTotal();refreshItemExportButtons();updateQuotePageIndicators()}
@@ -996,12 +996,19 @@ function quoteItemRow(data={}){
  if(couplingItem){wrap.querySelector('.item-display-shaft')?.addEventListener('change',()=>syncQuoteShaftDescription(wrap));wrap.querySelectorAll('.item-pump-shaft,.item-motor-shaft').forEach(control=>control.addEventListener('input',()=>syncQuoteShaftDescription(wrap)));wrap.querySelector('.item-motor-pole')?.addEventListener('change',()=>syncQuoteShaftDescription(wrap));wrap.querySelector('.item-model')?.addEventListener('input',()=>updateQuoteShaftWarnings(wrap));setQuoteShaftEnabled(wrap)}else if(!noCapacityItem){wrap.querySelector('.item-display-capacity')?.addEventListener('change',()=>syncQuoteCapacityDescription(wrap));wrap.querySelectorAll('.item-capacity-value,.item-head-value').forEach(control=>control.addEventListener('input',()=>syncQuoteCapacityDescription(wrap)));wrap.querySelectorAll('.item-capacity-unit,.item-head-unit').forEach(control=>control.addEventListener('change',()=>syncQuoteCapacityDescription(wrap)));setQuoteCapacityEnabled(wrap)}
  wrap.querySelectorAll('input,textarea').forEach(x=>x.addEventListener('input',()=>{calcTotal();refreshItemExportButtons();updateQuotePageIndicators()}));const dragHandle=wrap.querySelector('.drag-handle');dragHandle.addEventListener('dragstart',e=>{if(!canEditQuotation()){e.preventDefault();return}wrap.classList.add('is-dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','quote-item')});dragHandle.addEventListener('dragend',()=>{wrap.classList.remove('is-dragging');document.querySelectorAll('.quote-item').forEach(x=>x.classList.remove('drag-over'));renumberQuoteItems();calcTotal()});wrap.addEventListener('dragover',e=>{e.preventDefault();if(!wrap.classList.contains('is-dragging'))wrap.classList.add('drag-over')});wrap.addEventListener('dragleave',()=>wrap.classList.remove('drag-over'));wrap.addEventListener('drop',e=>{e.preventDefault();wrap.classList.remove('drag-over');const moving=document.querySelector('.quote-item.is-dragging');if(!moving||moving===wrap)return;const rect=wrap.getBoundingClientRect();wrap.parentNode.insertBefore(moving,e.clientY<rect.top+rect.height/2?wrap:wrap.nextSibling)});syncItemRemarkUi(wrap);renumberQuoteItems();calcTotal();return wrap;
 }
-function getQuoteItemData(r){const coupling=r.dataset.quoteKind==='coupling',motor=r.dataset.quoteKind==='motor',staticItem=r.dataset.quoteKind==='static',base={model:stripQuotationBrand(r.querySelector('.item-model').value.trim()),qty:+r.querySelector('.item-qty').value||0,unit:normalizeQuoteUnit(r.dataset.quoteUnit),unitPrice:+r.querySelector('.item-price').value||0,internalRemark:String(r.dataset.internalRemark||'').trim(),pumpData:r.dataset.pumpData?JSON.parse(r.dataset.pumpData):null,motorData:r.dataset.motorData?JSON.parse(r.dataset.motorData):null,pricingSource:r.dataset.pricingSource?JSON.parse(r.dataset.pricingSource):null,couplingData:r.dataset.couplingData?JSON.parse(r.dataset.couplingData):null};if(coupling){const shaftInfo=quoteShaftState(r);return {...base,model:normalizeCouplingQuoteModel(base.model,{...base,couplingData:base.couplingData}),isCoupling:true,productFamily:'COUPLING',shaftInfo,description:normalizeDescriptionIndentation(shaftText(r.querySelector('.item-description').value,shaftInfo)).trim()}}if(motor)return {...base,isMotor:true,productFamily:'MOTOR',description:normalizeDescriptionIndentation(normalizeMotorQuotationDescription(r.querySelector('.item-description').value)).trim()};if(staticItem)return {...base,productFamily:r.dataset.quoteFamily||quoteProductFamily(base),description:normalizeDescriptionIndentation(stripCapacityDescription(stripQuotationBrand(r.querySelector('.item-description').value))).trim()};const capacity=quoteCapacityState(r);return {...base,description:normalizeDescriptionIndentation(capacityText(stripQuotationBrand(r.querySelector('.item-description').value),capacity)).trim(),...capacity}}
+function getQuoteItemData(r){const coupling=r.dataset.quoteKind==='coupling',motor=r.dataset.quoteKind==='motor',staticItem=r.dataset.quoteKind==='static',rawModel=stripQuotationBrand(r.querySelector('.item-model').value.trim()),base={model:rawModel,qty:+r.querySelector('.item-qty').value||0,unit:normalizeQuoteUnit(r.dataset.quoteUnit),unitPrice:+r.querySelector('.item-price').value||0,internalRemark:String(r.dataset.internalRemark||'').trim(),pumpData:r.dataset.pumpData?JSON.parse(r.dataset.pumpData):null,motorData:r.dataset.motorData?JSON.parse(r.dataset.motorData):null,pricingSource:r.dataset.pricingSource?JSON.parse(r.dataset.pricingSource):null,couplingData:r.dataset.couplingData?JSON.parse(r.dataset.couplingData):null};if(coupling){const shaftInfo=quoteShaftState(r);return {...base,model:normalizeCouplingQuoteModel(base.model,{...base,couplingData:base.couplingData}),isCoupling:true,productFamily:'COUPLING',shaftInfo,description:normalizeDescriptionIndentation(shaftText(r.querySelector('.item-description').value,shaftInfo)).trim()}}if(motor)return {...base,isMotor:true,productFamily:'MOTOR',description:normalizeDescriptionIndentation(normalizeMotorQuotationDescription(r.querySelector('.item-description').value)).trim()};if(staticItem)return {...base,productFamily:r.dataset.quoteFamily||quoteProductFamily(base),description:normalizeDescriptionIndentation(stripCapacityDescription(stripQuotationBrand(r.querySelector('.item-description').value))).trim()};const capacity=quoteCapacityState(r);return {...base,model:splitCapacityModel(rawModel).base,description:normalizeDescriptionIndentation(capacityText(stripQuotationBrand(r.querySelector('.item-description').value),capacity)).trim(),...capacity}}
 
 function renumberQuoteItems(){[...document.querySelectorAll('.quote-item')].forEach((r,i)=>r.querySelector('.item-number').textContent=i+1);refreshItemExportButtons()}
 
 function safePdfName(value){
  return String(value||'Pump Model').replace(/[\\/:*?\"<>|]/g,'-').replace(/\s+/g,' ').trim()||'Pump Model';
+}
+function quotationPdfFilename(company,date,quoteNo){
+ const firstWord=String(company||'Quotation').trim().split(/\s+/)[0]||'Quotation';
+ const digits=String(date||'').replace(/\D/g,'');const yymmdd=digits.length>=8?digits.slice(2,8):digits.slice(-6).padStart(6,'0');
+ const parsed=parseQuoteNo(quoteNo),refDigits=String(parsed?.running||String(quoteNo||'').match(/(\d{1,4})(?!.*\d)/)?.[1]||'0').padStart(4,'0').slice(-4);
+ const revision=Number(parsed?.revision||quotationRevisionNumber||quoteRevisionNumberFromNo(quoteNo)||0),suffix=revision?`-R${revision}`:'';
+ return safePdfName(`${firstWord} - ${yymmdd} - ${refDigits}${suffix}.pdf`);
 }
 function restorePrintState(){
  document.body.classList.remove('export-single');
@@ -1070,6 +1077,18 @@ function pumpPdfModelIdentity(rawModel,pump={}){
  if(/\b(?:CHCS|CHCN|CHC)\b/i.test(model))model=model.replace(/\b(?:CHCS|CHCN|CHC)\b/i,pumpPdfChcVariant(pump,model));
  return model;
 }
+function pumpPdfDutyUnit(value,kind){
+ const unit=String(value||'').trim().toLowerCase().replace(/\s+/g,'');
+ if(kind==='flow')return {m3h:'m3／hr','m³/hr':'m3／hr','m3/hr':'m3／hr',igpm:'IGPM','impgpm':'IGPM','imperialgpm':'IGPM',usgpm:'US GPM',gpm:'US GPM',lps:'L/s','l/s':'L/s',lpm:'L/min','l/min':'L/min'}[unit]||String(value||'m3／hr');
+ return {m:'Mtr',mtr:'Mtr',metre:'Mtr',meter:'Mtr',ft:'Ft',bar:'Bar',kpa:'kPa',psi:'psi'}[unit]||String(value||'Mtr');
+}
+function pumpPdfOriginalDuty(pump={}){
+ const state=pump.export_state||{},rawFlow=pump.raw_flow_text??pump.rawFlowText??pump.raw_flow??pump.rawFlow??state.rawFlowText??state.raw_flow_text??state.rawFlow??state.raw_flow;
+ const rawHead=pump.raw_head_text??pump.rawHeadText??pump.raw_head??pump.rawHead??state.rawHeadText??state.raw_head_text??state.rawHead??state.raw_head;
+ const flowUnit=pump.flow_unit??pump.flowUnit??state.flowUnit??state.flow_unit,headUnit=pump.head_unit??pump.headUnit??state.headUnit??state.head_unit;
+ if(!(Number(rawFlow)>0&&Number(rawHead)>0))return '';
+ return `${String(rawFlow).trim()} ${pumpPdfDutyUnit(flowUnit,'flow')} @ ${String(rawHead).trim()} ${pumpPdfDutyUnit(headUnit,'head')}`;
+}
 function pumpPdfFilenameFromPayload(pump={},itemNumber=1){
  const rawModel=pump.keysuite_display_model||pump.quotation_model||pump.display_model||pump.model||pump.pumpData?.model||'Pump Model';
  const model=pumpPdfModelIdentity(rawModel,pump);
@@ -1077,8 +1096,8 @@ function pumpPdfFilenameFromPayload(pump={},itemNumber=1){
  const hp=Number(pump.motor_hp??pump.pumpData?.motorHp),pole=Number(pump.pole),efficiency=String(pump.motor_efficiency_class??pump.pumpData?.motorEfficiencyClass??pump.export_state?.motorEfficiencyClass??'').trim().toUpperCase();
  const motorBits=[];
  if(!bare){if(hp>0)motorBits.push(`${capacityNumber(hp,1)}HP`);if(pole>0)motorBits.push(`${capacityNumber(pole,0)}P`);if(efficiency)motorBits.push(efficiency);if(isEs){const coupling=pumpPayloadCoupling(pump);if(coupling)motorBits.push(coupling)}}
- let dutyFlow=Number(pump.required_total_flow_m3h??pump.required_flow_m3h??pump.flow_m3h??pump.pumpData?.flowM3h),dutyHead=Number(pump.required_head_m??pump.head_m??pump.pumpData?.headM);
- const numbered=Number(itemNumber)>0,no=String(Math.max(1,Number(itemNumber)||1)).padStart(2,'0'),motor=motorBits.length?` cw ${motorBits.join(' ')}`:'',duty=(dutyFlow>0&&dutyHead>0)?` - ${capacityNumber(dutyFlow,2)}m3／hr @ ${capacityNumber(dutyHead,2)} Mtr`:'';
+ let dutyFlow=Number(pump.required_total_flow_m3h??pump.required_flow_m3h??pump.flow_m3h??pump.pumpData?.flowM3h),dutyHead=Number(pump.required_head_m??pump.head_m??pump.pumpData?.headM),originalDuty=pumpPdfOriginalDuty(pump);
+ const numbered=Number(itemNumber)>0,no=String(Math.max(1,Number(itemNumber)||1)).padStart(2,'0'),motor=motorBits.length?` cw ${motorBits.join(' ')}`:'',duty=originalDuty?` - ${originalDuty}`:(dutyFlow>0&&dutyHead>0)?` - ${capacityNumber(dutyFlow,2)}m3／hr @ ${capacityNumber(dutyHead,2)} Mtr`:'';
  // B4.06.13: without a selected customer, use only pump model + duty capacity and do not consume Item numbering.
  return safePdfName(numbered?`Item ${no} - ${model}${motor}${duty}`:`${model}${duty}`);
 }
@@ -1091,10 +1110,10 @@ function quotePumpPdfFilename(row,itemNumber){
  const motorMatch=description.match(/\bc\/?w\s+([0-9]+(?:\.[0-9]+)?)\s*HP\s+([2468])\s*(?:P|Pole)\s+(IE\d)\b/i);
  const hp=Number(pump.motor_hp??pump.pumpData?.motorHp??motorMatch?.[1]),pole=Number(pump.pole??motorMatch?.[2]),efficiency=String(pump.motor_efficiency_class??pump.pumpData?.motorEfficiencyClass??motorMatch?.[3]??'').trim().toUpperCase();
  const motorBits=[];if(!bare){if(hp>0)motorBits.push(`${capacityNumber(hp,1)}HP`);if(pole>0)motorBits.push(`${capacityNumber(pole,0)}P`);if(efficiency)motorBits.push(efficiency);if(isEs){const coupling=quotePumpPdfCoupling(row,pump);if(coupling)motorBits.push(coupling)}}
- const state=quoteCapacityState(row);let dutyFlow=flowM3h(state.capacityValue,state.capacityUnit),dutyHead=headMtr(state.headValue,state.headUnit);
+ const state=quoteCapacityState(row);let dutyFlow=flowM3h(state.capacityValue,state.capacityUnit),dutyHead=headMtr(state.headValue,state.headUnit),originalDuty=(Number(state.capacityValue)>0&&Number(state.headValue)>0)?`${String(state.capacityValue).trim()} ${pumpPdfDutyUnit(state.capacityUnit,'flow')} @ ${String(state.headValue).trim()} ${pumpPdfDutyUnit(state.headUnit,'head')}`:'';
  if(!(dutyFlow>0))dutyFlow=Number(pump.required_total_flow_m3h??pump.required_flow_m3h??pump.flow_m3h??pump.pumpData?.flowM3h);
  if(!(dutyHead>0))dutyHead=Number(pump.required_head_m??pump.head_m??pump.pumpData?.headM);
- const numbered=Number(itemNumber)>0,no=String(Math.max(1,Number(itemNumber)||1)).padStart(2,'0'),motor=motorBits.length?` cw ${motorBits.join(' ')}`:'',duty=(dutyFlow>0&&dutyHead>0)?` - ${capacityNumber(dutyFlow,2)}m3／hr @ ${capacityNumber(dutyHead,2)} Mtr`:'';
+ const numbered=Number(itemNumber)>0,no=String(Math.max(1,Number(itemNumber)||1)).padStart(2,'0'),motor=motorBits.length?` cw ${motorBits.join(' ')}`:'',duty=originalDuty?` - ${originalDuty}`:(dutyFlow>0&&dutyHead>0)?` - ${capacityNumber(dutyFlow,2)}m3／hr @ ${capacityNumber(dutyHead,2)} Mtr`:'';
  // B4.06.13: without a selected customer, use only pump model + duty capacity and do not consume Item numbering.
  return safePdfName(numbered?`Item ${no} - ${model}${motor}${duty}`:`${model}${duty}`);
 }
@@ -1675,10 +1694,10 @@ function buildPrintQuotation(){
  let subtotal=0;
  const prepared=items.map((item,i)=>{
    const amount=item.qty*item.unitPrice,description=normalizeDescriptionIndentation(item.description);subtotal+=amount;
-   const setItem=normalizeQuoteUnit(item.unit)==='set';
+   const setItem=normalizeQuoteUnit(item.unit)==='set',capacityItem=/^Capacity:/i.test(description.trim()),capacityClass=capacityItem?' print-capacity-item':'';
    const html=setItem
-     ?`<tr class="print-system-item-head"><td rowspan="2">${i+1}</td><td><div class="print-item-model">${esc(item.model)}</div></td><td>${printQty(item.qty,item.unit)}</td><td>${printAmount(item.unitPrice)}</td><td>${printAmount(amount)}</td></tr><tr class="print-system-item-desc-row"><td class="print-system-desc-cell" colspan="2"><div class="print-item-desc">${esc(description)}</div></td><td class="print-system-price-spacer"></td><td class="print-system-total-spacer"></td></tr>`
-     :`<tr><td>${i+1}</td><td><div class="print-item-model">${esc(item.model)}</div><div class="print-item-desc">${esc(description)}</div></td><td>${printQty(item.qty,item.unit)}</td><td>${printAmount(item.unitPrice)}</td><td>${printAmount(amount)}</td></tr>`;
+     ?`<tr class="print-system-item-head${capacityClass}"><td rowspan="2">${i+1}</td><td><div class="print-item-model">${esc(item.model)}</div></td><td>${printQty(item.qty,item.unit)}</td><td>${printAmount(item.unitPrice)}</td><td>${printAmount(amount)}</td></tr><tr class="print-system-item-desc-row${capacityClass}"><td class="print-system-desc-cell" colspan="2"><div class="print-item-desc">${esc(description)}</div></td><td class="print-system-price-spacer"></td><td class="print-system-total-spacer"></td></tr>`
+     :`<tr class="${capacityClass.trim()}"><td>${i+1}</td><td><div class="print-item-model">${esc(item.model)}</div><div class="print-item-desc">${esc(description)}</div></td><td>${printQty(item.qty,item.unit)}</td><td>${printAmount(item.unitPrice)}</td><td>${printAmount(amount)}</td></tr>`;
    return {height:estimatePrintItemHeight(item),html};
  });
  const pages=paginatePrintItems(prepared);
@@ -1736,7 +1755,7 @@ async function printCompleteQuotation(options={}){
  await Promise.all(logoImages.map(img=>img.decode?img.decode().catch(()=>{}):Promise.resolve()));
  let restorePdfImages=()=>{};
  try{if(window.KeySuitePdfOptimization)restorePdfImages=await window.KeySuitePdfOptimization.optimizeDocument(document.getElementById('printQuotationDocument'),{profile:'quotation'});}catch(error){console.warn('Quotation PDF optimization:',error)}
- const customer=$('qPrintedCompany')?.value.trim()||selectedQuotationCustomer()?.company||'';const pdfName=window.KeySuiteTemplates?.getPdfName?.({quoteNo:$('quoteNo').value||'Quotation',customer,date:$('qDate').value})||safePdfName($('quoteNo').value||'Quotation');
+ const customer=$('qPrintedCompany')?.value.trim()||selectedQuotationCustomer()?.company||'';const pdfName=quotationPdfFilename(customer,$('qDate').value,$('quoteNo').value||'Quotation');
  restorePrintState();window.__ksOldTitle=document.title;document.title=safePdfName(pdfName);document.body.classList.add('print-complete');
  window.addEventListener('afterprint',()=>{try{restorePdfImages()}catch(_){}document.body.classList.remove('print-complete');restorePrintState()},{once:true});
  requestAnimationFrame(()=>setTimeout(()=>window.print(),80));
@@ -1985,7 +2004,7 @@ $('startProject')?.addEventListener('input',()=>syncProjectFields('dashboard'));
 $('project')?.addEventListener('input',()=>syncProjectFields('quotation'));
 
 syncOwnerKeyVisibility();newQuote();refreshAll();updateQuotationStateUi();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js?v=42864');
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js?v=42865');
 
 
 // Two-line popup editor for Project and Delivery.

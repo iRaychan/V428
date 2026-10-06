@@ -1,20 +1,18 @@
 {
-  "version": "4.28.64",
-  "baseline": "4.28.63 FULL CLEAN",
-  "upgrade_supported_from": "4.28.63",
+  "version": "4.28.65",
+  "baseline": "4.28.64",
+  "upgrade_supported_from": "4.28.64",
   "changes": [
-    "divides the single highest Fuel Charge equally by the number of visible Assembly/System BOM lines",
-    "uses a dynamic divisor matching two, three, four or any other positive BOM line count",
-    "recalculates and rounds each displayed BOM unit price after adding its allocated Fuel share",
-    "makes displayed BOM line totals add exactly to the displayed Consolidated Total",
-    "shows the allocated Fuel share per BOM line without changing the saved standalone component price",
-    "retains V4.28.63 quotation Set/Final Discount consolidation and nested System leaf pricing",
-    "keeps frozen PDF and quotation print layouts unchanged",
-    "visible version is V4.28.64"
+    "carries the already-final Assembly/System unit price into Quotation without component repricing or duplicate Fuel",
+    "reduces only model-to-Capacity spacing in quotation PDF output",
+    "keeps Capacity in the collapsed UI title and prints it once as a separate optional row",
+    "uses company, document date, reference digits, and revision in quotation PDF filenames",
+    "preserves the original searched duty unit and value in curve PDF filenames",
+    "shows auto-generated Product duty flow and head as rounded whole numbers while preserving calculation precision",
+    "reuses CHC/CR dimension scan and image optimization results to reduce PDF preparation latency",
+    "visible version is V4.28.65"
   ],
   "new_database_migration_required": false,
-  "database_migration": "supabase/migrations/20261005090000_v42858_cr_mechanical_seal_addons.sql",
-  "database_verification": "supabase/migrations/20261005090001_v42858_verify_cr_mechanical_seal_addons.sql",
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.63 to V4.28.64 by uploading the package. No new V4.28.64 database migration is required. Frozen PDF and quotation print layouts are unchanged."
+  "notes": "Upgrade V4.28.64 to V4.28.65 by uploading the package. No database migration is required. PDF/print layout remains frozen except the approved model-to-Capacity spacing change."
 }

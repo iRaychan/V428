@@ -148,6 +148,7 @@
     const family=String(source.product_family||source.family||'CHC').toUpperCase();
     if(family==='MANUAL')return '';
     if(family==='ASSEMBLY'){
+      if(source.carried_final_price===true||String(source.pricing_mode||'').toLowerCase()==='carried_final')return '';
       for(const entry of source.assembly_items||[]){
         const reason=pricingSourceBlockReason(entry?.pricingSource||entry?.source||entry||{});if(reason)return reason;
       }
@@ -178,6 +179,7 @@
   }
   function pricingSourceMarginBlockReason(input={}){
     const source=input?.pricingSource||input?.pricing_source||input?.source||input||{},family=String(source.product_family||source.family||input?.productFamily||'').toUpperCase();
+    if(family==='ASSEMBLY'&&(source.carried_final_price===true||String(source.pricing_mode||'').toLowerCase()==='carried_final'))return '';
     const nested=source.assembly_items||source.items||[];if(nested.length){for(const entry of nested){const reason=pricingSourceMarginBlockReason(entry);if(reason)return reason}if(family==='ASSEMBLY'||family==='MANUAL'||!family)return ''}
     if(!family||family==='MANUAL')return '';
     if(source.fixed_price===true||normalizeRarity(source.rarity)==='fixed')return '';
@@ -574,6 +576,11 @@ BOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
     for(const row of [...document.querySelectorAll('.quote-item[data-pricing-source]')]){
       let source={};try{source=JSON.parse(row.dataset.pricingSource||'{}')}catch(_){ }
       if(String(source.product_family||'').toUpperCase()==='ASSEMBLY'){
+        // V4.28.65 Assembly/System quotations carry the already-final assembly
+        // unit price. Customer/category refresh must not re-run leaf pricing or Fuel.
+        if(source.carried_final_price===true||String(source.pricing_mode||'').toLowerCase()==='carried_final'){
+          delete row.dataset.pricingValidationError;continue;
+        }
         const result=priceAssemblyForQuotation((source.assembly_items||[]).map(entry=>({id:entry.id,model:entry.model,qty:entry.qty,pricingSource:entry.pricingSource||entry.source||entry})),{customer,category:cat});
         if(result.error){row.querySelector('.item-price').value='0.00';row.dataset.pricingValidationError=result.error;continue}
         delete row.dataset.pricingValidationError;row.querySelector('.item-price').value=Number(result.total||0).toFixed(2);row.dataset.pricingSource=JSON.stringify(result.source);continue;
