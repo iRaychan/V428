@@ -1,15 +1,15 @@
 {
-  "version": "4.28.69",
-  "baseline": "4.28.68",
-  "upgrade_supported_from": "4.28.68",
+  "version": "4.28.70",
+  "baseline": "4.28.69",
+  "upgrade_supported_from": "4.28.69",
   "changes": [
-    "hides CHC C4 generation swaps until the replacement iframe is sized and ready on Safari and Windows",
-    "removes the CR-only Safari CSS zoom override so CR inherits the same viewport scale as CHC C6",
-    "retains the verified 340 px duty sidebar, 27 px title and zero horizontal overflow geometry",
-    "preserves CR data, models, curves, PDF, Assembly and Quote behavior",
-    "visible version is V4.28.69"
+    "hides CHC C4 and C6 generation swaps until the requested iframe document is loaded and fully sized on Safari and Windows",
+    "restores the verified V4.28.63 Safari CR layout rules and responsive breakpoints",
+    "retains the verified 340 px duty sidebar, 17 px grid gap, 1.55:1 curve grid and zero horizontal overflow geometry",
+    "preserves newer CR data, models, curves, PDF, Assembly, Quote, permissions and pricing behavior",
+    "visible version is V4.28.70"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.68 to V4.28.69 by uploading the package. No database migration or edge-function deployment is required. Selector data and frozen PDF geometry are preserved."
+  "notes": "Upgrade V4.28.69 to V4.28.70 by uploading the package. No database migration or edge-function deployment is required. Selector data and frozen PDF geometry are preserved."
 }

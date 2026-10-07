@@ -1,8 +1,8 @@
-# KeySuite V4.28.69 FULL CLEAN
+# KeySuite V4.28.70 FULL CLEAN
 
-Complete clean source package, including the V4.28.69 changes and all retained KeySuite modules.
+Complete clean source package, including the V4.28.70 changes and all retained KeySuite modules.
 
-## V4.28.69 - CR PDF and Selector presentation repair
+## V4.28.70 - CR PDF and Selector presentation repair
 
 - Uses CR-specific workbook drawings on CR PDF Page 3 for both Selector and Product; a missing CR drawing never falls back to CHC.
 - Restores the verified macOS CR Selector geometry: 340 px duty sidebar, 27 px title, 100% browser scale and no horizontal overflow.
