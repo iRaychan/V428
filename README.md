@@ -1,15 +1,15 @@
-# KeySuite V4.28.70 FULL CLEAN
+# KeySuite V4.28.71 FULL CLEAN
 
-Complete clean source package, including the V4.28.70 changes and all retained KeySuite modules.
+Complete clean source package, including the V4.28.71 changes and all retained KeySuite modules.
 
-## V4.28.70 - CR PDF and Selector presentation repair
+## V4.28.71 - macOS Safari selector lifecycle repair
 
-- Uses CR-specific workbook drawings on CR PDF Page 3 for both Selector and Product; a missing CR drawing never falls back to CHC.
-- Restores the verified macOS CR Selector geometry: 340 px duty sidebar, 27 px title, 100% browser scale and no horizontal overflow.
-- Keeps the outer Selector header series-specific for BFI and ES instead of reverting to `CHC Curve`.
-- Opens Product CR PDF synchronously on macOS Safari, avoiding the delayed print-blocked warning caused by the hidden-frame path.
-- Removes the redundant completed-image decode wait and shortens only the safety fallback while retaining the report's own image/font readiness checks.
-- Preserves CR data, models, curves, dimensions, pricing, Assembly and Quote behavior.
+- Keeps CR and CHC selector frames layout-active on macOS Safari instead of using `visibility:hidden` during first-visible sizing.
+- Corrects Safari's nested-frame page-zoom mismatch from the live window ratio, so 75%, 100% and other zoom levels use the selector's intended width without hard-coded series dimensions.
+- Performs one guarded visible-host navigation per selector/generation and bounded responsive-width stabilization.
+- Guarantees a safe reveal for a correctly routed C4/C6 document instead of relying on one animation-frame readiness check.
+- Leaves the working V4.28.70 Windows path and the ES/BFI shared Product Curve implementation unchanged.
+- Preserves CR/CHC data, models, curves, dimensions, pricing, PDF, Assembly, Quote and permissions.
 - Requires no database migration or edge-function deployment.
 
 ## V4.28.64 - shared Fuel across visible BOM prices

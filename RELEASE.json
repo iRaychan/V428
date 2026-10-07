@@ -1,15 +1,17 @@
 {
-  "version": "4.28.70",
-  "baseline": "4.28.69",
-  "upgrade_supported_from": "4.28.69",
+  "version": "4.28.71",
+  "baseline": "4.28.70",
+  "upgrade_supported_from": "4.28.70",
   "changes": [
-    "hides CHC C4 and C6 generation swaps until the requested iframe document is loaded and fully sized on Safari and Windows",
-    "restores the verified V4.28.63 Safari CR layout rules and responsive breakpoints",
-    "retains the verified 340 px duty sidebar, 17 px grid gap, 1.55:1 curve grid and zero horizontal overflow geometry",
+    "keeps macOS Safari selector iframes in a real visible layout while using opacity to conceal intermediate CHC generation frames",
+    "normalizes Safari nested-frame page zoom from the live window ratio so embedded CR, C4 and C6 retain their intended layout at 75%, 100% and other zoom levels",
+    "performs one visible-host navigation for CR and each CHC generation, followed by bounded width stabilization and a guaranteed safe reveal",
+    "leaves the V4.28.70 Windows selector lifecycle unchanged",
+    "retains the existing CR geometry, ES/BFI shared Product Curve host and BFI visible fallback",
     "preserves newer CR data, models, curves, PDF, Assembly, Quote, permissions and pricing behavior",
-    "visible version is V4.28.70"
+    "visible version is V4.28.71"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.69 to V4.28.70 by uploading the package. No database migration or edge-function deployment is required. Selector data and frozen PDF geometry are preserved."
+  "notes": "Upgrade V4.28.70 to V4.28.71 by uploading the package. No database migration or edge-function deployment is required. Selector data and frozen PDF geometry are preserved."
 }
