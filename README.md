@@ -1,14 +1,13 @@
-# KeySuite V4.28.71 FULL CLEAN
+# KeySuite V4.28.72 FULL CLEAN
 
-Complete clean source package, including the V4.28.71 changes and all retained KeySuite modules.
+Complete clean source package, including the V4.28.72 changes and all retained KeySuite modules.
 
-## V4.28.71 - macOS Safari selector lifecycle repair
+## V4.28.72 - macOS Safari Selector scale correction
 
-- Keeps CR and CHC selector frames layout-active on macOS Safari instead of using `visibility:hidden` during first-visible sizing.
-- Corrects Safari's nested-frame page-zoom mismatch from the live window ratio, so 75%, 100% and other zoom levels use the selector's intended width without hard-coded series dimensions.
-- Performs one guarded visible-host navigation per selector/generation and bounded responsive-width stabilization.
-- Guarantees a safe reveal for a correctly routed C4/C6 document instead of relying on one animation-frame readiness check.
-- Leaves the working V4.28.70 Windows path and the ES/BFI shared Product Curve implementation unchanged.
+- Removes the duplicate `outerWidth / innerWidth` child-body zoom and percentage width applied by V4.28.71 to Selector CHC C4, CHC C6 and CR on macOS Safari.
+- Restores native selector CSS scale, matching the working BFI and Product curve geometry.
+- Retains the V4.28.71 visible-host navigation, bounded responsive-width stabilization and safe reveal lifecycle.
+- Leaves Windows, ES, BFI and every Product page unchanged.
 - Preserves CR/CHC data, models, curves, dimensions, pricing, PDF, Assembly, Quote and permissions.
 - Requires no database migration or edge-function deployment.
 

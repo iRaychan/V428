@@ -1,11 +1,11 @@
-/* KeySuite V4.28.71 reversible PDF image optimization. Source assets are never modified. */
+/* KeySuite V4.28.72 reversible PDF image optimization. Source assets are never modified. */
 (()=>{
   'use strict';
   const STORAGE_KEY='keysuite_pdf_optimized_v42320';
   // Reuse optimized logos/dimension drawings across the short-lived print iframe.
   // This removes repeated canvas encode work without changing source pixels or PDF layout.
-  const cache=(()=>{try{const host=window.top||window;return host.__KEYSUITE_PDF_IMAGE_CACHE_V42871||(host.__KEYSUITE_PDF_IMAGE_CACHE_V42871=new Map())}catch(_){return new Map()}})();
-  const inflight=(()=>{try{const host=window.top||window;return host.__KEYSUITE_PDF_IMAGE_INFLIGHT_V42871||(host.__KEYSUITE_PDF_IMAGE_INFLIGHT_V42871=new Map())}catch(_){return new Map()}})();
+  const cache=(()=>{try{const host=window.top||window;return host.__KEYSUITE_PDF_IMAGE_CACHE_V42872||(host.__KEYSUITE_PDF_IMAGE_CACHE_V42872=new Map())}catch(_){return new Map()}})();
+  const inflight=(()=>{try{const host=window.top||window;return host.__KEYSUITE_PDF_IMAGE_INFLIGHT_V42872||(host.__KEYSUITE_PDF_IMAGE_INFLIGHT_V42872=new Map())}catch(_){return new Map()}})();
 
   function isEnabled(){
     try{
@@ -97,7 +97,7 @@
   }
   function labelHtml(){return '<label class="keysuite-pdf-optimize-label"><input type="checkbox" data-keysuite-pdf-optimize>Optimized PDF</label>'}
 
-  const api={version:'4.28.71',storageKey:STORAGE_KEY,isEnabled,setEnabled,syncCheckboxes,optimizeDocument,labelHtml};
+  const api={version:'4.28.72',storageKey:STORAGE_KEY,isEnabled,setEnabled,syncCheckboxes,optimizeDocument,labelHtml};
   window.KeySuitePdfOptimization=api;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>syncCheckboxes(),{once:true});
   else syncCheckboxes();
