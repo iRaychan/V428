@@ -425,9 +425,48 @@ async function openCurve(e,data){
         return !!(live&&live.style.visibility!=='hidden'&&doc?.readyState==='complete'&&model&&chart&&String(model.textContent||'').toLowerCase().includes(wantedModel.toLowerCase()));
       }catch(_){return false}
     };
-    const onAck=ev=>{const m=ev.data||{};if(m.type!=='KEYSUITE_DASHBOARD_MODEL_OPENED'||m.requestId!==req.requestId||upper(m.family)!==family)return;if(String(m.model||'').toLowerCase()!==wantedModel.toLowerCase())return;if(family==='ES'&&Number(data.pole)>0&&Number(m.pole)!==Number(data.pole))return;if(m.opened===false)return;if(family!=='CHC'){finish();return}const ackFrame=ensureFrame(e);timers.push(setTimeout(()=>{if(done)return;if(ackFrame===ensureFrame(e)&&chcCurveReady())timers.push(setTimeout(()=>{if(!done&&ackFrame===ensureFrame(e)&&chcCurveReady())finish()},180))},180))};
-    const send=()=>{if(done||state.pending?.requestId!==req.requestId){finish();return}const live=ensureFrame(e);pinFrameContext(live,ctx);if(e.family==='CHC')setDefaultChcPayload(live);sendOnce(e,payload);attempt++;if(attempt<6)timers.push(setTimeout(send,[140,220,360,560,850][attempt-1]||850));else timers.push(setTimeout(()=>{if(family==='CHC'&&!chcCurveReady()&&state.pending?.requestId===req.requestId){sendOnce(e,payload);timers.push(setTimeout(finish,850))}else finish()},900))};
-    window.addEventListener('message',onAck,true);send();
+    // V4.28.74: Stop resending after an acknowledged model opens. The previous
+    // fixed send loop could repeatedly redraw a valid curve for several seconds.
+    // Observe the actual curve promptly; retry only when acknowledgement or
+    // visible curve is missing, retaining a bounded recovery path for Safari.
+    let acknowledged=false,firstAckAt=0,lastSendAt=0,sendCount=0,stableFrame=null,stableSince=0;
+    const onAck=ev=>{
+      const m=ev.data||{};
+      if(m.type!=='KEYSUITE_DASHBOARD_MODEL_OPENED'||m.requestId!==req.requestId||upper(m.family)!==family)return;
+      if(String(m.model||'').toLowerCase()!==wantedModel.toLowerCase())return;
+      if(family==='ES'&&Number(data.pole)>0&&Number(m.pole)!==Number(data.pole))return;
+      if(m.opened===false)return;
+      if(family!=='CHC'){finish();return}
+      acknowledged=true;firstAckAt=performance.now();
+    };
+    const send=()=>{
+      if(done||state.pending?.requestId!==req.requestId){finish();return}
+      const live=ensureFrame(e);pinFrameContext(live,ctx);
+      if(e.family==='CHC')setDefaultChcPayload(live);
+      sendOnce(e,payload);sendCount++;lastSendAt=performance.now();
+    };
+    const begun=performance.now();
+    const observe=()=>{
+      if(done)return;
+      if(state.pending?.requestId!==req.requestId){finish();return}
+      const now=performance.now(),live=ensureFrame(e);
+      if(acknowledged&&chcCurveReady()){
+        if(stableFrame!==live){stableFrame=live;stableSince=now}
+        if(now-stableSince>=90){finish();return}
+      }else{stableFrame=null;stableSince=0}
+      // Avoid duplicate renders while a valid open is still processing.
+      // If the selector never acknowledges, retry with modest backoff.
+      if(!acknowledged&&sendCount<5&&now-lastSendAt>=([0,450,750,1100,1500][sendCount]||1500))send();
+      // Safari can acknowledge before its SVG finishes rendering. Only
+      // resend after a grace period if the requested curve is still absent.
+      if(acknowledged&&!chcCurveReady()&&sendCount<5&&now-firstAckAt>=650&&now-lastSendAt>=800){
+        acknowledged=false;send();
+      }
+      if(now-begun>=6500){finish();return}
+      timers.push(setTimeout(observe,55));
+    };
+    window.addEventListener('message',onAck,true);
+    send();timers.push(setTimeout(observe,55));
   });
   try{if(window.__KEYSUITE_PRESERVE_SELECTOR_BRAND_ONCE__?.context===ctx)delete window.__KEYSUITE_PRESERVE_SELECTOR_BRAND_ONCE__}catch(_){}
   if(window.__KEYSUITE_QUICK_SELECTION_OPENING__?.family===e.family)delete window.__KEYSUITE_QUICK_SELECTION_OPENING__;
@@ -440,7 +479,7 @@ function bind(){const box=$('ksDashboardDutyFinder');if(!box||box.dataset.v39444
   const changed=ev=>{if(!ev.target.matches('#ksDashFlow,#ksDashHead,#ksDashFlowUnit,#ksDashHeadUnit,#ks42704IncludeCold,input[data-enhanced-key]'))return;if(ev.target.matches('input[data-enhanced-key]'))syncEnhancedChecks();if(ev.target.matches('#ks42704IncludeCold'))syncColdItemCheck();ev.stopPropagation();ev.stopImmediatePropagation();cancelPending();const st=$('ksDutyStatus');if(st)st.textContent='Press Check Pumps to update results.'};
   box.addEventListener('input',changed,true);box.addEventListener('change',changed,true);return true}
 function message(ev){const m=ev.data||{};if(m.type!=='KEYSUITE_DASHBOARD_RESULT'||m.requestId!==state.pending?.requestId||!FAMILIES.includes(upper(m.family)))return;const f=upper(m.family),e=state.currentEntry;if(!e||f!==upper(e.family))return;const key=entryKey(e),data=m.suitable?applyDashboardStockPriority(e,m.data,state.pending?.includeColdItems===true):null;clearFamilyTimer();state.responded[key]=true;state.results[key]={suitable:!!data,data};state.currentEntry=null;state.currentFamily=null;renderResults(false);processNext(m.requestId)}
-function mark(){const version=window.KEYSUITE_VERSION||'4.28.73';document.title='KeySuite V'+version;document.querySelectorAll('.suite-version').forEach(n=>n.textContent='KeySuite V'+version)}
+function mark(){const version=window.KEYSUITE_VERSION||'4.28.74';document.title='KeySuite V'+version;document.querySelectorAll('.suite-version').forEach(n=>n.textContent='KeySuite V'+version)}
 function setup(){style();mark();if(!ensureUi()||!bind())return false;removeMaterialControls();if(api()?.state?.coreReady){if(!state.prefLoaded)loadPreference();else{renderPreference();renderResults(true)}}else renderBrandState();return true}
 window.addEventListener('message',message,true);
 window.addEventListener('KEYSUITE_BRANDS_READY',()=>{state.prefLoaded=false;if(canQuick())loadPreference()});

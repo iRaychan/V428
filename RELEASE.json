@@ -1,17 +1,14 @@
 {
-  "version": "4.28.72",
-  "baseline": "4.28.71",
-  "upgrade_supported_from": "4.28.71",
+  "version": "4.28.74",
+  "baseline": "4.28.73",
+  "upgrade_supported_from": "4.28.73",
   "changes": [
-    "removes the duplicate macOS Safari page-zoom injection from only the embedded CHC C4, CHC C6 and CR selectors",
-    "restores the selector documents to their native CSS geometry, matching the working BFI and Product curve scale",
-    "keeps the V4.28.71 visible-host navigation, bounded width stabilization and safe reveal lifecycle",
-    "leaves Windows behavior unchanged",
-    "leaves ES, BFI and every Product page unchanged",
-    "preserves newer CR data, models, curves, PDF, Assembly, Quote, permissions and pricing behavior",
-    "visible version is V4.28.72"
+    "Quick Search curve handoff stops resending when model is acknowledged and chart is ready",
+    "Promptly observes curve readiness every 55ms instead of continued fixed resend sequence",
+    "Retries only when acknowledgement/curve is missing, with bounded recovery",
+    "Preserves all selectors and V4.28.72 chart layout and frozen PDF"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.28.71 to V4.28.72 by uploading the package. No database migration or edge-function deployment is required. Selector data and frozen PDF geometry are preserved."
+  "notes": "Deploy on top of V4.28.73; manually verify first CHC 15-3 selection in Safari."
 }
