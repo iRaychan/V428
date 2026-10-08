@@ -412,8 +412,21 @@ async function openCurve(e,data){
   await new Promise(resolve=>{
     let done=false,attempt=0;const timers=[];
     const finish=()=>{if(done)return;done=true;window.removeEventListener('message',onAck,true);timers.forEach(clearTimeout);resolve()};
-    const onAck=ev=>{const m=ev.data||{};if(m.type!=='KEYSUITE_DASHBOARD_MODEL_OPENED'||m.requestId!==req.requestId||upper(m.family)!==family)return;if(String(m.model||'').toLowerCase()!==wantedModel.toLowerCase())return;if(family==='ES'&&Number(data.pole)>0&&Number(m.pole)!==Number(data.pole))return;if(m.opened!==false)finish()};
-    const send=()=>{if(done||state.pending?.requestId!==req.requestId){finish();return}const live=ensureFrame(e);pinFrameContext(live,ctx);if(e.family==='CHC')setDefaultChcPayload(live);sendOnce(e,payload);attempt++;if(attempt<6)timers.push(setTimeout(send,[140,220,360,560,850][attempt-1]||850));else timers.push(setTimeout(finish,900))};
+    // V4.28.73: CHC first-open can acknowledge before Safari's newly shown
+    // selector iframe has settled. Only accept the acknowledgement once the
+    // expected model AND its rendered curve are present in the active iframe.
+    const chcCurveReady=()=>{
+      if(family!=='CHC')return true;
+      const live=ensureFrame(e);
+      try{
+        const doc=live?.contentDocument;
+        const model=doc?.querySelector('.selection-model');
+        const chart=doc?.querySelector('.curve-grid .chart-main svg');
+        return !!(live&&live.style.visibility!=='hidden'&&doc?.readyState==='complete'&&model&&chart&&String(model.textContent||'').toLowerCase().includes(wantedModel.toLowerCase()));
+      }catch(_){return false}
+    };
+    const onAck=ev=>{const m=ev.data||{};if(m.type!=='KEYSUITE_DASHBOARD_MODEL_OPENED'||m.requestId!==req.requestId||upper(m.family)!==family)return;if(String(m.model||'').toLowerCase()!==wantedModel.toLowerCase())return;if(family==='ES'&&Number(data.pole)>0&&Number(m.pole)!==Number(data.pole))return;if(m.opened===false)return;if(family!=='CHC'){finish();return}const ackFrame=ensureFrame(e);timers.push(setTimeout(()=>{if(done)return;if(ackFrame===ensureFrame(e)&&chcCurveReady())timers.push(setTimeout(()=>{if(!done&&ackFrame===ensureFrame(e)&&chcCurveReady())finish()},180))},180))};
+    const send=()=>{if(done||state.pending?.requestId!==req.requestId){finish();return}const live=ensureFrame(e);pinFrameContext(live,ctx);if(e.family==='CHC')setDefaultChcPayload(live);sendOnce(e,payload);attempt++;if(attempt<6)timers.push(setTimeout(send,[140,220,360,560,850][attempt-1]||850));else timers.push(setTimeout(()=>{if(family==='CHC'&&!chcCurveReady()&&state.pending?.requestId===req.requestId){sendOnce(e,payload);timers.push(setTimeout(finish,850))}else finish()},900))};
     window.addEventListener('message',onAck,true);send();
   });
   try{if(window.__KEYSUITE_PRESERVE_SELECTOR_BRAND_ONCE__?.context===ctx)delete window.__KEYSUITE_PRESERVE_SELECTOR_BRAND_ONCE__}catch(_){}
@@ -427,7 +440,7 @@ function bind(){const box=$('ksDashboardDutyFinder');if(!box||box.dataset.v39444
   const changed=ev=>{if(!ev.target.matches('#ksDashFlow,#ksDashHead,#ksDashFlowUnit,#ksDashHeadUnit,#ks42704IncludeCold,input[data-enhanced-key]'))return;if(ev.target.matches('input[data-enhanced-key]'))syncEnhancedChecks();if(ev.target.matches('#ks42704IncludeCold'))syncColdItemCheck();ev.stopPropagation();ev.stopImmediatePropagation();cancelPending();const st=$('ksDutyStatus');if(st)st.textContent='Press Check Pumps to update results.'};
   box.addEventListener('input',changed,true);box.addEventListener('change',changed,true);return true}
 function message(ev){const m=ev.data||{};if(m.type!=='KEYSUITE_DASHBOARD_RESULT'||m.requestId!==state.pending?.requestId||!FAMILIES.includes(upper(m.family)))return;const f=upper(m.family),e=state.currentEntry;if(!e||f!==upper(e.family))return;const key=entryKey(e),data=m.suitable?applyDashboardStockPriority(e,m.data,state.pending?.includeColdItems===true):null;clearFamilyTimer();state.responded[key]=true;state.results[key]={suitable:!!data,data};state.currentEntry=null;state.currentFamily=null;renderResults(false);processNext(m.requestId)}
-function mark(){const version=window.KEYSUITE_VERSION||'4.28.72';document.title='KeySuite V'+version;document.querySelectorAll('.suite-version').forEach(n=>n.textContent='KeySuite V'+version)}
+function mark(){const version=window.KEYSUITE_VERSION||'4.28.73';document.title='KeySuite V'+version;document.querySelectorAll('.suite-version').forEach(n=>n.textContent='KeySuite V'+version)}
 function setup(){style();mark();if(!ensureUi()||!bind())return false;removeMaterialControls();if(api()?.state?.coreReady){if(!state.prefLoaded)loadPreference();else{renderPreference();renderResults(true)}}else renderBrandState();return true}
 window.addEventListener('message',message,true);
 window.addEventListener('KEYSUITE_BRANDS_READY',()=>{state.prefLoaded=false;if(canQuick())loadPreference()});
