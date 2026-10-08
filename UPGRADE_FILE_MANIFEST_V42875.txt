@@ -1,0 +1,22 @@
+KeySuite V4.28.75 Upgrade File Manifest
+=======================================
+
+Upgrade from V4.28.74:
+
+README.md
+README_UPGRADE_V42875.md
+RELEASE.json
+UPGRADE_FILE_MANIFEST_V42875.txt
+VERIFICATION_V42875.md
+VERSION.txt
+index.html
+manifest.json
+sw.js
+v40201-quick-selection.js
+v41200-bootstrap.js
+v42875-version-lock.js
+tests/v42875-curve-timing-regression.cjs
+tests/v42875-release-regression.cjs
+
+No selector, curve-data, pricing, layout or frozen-PDF files are replaced.
+

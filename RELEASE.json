@@ -1,14 +1,14 @@
 {
-  "version": "4.28.74",
-  "baseline": "4.28.73",
-  "upgrade_supported_from": "4.28.73",
+  "version": "4.28.75",
+  "baseline": "4.28.74",
+  "upgrade_supported_from": "4.28.74",
   "changes": [
-    "Quick Search curve handoff stops resending when model is acknowledged and chart is ready",
-    "Promptly observes curve readiness every 55ms instead of continued fixed resend sequence",
-    "Retries only when acknowledgement/curve is missing, with bounded recovery",
-    "Preserves all selectors and V4.28.72 chart layout and frozen PDF"
+    "accepts the unified selector readiness flag during Dashboard Quick Selection",
+    "removes the erroneous 4.5-second CHC first-open fallback wait",
+    "retains legacy CHC readiness compatibility",
+    "preserves curve data, pricing, layouts and frozen PDF behavior",
+    "visible version is V4.28.75"
   ],
   "new_database_migration_required": false,
-  "edge_function_deploy_required": false,
-  "notes": "Deploy on top of V4.28.73; manually verify first CHC 15-3 selection in Safari."
+  "edge_function_deploy_required": false
 }
