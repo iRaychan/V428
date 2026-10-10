@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#17365d">
-  <title>KeySuite V4.28.75</title>
-  <script>window.KEYSUITE_VERSION='4.28.75';window.KEYSUITE_BUILD='V4.28.75';</script>
+  <title>KeySuite V4.29.01</title>
+  <script>window.KEYSUITE_VERSION='4.29.01';window.KEYSUITE_BUILD='V4.29.01';</script>
   <link rel="manifest" href="manifest.json">
   <style>
     :root{--navy:#17365d;--blue:#2f75b5;--light:#eef3f8;--line:#cbd5e1;--text:#172033;--muted:#64748b;--ok:#15803d}
@@ -366,8 +366,8 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 
     /* V2.31 unified Assembly BOM rows */
     .coupling-product-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:12px;align-items:start}.coupling-product-grid>div{display:grid;grid-template-rows:18px 42px;gap:4px;min-width:0;align-self:start}.coupling-product-grid>div:nth-child(1),.coupling-product-grid>div:nth-child(2){grid-column:span 5}.coupling-product-grid>div:nth-child(n+3){grid-column:span 2}.coupling-product-grid label{margin:0;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.coupling-product-grid input,.coupling-product-grid select{width:100%;min-width:0;height:42px}.coupling-product-grid #couplingProductPumpShaft.non-default-selection{background:#ffd6e7!important;border-color:#e879a7!important;box-shadow:0 0 0 1px rgba(232,121,167,.16)}
-    .assembly-item{display:block;padding:0;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;margin-bottom:10px;background:#fff}.assembly-bom-main-row{display:grid;grid-template-columns:minmax(260px,1.5fr) 90px 130px 130px auto;gap:10px;align-items:end;padding:10px 12px}.assembly-bom-main-row>div{display:grid;grid-template-rows:18px 42px;gap:4px}.assembly-bom-main-row label{margin:0;line-height:18px;white-space:nowrap;font-size:11px}.assembly-bom-main-row input,.assembly-model-value{height:42px;width:100%;min-width:0}.assembly-model-value{background:rgba(255,255,255,.78);font-weight:700}.assembly-bom-main-row .assembly-delete{margin:0;height:42px}.assembly-component-detail-row{padding:0 12px 12px}.assembly-component-detail-row .assembly-component-options,.assembly-component-detail-row .assembly-keyplc-options,.assembly-component-detail-row .assembly-motor-options{margin-top:0;grid-template-columns:repeat(auto-fit,minmax(160px,240px))}.assembly-item-pump{background:#E2EFDA}.assembly-item-motor{background:#C6E0B4}.assembly-item-coupling{background:#A9D08E}.assembly-item-baseplate{background:#76B54B}.assembly-item-baseplate label,.assembly-item-baseplate .assembly-line-total{color:#102a12}.assembly-auto-badge{vertical-align:middle}.assembly-coupling-mode-buttons{display:none!important}
-    @media(max-width:900px){.coupling-product-grid{grid-template-columns:1fr}.coupling-product-grid>div{grid-column:1!important}.assembly-bom-main-row{grid-template-columns:minmax(220px,1fr) 80px 110px 110px auto}}@media(max-width:720px){.assembly-bom-main-row{grid-template-columns:1fr}.assembly-bom-main-row>div{grid-template-columns:110px 1fr;grid-template-rows:42px;align-items:center}.assembly-bom-main-row .assembly-delete{width:100%}}
+    .assembly-item{display:block;padding:0;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;margin-bottom:10px;background:#fff}.assembly-bom-main-row{display:grid;grid-template-columns:minmax(260px,1.5fr) 90px 130px 130px auto;gap:10px;align-items:start;padding:10px 12px}.assembly-bom-main-row>div{display:grid;grid-template-rows:18px 42px;gap:4px}.assembly-bom-main-row label{margin:0;line-height:18px;white-space:nowrap;font-size:11px}.assembly-bom-main-row input,.assembly-model-value{height:42px;width:100%;min-width:0}.assembly-model-value{background:rgba(255,255,255,.78);font-weight:700}.assembly-bom-main-row .assembly-delete{margin:22px 0 0;height:42px}.assembly-component-detail-row{padding:0 12px 12px}.assembly-component-detail-row .assembly-component-options,.assembly-component-detail-row .assembly-keyplc-options,.assembly-component-detail-row .assembly-motor-options{margin-top:0;grid-template-columns:repeat(auto-fit,minmax(160px,240px))}.assembly-item-pump{background:#E2EFDA}.assembly-item-motor{background:#C6E0B4}.assembly-item-coupling{background:#A9D08E}.assembly-item-baseplate{background:#76B54B}.assembly-item-baseplate label,.assembly-item-baseplate .assembly-line-total{color:#102a12}.assembly-auto-badge{vertical-align:middle}.assembly-coupling-mode-buttons{display:none!important}
+    @media(max-width:900px){.coupling-product-grid{grid-template-columns:1fr}.coupling-product-grid>div{grid-column:1!important}.assembly-bom-main-row{grid-template-columns:minmax(220px,1fr) 80px 110px 110px auto}}@media(max-width:720px){.assembly-bom-main-row{grid-template-columns:1fr}.assembly-bom-main-row>div{grid-template-columns:110px 1fr;grid-template-rows:42px;align-items:center}.assembly-bom-main-row .assembly-delete{width:100%;margin:0}}
 
     /* V2.31 Coupling shaft-information row */
     .quote-shaft-row{grid-template-columns:minmax(180px,.8fr) minmax(170px,1fr) minmax(170px,1fr) minmax(210px,1.1fr)}.quote-shaft-row>div{display:grid;grid-template-rows:18px 42px;gap:4px}.quote-shaft-row input,.quote-shaft-row select{height:42px;width:100%}
@@ -641,7 +641,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <body>
 <div id="loginView" class="auth-shell">
   <form id="loginForm" class="auth-card" novalidate>
-    <div class="auth-brand">KeySuite<small>V4.28.75</small></div>
+    <div class="auth-brand">KeySuite<small>V4.29.01</small></div>
     <h1>Sign in</h1>
     <p>Only approved Keylargo users can enter KeySuite.</p>
     <div id="loginMessage" class="auth-message"></div>
@@ -657,7 +657,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <div id="loadingView" class="loading-screen hidden"><div class="loading-card"><div class="spinner"></div><div id="loadingText">Checking secure access…</div></div></div>
 <div id="appView" class="app hidden">
   <aside>
-    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.28.75</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
+    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.29.01</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
     <nav>
       <button data-page="dashboard" class="active">Dashboard</button>
       <button data-page="customers">Customers</button>
@@ -682,7 +682,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       <button id="settingsButton" type="button" class="settings-button">⚙ Settings</button>
       <button id="logoutButton" type="button">Sign out</button>
     </div>
-    <div class="suite-version">KeySuite V4.28.75</div>
+    <div class="suite-version">KeySuite V4.29.01</div>
   </aside>
 
   <main>
@@ -2192,8 +2192,8 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 })();
 </script>
 <script src="v42872-selector-first-open.js?v=42872"></script>
-<script src="v41200-bootstrap.js?v=42875"></script>
-<script src="v42875-version-lock.js?v=42875"></script>
+<script src="v41200-bootstrap.js?v=42901"></script>
+<script src="v42901-version-lock.js?v=42901"></script>
 
 <script id="v41412-static-product-generation">
 document.addEventListener('click',event=>{

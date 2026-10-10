@@ -1,0 +1,20 @@
+KeySuite V4.29.01 Upgrade File Manifest
+=======================================
+
+Upgrade from V4.28.75:
+
+README.md
+README_UPGRADE_V42901.md
+RELEASE.json
+UPGRADE_FILE_MANIFEST_V42901.txt
+VERIFICATION_V42901.md
+VERSION.txt
+index.html
+manifest.json
+sw.js
+v41200-bootstrap.js
+v42901-version-lock.js
+tests/v42901-release-regression.cjs
+
+Only the Assembly BOM layout CSS in index.html is changed. No selector, curve-data, pricing, calculation or frozen-PDF files are replaced.
+

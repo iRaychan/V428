@@ -1,13 +1,12 @@
 {
-  "version": "4.28.75",
-  "baseline": "4.28.74",
-  "upgrade_supported_from": "4.28.74",
+  "version": "4.29.01",
+  "baseline": "4.28.75",
+  "upgrade_supported_from": "4.28.75",
   "changes": [
-    "accepts the unified selector readiness flag during Dashboard Quick Selection",
-    "removes the erroneous 4.5-second CHC first-open fallback wait",
-    "retains legacy CHC readiness compatibility",
-    "preserves curve data, pricing, layouts and frozen PDF behavior",
-    "visible version is V4.28.75"
+    "aligns Model / Item, Qty, Unit Price and Total Price labels and controls on one top-aligned BOM row",
+    "applies the same alignment to Pump, Motor, Coupling and Baseplate",
+    "preserves BOM values, pricing calculations, component details and frozen PDF behavior",
+    "visible version is V4.29.01"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false
