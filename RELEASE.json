@@ -1,13 +1,14 @@
 {
-  "version": "4.29.01",
-  "baseline": "4.28.75",
-  "upgrade_supported_from": "4.28.75",
+  "version": "4.29.02",
+  "baseline": "4.29.01",
+  "upgrade_supported_from": "4.29.01",
   "changes": [
-    "aligns Model / Item, Qty, Unit Price and Total Price labels and controls on one top-aligned BOM row",
-    "applies the same alignment to Pump, Motor, Coupling and Baseplate",
-    "preserves BOM values, pricing calculations, component details and frozen PDF behavior",
-    "visible version is V4.29.01"
+    "restores the existing Alternative Models recommendations in Product curve views for ES and BFI",
+    "keeps CHC and CR Product curve alternative panels hidden",
+    "preserves selector ranking, hydraulic calculations, pricing, actions, PDFs and layout styling",
+    "visible version is V4.29.02"
   ],
   "new_database_migration_required": false,
-  "edge_function_deploy_required": false
+  "edge_function_deploy_required": false,
+  "notes": "Upgrade V4.29.01 to V4.29.02 by uploading the patch. No database migration or edge-function deployment is required."
 }

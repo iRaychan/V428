@@ -1,0 +1,20 @@
+KeySuite V4.29.02 Upgrade File Manifest
+=======================================
+
+Upgrade from V4.29.01:
+
+README.md
+README_UPGRADE_V42902.md
+RELEASE.json
+UPGRADE_FILE_MANIFEST_V42902.txt
+VERIFICATION_V42902.md
+VERSION.txt
+index.html
+manifest.json
+sw.js
+tests/v42902-release-regression.cjs
+v394411-product-curve.js
+v41200-bootstrap.js
+v42902-version-lock.js
+
+Only the family-specific Product curve visibility rule is changed at runtime. ES and BFI alternative-model panels are restored; CHC and CR remain unchanged.
