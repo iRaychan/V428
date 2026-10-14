@@ -14,7 +14,8 @@ manifest.json
 sw.js
 tests/v42902-release-regression.cjs
 v394411-product-curve.js
+v40001-product-series-overhaul.js
 v41200-bootstrap.js
 v42902-version-lock.js
 
-Only the family-specific Product curve visibility rule is changed at runtime. ES and BFI alternative-model panels are restored; CHC and CR remain unchanged.
+Only Product/Selection visibility and embedded height synchronization change at runtime. ES and BFI alternative-model panels are restored, dynamic content remains scrollable on Windows, and CHC/CR recommendation visibility remains unchanged.

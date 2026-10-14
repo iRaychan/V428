@@ -6,6 +6,7 @@ Upgrade patch for V4.29.01 that restores existing Alternative Models recommendat
 
 - ES Product curve: Alternative Selections are visible again.
 - BFI Product curve: Alternative Models are visible again.
+- Windows: expanding Orifice settings, results or alternatives automatically grows the embedded selector so the page can scroll to the bottom.
 - CHC and CR Product curve alternative panels remain hidden.
 - Existing selector ranking, hydraulic calculations, pricing, Product actions, PDF behavior and layout styling are unchanged.
 - No database migration or edge-function deployment is required.

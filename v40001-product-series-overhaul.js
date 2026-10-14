@@ -191,8 +191,15 @@
   function setBackLabel(on){const b=$('closeProductCurve');if(!b)return;b.textContent=on?'← Back':'Close';b.setAttribute('aria-label',on?'Back to Product pump models':'Close')}
   function hideFrame(frame=activeFrame()){const host=$('productCurveHost');if(frame)frame.style.opacity='0';if(host)host.dataset.ks3963Loading='1'}
   function revealFrame(frame=activeFrame()){const host=$('productCurveHost');if(host)delete host.dataset.ks3963Loading;if(frame)frame.style.opacity='1'}
+  function watchFrameHeight(frame,doc){
+    if(!frame||!doc?.body||frame.__ks42902HeightDoc===doc)return;
+    try{frame.__ks42902ResizeObserver?.disconnect?.();frame.__ks42902MutationObserver?.disconnect?.()}catch(_){}
+    frame.__ks42902HeightDoc=doc;let queued=false;const queue=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;resizeFrame(frame)})};
+    try{if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(queue);observer.observe(doc.documentElement);observer.observe(doc.body);frame.__ks42902ResizeObserver=observer}}catch(_){}
+    try{const observer=new MutationObserver(queue);observer.observe(doc.body,{subtree:true,childList:true,attributes:true,characterData:true});frame.__ks42902MutationObserver=observer}catch(_){}
+  }
   function resizeFrame(frame=activeFrame()){
-    if(!frame)return;try{const d=frame.contentDocument;frame.setAttribute('scrolling','no');frame.style.overflow='hidden';const h=Math.max(1080,Number(d?.documentElement?.scrollHeight||0),Number(d?.body?.scrollHeight||0))+10;frame.style.height=h+'px'}catch(_){frame.style.height='1900px'}
+    if(!frame)return;try{const d=frame.contentDocument;frame.setAttribute('scrolling','no');frame.style.overflow='hidden';const h=Math.max(1080,Number(d?.documentElement?.scrollHeight||0),Number(d?.body?.scrollHeight||0))+10;if(Math.abs((parseFloat(frame.style.height)||0)-h)>1)frame.style.height=h+'px';watchFrameHeight(frame,d)}catch(_){frame.style.height='1900px'}
   }
   function openInline(){
     if(selectionEsOpen)closeSelectionEsPanel();
@@ -249,7 +256,7 @@
       body.product-frame.ks3963-product-es>.layout{display:grid!important;grid-template-columns:350px minmax(0,1fr)!important;gap:14px!important;padding:14px!important;max-width:1550px!important;margin:auto!important;align-items:start!important}
       body.product-frame.ks3963-product-es aside.inputs{display:block!important;position:sticky!important;top:128px!important;align-self:start!important;max-height:none!important;overflow:visible!important;width:auto!important}
       body.product-frame.ks3963-product-es .main{display:grid!important;gap:14px!important;max-width:none!important;min-width:0!important}
-      body.product-frame.ks3963-product-es .alts{display:none!important}
+      body.product-frame.ks3963-product-es .alts{display:block!important}
       body.product-frame.ks3963-product-es .details{display:block!important}
       body.product-frame.ks3963-product-es .grid2{display:grid!important;grid-template-columns:minmax(0,1.55fr) minmax(310px,1fr)!important;gap:14px!important;align-items:stretch!important}
       body.product-frame.ks3963-product-es .grid2>.chart-card{height:554px!important}
@@ -273,7 +280,7 @@
       body.product-frame.ks3963-product-chc .result-area{display:grid!important;gap:17px!important;max-width:none!important;min-width:0!important}
       body.product-frame.ks3963-product-chc #out{display:block!important;min-height:0!important}
       body.product-frame.ks3963-product-chc #go{background:#0f629c!important}
-      body.product-frame.ks3963-product-chc #alternativesCard,body.product-frame.ks3963-product-chc .alternatives-panel{display:none!important}
+      ${String(f||'').toUpperCase()==='BFI'?'body.product-frame.ks3963-product-chc #alternativesCard,body.product-frame.ks3963-product-chc .alternatives-panel{display:block!important}':'body.product-frame.ks3963-product-chc #alternativesCard,body.product-frame.ks3963-product-chc .alternatives-panel{display:none!important}'}
       body.product-frame.ks3963-product-chc .curve-grid{grid-template-columns:minmax(0,1.55fr) minmax(310px,.85fr)!important;align-items:stretch!important}
       body.product-frame.ks3963-product-chc .curve-grid>.chart-main{height:554px!important}
       body.product-frame.ks3963-product-chc .chart-stack{display:grid!important;grid-template-rows:repeat(3,178px)!important;gap:10px!important}

@@ -4,8 +4,9 @@
   "upgrade_supported_from": "4.29.01",
   "changes": [
     "restores the existing Alternative Models recommendations in Product curve views for ES and BFI",
+    "remeasures embedded selector height when Orifice settings, results or alternatives expand so Windows can scroll to the complete content",
     "keeps CHC and CR Product curve alternative panels hidden",
-    "preserves selector ranking, hydraulic calculations, pricing, actions, PDFs and layout styling",
+    "preserves selector ranking, hydraulic calculations, pricing, actions, PDFs and existing layout styling",
     "visible version is V4.29.02"
   ],
   "new_database_migration_required": false,
