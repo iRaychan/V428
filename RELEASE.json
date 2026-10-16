@@ -1,15 +1,15 @@
 {
-  "version": "4.29.04",
-  "baseline": "4.29.03",
-  "upgrade_supported_from": "4.29.03",
+  "version": "4.29.05",
+  "baseline": "4.29.04",
+  "upgrade_supported_from": "4.29.04",
   "changes": [
-    "prepares CHC C4/C6 PDF dimension alignment and image optimization during idle time",
-    "reuses the prepared caches when the CHC PDF is requested",
-    "preserves the existing PDF content, values, layout, branding and print behavior",
-    "preserves every non-CHC selector and all calculations, data, UI, pricing and actions",
-    "visible version is V4.29.04"
+    "opens the CHC C4/C6 Product PDF in a visible report tab before the macOS print/save dialog",
+    "removes the hidden desktop print frame that could make Product PDF saving appear stalled",
+    "adds late macOS Safari fit checks for the Selection C4/C6 embedded view",
+    "preserves the existing PDF content, values, layout, branding and all unrelated behavior",
+    "visible version is V4.29.05"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.29.03 to V4.29.04 by uploading the patch. No database migration or edge-function deployment is required."
+  "notes": "Upgrade V4.29.04 to V4.29.05 by uploading the patch. No database migration or edge-function deployment is required."
 }

@@ -1104,6 +1104,27 @@ function keysuiteChcApplyBrandingToReport(html){
  }
  return out;
 }
+const KEYCHC_PDF_PREWARM_KEYS=new Set();
+function keychcPrewarmPdfAssets(best){
+ const series=String(best?.series||'').trim(),dimension=String(keychcG1DimensionImage(series)||'');
+ if(!series||!dimension)return;
+ const ctx=keysuiteChcPresentationContext(),screenLogo=document.querySelector('header .brand-logo,.brand-wrap > .brand-logo,img.brand-logo'),logo=String(ctx?.logo||screenLogo?.getAttribute('src')||'').trim();
+ const key=series+'|'+logo;if(KEYCHC_PDF_PREWARM_KEYS.has(key))return;KEYCHC_PDF_PREWARM_KEYS.add(key);
+ const prepare=async()=>{try{
+  const host=window;
+  const box=document.createElement('div'),dimensionImg=document.createElement('img');dimensionImg.src=dimension;box.appendChild(dimensionImg);
+  if(logo){const logoImg=document.createElement('img');logoImg.src=logo;box.appendChild(logoImg)}
+  if(!(dimensionImg.complete&&dimensionImg.naturalWidth>0))await new Promise(resolve=>{dimensionImg.addEventListener('load',resolve,{once:true});dimensionImg.addEventListener('error',resolve,{once:true})});
+  if(dimensionImg.naturalWidth>0&&dimensionImg.naturalHeight>0){
+   const canvas=document.createElement('canvas');canvas.width=dimensionImg.naturalWidth;canvas.height=dimensionImg.naturalHeight;
+   const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(dimensionImg,0,0);const data=context.getImageData(0,0,canvas.width,canvas.height).data;let last=-1;
+   outer:for(let y=canvas.height-1;y>=0;y--){const row=y*canvas.width*4;for(let x=0;x<canvas.width;x++){const i=row+x*4,a=data[i+3],r=data[i],g=data[i+1],b=data[i+2];if(a>20&&(r<245||g<245||b<245)){last=y;break outer}}}
+   if(last>=0){const ratio=(last+1)/canvas.height,cache=host.__KEYSUITE_DIMENSION_VISIBLE_RATIO_V42872||(host.__KEYSUITE_DIMENSION_VISIBLE_RATIO_V42872=new Map()),cacheKey=String(dimensionImg.currentSrc||dimensionImg.src||'').length+':'+dimensionImg.naturalWidth+'x'+dimensionImg.naturalHeight;cache.set(cacheKey,ratio)}
+  }
+  const optimizer=window.KeySuitePdfOptimization;if(optimizer?.optimizeDocument){const restore=await optimizer.optimizeDocument(box,{profile:'datasheet'});restore()}
+ }catch(_){}};
+ if(typeof requestIdleCallback==='function')requestIdleCallback(prepare,{timeout:1500});else setTimeout(prepare,80);
+}
 function exportPDF(requestedFilename){
  const best=keychcCurrentDisplayModel();
  if(!best)return;
@@ -1342,25 +1363,26 @@ window.onload=async()=>{
     const img=document.getElementById('dimensionDrawingImage');
     const info=document.getElementById('dimensionInfo');
     if(img&&info&&img.naturalWidth>0&&img.naturalHeight>0){
-      let visibleBottom=img.getBoundingClientRect().bottom;
+      const rect=img.getBoundingClientRect(),cacheHost=window.opener||window.top||window,cache=cacheHost.__KEYSUITE_DIMENSION_VISIBLE_RATIO_V42872||(cacheHost.__KEYSUITE_DIMENSION_VISIBLE_RATIO_V42872=new Map()),cacheKey=String(img.currentSrc||img.src||'').length+':'+img.naturalWidth+'x'+img.naturalHeight;
+      let ratio=cache.get(cacheKey),visibleBottom=rect.bottom;
       try{
-        const canvas=document.createElement('canvas');
-        canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
-        const ctx=canvas.getContext('2d',{willReadFrequently:true});
-        ctx.drawImage(img,0,0);
-        const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
-        let last=-1;
-        outer:for(let y=canvas.height-1;y>=0;y--){
-          const row=y*canvas.width*4;
-          for(let x=0;x<canvas.width;x++){
-            const i=row+x*4,a=data[i+3],r=data[i],g=data[i+1],b=data[i+2];
-            if(a>20&&(r<245||g<245||b<245)){last=y;break outer;}
+        if(!(ratio>0)){
+          const canvas=document.createElement('canvas');
+          canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+          const ctx=canvas.getContext('2d',{willReadFrequently:true});
+          ctx.drawImage(img,0,0);
+          const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+          let last=-1;
+          outer:for(let y=canvas.height-1;y>=0;y--){
+            const row=y*canvas.width*4;
+            for(let x=0;x<canvas.width;x++){
+              const i=row+x*4,a=data[i+3],r=data[i],g=data[i+1],b=data[i+2];
+              if(a>20&&(r<245||g<245||b<245)){last=y;break outer;}
+            }
           }
+          ratio=last>=0?(last+1)/canvas.height:1;cache.set(cacheKey,ratio);
         }
-        if(last>=0){
-          const rect=img.getBoundingClientRect();
-          visibleBottom=rect.top+((last+1)/canvas.height)*rect.height;
-        }
+        visibleBottom=rect.top+ratio*rect.height;
       }catch(_){}
       const infoTop=info.getBoundingClientRect().top;
       const deltaRendered=(visibleBottom+38)-infoTop;
@@ -1370,7 +1392,7 @@ window.onload=async()=>{
     }
   }catch(e){console.warn('Dimension table alignment:',e)}
   let __keysuiteRestorePdfImages=()=>{};
-  try{const __pdfOpt=window.KeySuitePdfOptimization||(window.opener&&window.opener.KeySuitePdfOptimization);if(__pdfOpt)__keysuiteRestorePdfImages=await __pdfOpt.optimizeDocument(document,{profile:'datasheet'});}catch(e){console.warn('PDF optimization:',e)}
+  try{const __pdfOpt=(window.opener&&window.opener.KeySuitePdfOptimization)||(window.top&&window.top.KeySuitePdfOptimization)||window.KeySuitePdfOptimization;if(__pdfOpt)__keysuiteRestorePdfImages=await __pdfOpt.optimizeDocument(document,{profile:'datasheet'});}catch(e){console.warn('PDF optimization:',e)}
   window.addEventListener('afterprint',()=>{try{__keysuiteRestorePdfImages()}catch(_){}},{once:true});
   requestAnimationFrame(()=>setTimeout(()=>{__keysuiteLockPdfTitle();window.print();},80));
 };
@@ -1404,41 +1426,22 @@ window.onload=async()=>{
    }
    return;
  }
- const previousFrame=document.getElementById("pdfPrintFrame");
- if(previousFrame)previousFrame.remove();
- const frame=document.createElement("iframe");
- frame.id="pdfPrintFrame";
- frame.name=pdfFileTitle;
- frame.title=pdfFileTitle;
- frame.setAttribute("aria-hidden","true");
- frame.style.position="fixed";
- frame.style.right="0";
- frame.style.bottom="0";
- frame.style.width="1px";
- frame.style.height="1px";
- frame.style.border="0";
- frame.style.opacity="0";
- frame.style.pointerEvents="none";
- document.body.appendChild(frame);
- const printWindow=frame.contentWindow;
- const printDocument=frame.contentDocument||printWindow.document;
- const cleanupPrintFrame=()=>{
-   try{window.focus();}catch(e){}
-   setTimeout(()=>{
-     if(frame.parentNode)frame.parentNode.removeChild(frame);
-     restorePrintTitles();
-     try{flowInput.disabled=false;headInput.disabled=false;flowInput.focus();}catch(e){}
-   },100);
- };
+ const printWindow=window.open("","_blank");
+ if(!printWindow){
+   restorePrintTitles();
+   alert("Your browser blocked the PDF window. Please allow pop-ups for this site, then press EXPORT PDF again.");
+   return;
+ }
  try{
+   const printDocument=printWindow.document;
    printDocument.open();
    printDocument.write(keysuiteChcApplyBrandingToReport(report));
    printDocument.close();
-   try{printDocument.title=pdfFileTitle;printWindow.__KEYSUITE_PDF_FILE_TITLE__=pdfFileTitle;frame.name=pdfFileTitle;frame.title=pdfFileTitle;printWindow.addEventListener('beforeprint',()=>{try{printDocument.title=pdfFileTitle;frame.name=pdfFileTitle;frame.title=pdfFileTitle;document.title=pdfFileTitle;if(window.top&&window.top!==window)window.top.document.title=pdfFileTitle;}catch(_){}});}catch(_){}
-   printWindow.addEventListener("afterprint",cleanupPrintFrame,{once:true});
-   setTimeout(cleanupPrintFrame,120000);
+   try{printDocument.title=pdfFileTitle;printWindow.__KEYSUITE_PDF_FILE_TITLE__=pdfFileTitle;printWindow.addEventListener('beforeprint',()=>{try{printDocument.title=pdfFileTitle;document.title=pdfFileTitle;if(window.top&&window.top!==window)window.top.document.title=pdfFileTitle;}catch(_){}});}catch(_){ }
+   setTimeout(()=>{restorePrintTitles();try{flowInput.disabled=false;headInput.disabled=false;}catch(e){}},1000);
  }catch(error){
-   cleanupPrintFrame();
+   try{printWindow.close();}catch(e){}
+   restorePrintTitles();
    alert("Unable to prepare the PDF report. Please try again.");
  }
 }
@@ -1776,6 +1779,7 @@ function renderSelected(){
  </div>
  <div class="iso-note">ISO 9906:Grade 3B</div>`;
  updateKeyCHCCurveStatus(best);
+ keychcPrewarmPdfAssets(best);
 }
 
 

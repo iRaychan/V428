@@ -1,6 +1,14 @@
-# KeySuite V4.29.04 FULL CLEAN
+# KeySuite V4.29.05 FULL CLEAN
 
-Complete clean source package based on V4.29.03, with faster CHC C4/C6 PDF preparation and all retained KeySuite modules.
+Complete clean source package based on V4.29.04, with the macOS CHC C4/C6 Product PDF and Selection fit corrections and all retained KeySuite modules.
+
+## V4.29.05 - macOS CHC C4/C6 PDF and Selection fit
+
+- Opens the CHC C4/C6 Product PDF in a visible report tab before the macOS print/save dialog, matching Selection.
+- Removes the hidden desktop print frame that could make Product PDF saving appear stalled.
+- Adds late macOS Safari fit checks so Selection C4/C6 reliably returns to the full-width zoomed-out view.
+- Keeps the report content, values, layout, branding and all unrelated UI and behavior unchanged.
+- Requires no database migration or edge-function deployment.
 
 ## V4.29.04 - CHC C4/C6 PDF preparation performance
 

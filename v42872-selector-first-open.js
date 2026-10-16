@@ -166,7 +166,7 @@
     if(!isMacSafari)return stabilizeDesktop(page);
     const token=++sequences[page],target=frame(page);
     if(target)keepMacFrameLayoutActive(target);
-    [0,40,120,280,650].forEach((delay,attempt)=>setTimeout(()=>stabilizeMac(page,attempt,token),delay));
+    [0,40,120,280,650,1200,2200].forEach((delay,attempt)=>setTimeout(()=>stabilizeMac(page,attempt,token),delay));
     return true;
   }
   function bindTarget(page){
