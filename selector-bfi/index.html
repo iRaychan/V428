@@ -915,7 +915,8 @@ function formatPdfNumber(v,dec=1){
 function formatHP(value){
  const n=Number(value);
  if(!Number.isFinite(n))return "-";
- return `${Number.isInteger(n)?n.toFixed(0):n.toFixed(1)} HP`;
+ const hp=n<1?n.toFixed(2):n.toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
+ return `${hp} HP`;
 }
 function flowToM3h(value,unit){
  if(unit==="m3min")return value*60;
