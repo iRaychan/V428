@@ -1,6 +1,14 @@
-# KeySuite V4.29.03 FULL CLEAN
+# KeySuite V4.29.04 FULL CLEAN
 
-Complete clean source package based on V4.29.02, with corrected motor HP display precision and all retained KeySuite modules.
+Complete clean source package based on V4.29.03, with faster CHC C4/C6 PDF preparation and all retained KeySuite modules.
+
+## V4.29.04 - CHC C4/C6 PDF preparation performance
+
+- Prepares the selected CHC dimension drawing and PDF images in idle time after results render.
+- Reuses the exact dimension-alignment result and optimized image cache when PDF is requested.
+- Keeps the existing CHC C4/C6 PDF content, values, layout, branding and print behavior unchanged.
+- Leaves every non-CHC selector and all calculations, data, UI, pricing and actions unchanged.
+- Requires no database migration or edge-function deployment.
 
 ## V4.29.03 - Motor HP display precision
 

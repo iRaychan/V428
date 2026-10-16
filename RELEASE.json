@@ -1,15 +1,15 @@
 {
-  "version": "4.29.03",
-  "baseline": "4.29.02",
-  "upgrade_supported_from": "4.29.02",
+  "version": "4.29.04",
+  "baseline": "4.29.03",
+  "upgrade_supported_from": "4.29.03",
   "changes": [
-    "shows motor HP below 1 with two decimal places",
-    "shows motor HP of 1 or above without unnecessary trailing zeros",
-    "preserves the existing kW display format",
-    "preserves all calculations, data, pricing, actions, PDFs and layout styling",
-    "visible version is V4.29.03"
+    "prepares CHC C4/C6 PDF dimension alignment and image optimization during idle time",
+    "reuses the prepared caches when the CHC PDF is requested",
+    "preserves the existing PDF content, values, layout, branding and print behavior",
+    "preserves every non-CHC selector and all calculations, data, UI, pricing and actions",
+    "visible version is V4.29.04"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.29.02 to V4.29.03 by uploading the patch. No database migration or edge-function deployment is required."
+  "notes": "Upgrade V4.29.03 to V4.29.04 by uploading the patch. No database migration or edge-function deployment is required."
 }
