@@ -1,10 +1,10 @@
-/* KeySuite V4.29.07 — universal floating Back control, including Selection → Quotation return. */
+/* KeySuite V4.29.08 — universal floating Back control, including Selection → Quotation return. */
 (() => {
 'use strict';
 if(window.top!==window.self||window.__KEYSUITE_V40413_MODEL_RETURN__)return;
 window.__KEYSUITE_V40413_MODEL_RETURN__=true;
 const $=id=>document.getElementById(id);
-const STORE='keysuite-v39445-model-return',PAGE_STORE='keysuite-v40413-page-history',QUOTE_ORIGIN_STORE='keysuite-v42907-quotation-selection-origin';
+const STORE='keysuite-v39445-model-return',PAGE_STORE='keysuite-v40413-page-history',QUOTE_ORIGIN_STORE='keysuite-v42908-quotation-selection-origin';
 const SELECTION_PAGES=new Set(['selector','selectorCr','selectorBfi','selectorEs']);
 let memory=null,suppressNextPageHistory=false,quotationSelectionOrigin='';
 function icon(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5"></path><path d="M4 12h10a6 6 0 0 1 6 6"></path></svg>'}

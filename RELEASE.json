@@ -1,7 +1,7 @@
 {
-  "version": "4.29.07",
-  "baseline": "4.29.06",
-  "upgrade_supported_from": "4.29.05 or 4.29.06",
+  "version": "4.29.08",
+  "baseline": "4.29.07",
+  "upgrade_supported_from": "4.29.05, 4.29.06 or 4.29.07",
   "changes": [
     "replaces CHC Models with an all-family distinct Models counter",
     "replaces Priced Variants with Models With Price counted once per model",
@@ -9,9 +9,10 @@
     "makes rarity model-variant based and synchronized across USD, RMB and MYR",
     "normalizes legacy rarity conflicts using priced currencies and Fixed > Rare > Many > Common precedence",
     "restores the floating Back button from Selection to Quotation",
-    "visible version is V4.29.07"
+    "prevents automatic quotation references resetting to 0001 while secure history loads",
+    "visible version is V4.29.08"
   ],
   "new_database_migration_required": true,
   "edge_function_deploy_required": true,
-  "notes": "Upgrade V4.29.05 or V4.29.06 to V4.29.07. The included v42906 database migration and telegram-webhook deployment are unchanged and need only be applied once."
+  "notes": "Upgrade V4.29.05, V4.29.06 or V4.29.07 to V4.29.08. The included v42906 database migration and telegram-webhook deployment are unchanged and need only be applied once."
 }

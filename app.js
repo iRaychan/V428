@@ -305,7 +305,7 @@ function parseQuoteJson(value){if(value&&typeof value==='object')return value;tr
 function firstQuoteText(...values){for(const value of values){const text=String(value??'').trim();if(text)return text}return ''}
 function quoteDateValue(value){const text=firstQuoteText(value);if(!text)return '';const match=text.match(/^\d{4}-\d{2}-\d{2}/);return match?match[0]:text}
 function canonicalQuotationNumber(value){
- const text=String(value||'').trim().toUpperCase(),match=text.match(/^([A-Z0-9]{1,8})-(\d{4})-(\d{1,4})(?:-R(\d+)|\s*\(R(\d+)\)|-V(\d+))?$/i);
+ const text=String(value||'').trim().toUpperCase(),match=text.match(/^([A-Z0-9]{1,8})[\/-](\d{4})[\/-](\d{1,4})(?:-R(\d+)|\s*\(R(\d+)\)|-V(\d+))?$/i);
  if(!match)return text;const revision=Number(match[4]||match[5]||match[6]||0);return `${match[1].toUpperCase()}-${match[2]}-${String(Number(match[3])||0).padStart(4,'0')}${revision?`-R${revision}`:''}`
 }
 function normalizeRemoteQuote(row={}){
@@ -1161,7 +1161,7 @@ function getQuoteItems(){return [...document.querySelectorAll('.quote-item')].ma
 function setQuoteItems(items=[]){$('quoteItems').innerHTML='';(items.length?items:[{}]).forEach(quoteItemRow);calcTotal()}
 function assignedQuotationPrefix(){return String(currentProfile().quotation_prefix||window.KeySuiteQuotationReferences?.getState?.().prefix||'').trim().toUpperCase()}
 function parseQuoteNo(value){
- const text=String(value||'').trim(),match=text.match(/^([A-Z0-9]{1,8})-(\d{4})-(\d{1,4})(?:-r(\d+)|\s*\(r(\d+)\)|-v(\d+))?$/i);
+ const text=String(value||'').trim(),match=text.match(/^([A-Z0-9]{1,8})[\/-](\d{4})[\/-](\d{1,4})(?:-r(\d+)|\s*\(r(\d+)\)|-v(\d+))?$/i);
  if(!match)return null;const revision=Number(match[4]||match[5]||match[6]||0);return {prefix:match[1].toUpperCase(),yymm:match[2],running:String(match[3]),revision,suffix:revision?`-R${revision}`:''};
 }
 function formatQuoteNo(parsed){
@@ -1195,26 +1195,34 @@ function validateQuoteNoForSave(options={}){
  if($('quoteNo'))$('quoteNo').value=formatted;return formatted;
 }
 function highestLocalRunning(prefix,year){
- const yy=String(year).slice(-2),rx=new RegExp(`^${String(prefix).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}-${yy}\\d{2}-(\\d+)(?:-R\\d+|-V\\d+|\\s*\\(R\\d+\\))?$`,'i');
+ const yy=String(year).slice(-2),rx=new RegExp(`^${String(prefix).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}[\\/-]${yy}\\d{2}[\\/-](\\d+)(?:-R\\d+|-V\\d+|\\s*\\(R\\d+\\))?$`,'i');
  return quotes().reduce((maximum,row)=>{const match=String(row.no||'').match(rx);return match?Math.max(maximum,Number(match[1])||0):maximum},0);
 }
 function nextQuoteNo(){
  const d=new Date(),year=d.getFullYear(),yy=String(year).slice(-2),mm=String(d.getMonth()+1).padStart(2,'0'),prefix=assignedQuotationPrefix(),next=highestLocalRunning(prefix,year)+1;
  return prefix?`${prefix}-${yy}${mm}-${String(next).padStart(4,'0')}`:'';
 }
-$('quoteNo')?.addEventListener('input',()=>normalizeQuoteNoInput());
+$('quoteNo')?.addEventListener('input',event=>{if(event.isTrusted)lastAutoQuotationReference='';normalizeQuoteNoInput()});
 $('quoteNo')?.addEventListener('blur',()=>normalizeQuoteNoInput({final:true}));
 $('quoteNo')?.addEventListener('paste',()=>setTimeout(()=>normalizeQuoteNoInput(),0));
 
-let quotationReferenceRequest=0,quotationReferenceAllocated=false;
+let quotationReferenceRequest=0,quotationReferenceAllocated=false,lastAutoQuotationReference='';
 function assignNewQuotationReference(){
  const input=$('quoteNo');if(!input)return;
  // V4.08.08: a new quotation number is a preview only. Never call the allocating RPC here.
  // The running number is synchronized only after the first successful save of the new quotation.
  quotationReferenceRequest++;quotationReferenceAllocated=false;lockedQuotePrefix=assignedQuotationPrefix();quoteNumberSuffix='';
- const reference=nextQuoteNo();setQuoteNoValue(reference||'');
+ const reference=nextQuoteNo();lastAutoQuotationReference=setQuoteNoValue(reference||'');
 }
-function refreshNewQuotationReference(){if(editingQuoteId||quotationStatus!=='new'||quoteHasItems())return;assignNewQuotationReference()}
+function refreshNewQuotationReference(){
+ if(editingQuoteId||quotationStatus!=='new')return;
+ const current=canonicalQuotationNumber($('quoteNo')?.value),automatic=canonicalQuotationNumber(lastAutoQuotationReference);
+ // Secure quotation history loads in the background. A Selection item may be
+ // added before that load completes, so refresh the still-automatic preview
+ // even when the draft already contains items. Never replace a manual number.
+ if(quoteHasItems()&&current&&current!==automatic)return;
+ assignNewQuotationReference();
+}
 function calcTotal(){
  let total=0,complete=0,warning=0,error=0;
  const rows=[...document.querySelectorAll('.quote-item')];

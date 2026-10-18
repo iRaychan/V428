@@ -6,12 +6,12 @@
   function normalizePrefix(value){return String(value||'').trim().toUpperCase()}
   function validatePrefix(value){const prefix=normalizePrefix(value);if(!/^[A-Z0-9]{1,8}$/.test(prefix))throw new Error('Quotation prefix must contain 1 to 8 letters or numbers only.');return prefix}
   function parseReference(value){
-    const match=String(value||'').trim().match(/^([A-Z0-9]{1,8})-(\d{4})-(\d{1,4})(?:-r(\d+)|\s*\(r(\d+)\)|-v(\d+))?$/i);
+    const match=String(value||'').trim().match(/^([A-Z0-9]{1,8})[\/-](\d{4})[\/-](\d{1,4})(?:-r(\d+)|\s*\(r(\d+)\)|-v(\d+))?$/i);
     if(!match)return null;const revision=Number(match[4]||match[5]||match[6]||0);return {prefix:match[1].toUpperCase(),yymm:match[2],running:Number(match[3])||0,revision,suffix:revision?`-R${revision}`:''};
   }
   function scanRunningFloor(prefix,date=new Date()){
     if(!prefix||typeof localStorage==='undefined')return 0;
-    const yy=String(date.getFullYear()).slice(-2),safe=String(prefix).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),rx=new RegExp(`^${safe}-${yy}\\d{2}-(\\d+)(?:-R\\d+|-V\\d+|\\s*\\(R\\d+\\))?$`,'i');let maximum=0;
+    const yy=String(date.getFullYear()).slice(-2),safe=String(prefix).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),rx=new RegExp(`^${safe}[\\/-]${yy}\\d{2}[\\/-](\\d+)(?:-R\\d+|-V\\d+|\\s*\\(R\\d+\\))?$`,'i');let maximum=0;
     const visit=value=>{if(typeof value==='string'){const match=value.match(rx);if(match)maximum=Math.max(maximum,Number(match[1])||0);return}if(Array.isArray(value)){value.forEach(visit);return}if(value&&typeof value==='object')Object.values(value).forEach(visit)};
     for(let index=0;index<localStorage.length;index++){const key=localStorage.key(index),value=localStorage.getItem(key);try{visit(JSON.parse(value))}catch(_){visit(value)}}
     return maximum;
