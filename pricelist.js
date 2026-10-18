@@ -378,7 +378,7 @@
       const product=chcProducts().find(item=>item.id===productId);
       if(product){
         product.pricesByCurrency=product.pricesByCurrency||{};product.pricesByCurrency[currency]={CHC:chc,CHCS:chcs,CHCN:chcn};
-        product.rarityByCurrency=product.rarityByCurrency||{};product.rarityByCurrency[currency]={...product.rarityByCurrency[currency],...rarities};
+        product.rarityByCurrency=product.rarityByCurrency||{};['USD','RMB','MYR'].forEach(code=>{product.rarityByCurrency[code]={...product.rarityByCurrency[code],...rarities}});
       }
       window.KeySuitePricing?.syncPriceListSettings?.({chcG1Products:secureData.chcG1Products,products:secureData.products});window.KeySuitePricing?.render?.();message('chc',`${selectedChcGeneration} ${product?.model||'CHC model'} ${currency} prices and rarity saved.`,'info');
     }catch(error){console.error(error);const text=String(error.message||error);message('chc',/rarity|fixed/i.test(text)?`${text}. Run V40602_SUPABASE_MIGRATION.sql.`:text,'error')}
@@ -436,7 +436,7 @@
       const product=gwsProducts().find(item=>item.id===productId);
       if(product){
         product.pricesByCurrency=product.pricesByCurrency||{};product.pricesByCurrency[currency]={SKU:price};
-        product.rarityByCurrency=product.rarityByCurrency||{};product.rarityByCurrency[currency]={SKU:rarity};
+        product.rarityByCurrency=product.rarityByCurrency||{};['USD','RMB','MYR'].forEach(code=>{product.rarityByCurrency[code]={SKU:rarity}});
       }
       window.KeySuitePricing?.render?.();message('gws',`${product?.model||'GWS Tank'} ${currency} price and rarity saved.`,'info');
     }catch(error){console.error(error);const text=String(error.message||error);message('gws',/rarity|fixed/i.test(text)?`${text}. Run V40602_SUPABASE_MIGRATION.sql.`:text,'error')}

@@ -1636,8 +1636,9 @@ function customerPricingRow(row:any={}){const q=row?.quotation||{};return {commi
 function productRates(settings:any,family:string){const fam=String(family||'CHC').toLowerCase();return {USD:Number(settings?.[`${fam}_usd_multiplier`]??settings?.usd_multiplier??5.8),RMB:Number(settings?.[`${fam}_rmb_multiplier`]??settings?.rmb_multiplier??.65),MYR:1}}
 function calculateQuotedPrice(candidates:any[],rarityHint:any,rule:any,customerRates:any,ctx:any){
   const rows=(candidates||[]).filter(row=>Number(row?.sourcePrice)>0).map(row=>({...row,rarity:pricingRarity(row.rarity),baseMyr:Number(row.sourcePrice)*Number(row.multiplier||1)}));if(!rows.length)return null;
-  const requested=pricingRarity(rarityHint),fixedRows=requested==='fixed'?rows:rows.filter(row=>row.rarity==='fixed'),pool=fixedRows.length?fixedRows:rows;
-  const chosen=(fixedRows.length?pool.find(row=>row.currency==='MYR'):null)||pool.reduce((best,row)=>!best||row.baseMyr>best.baseMyr?row:best,null),rarity=pricingRarity(rarityHint||chosen.rarity),fixedPrice=rarity==='fixed';
+  const rank:any={common:1,many:2,rare:3,fixed:4},modelRarity=rarityHint?pricingRarity(rarityHint):rows.reduce((best,row)=>rank[row.rarity]>rank[best]?row.rarity:best,'common');rows.forEach(row=>row.rarity=modelRarity);
+  const requested=modelRarity,fixedRows=requested==='fixed'?rows:[],pool=fixedRows.length?fixedRows:rows;
+  const chosen=(fixedRows.length?pool.find(row=>row.currency==='MYR'):null)||pool.reduce((best,row)=>!best||row.baseMyr>best.baseMyr?row:best,null),rarity=modelRarity,fixedPrice=rarity==='fixed';
   if(fixedPrice)return {finalPrice:chosen.baseMyr,fixedPrice:true,rarity,sourceCurrency:chosen.currency,sourcePrice:chosen.sourcePrice,multiplier:chosen.multiplier,baseMyr:chosen.baseMyr,fuelCharge:0};
   if(!(Number(rule.margin)>0))throw new Error('Category Margin is blank or 0%. Update Key → Category Pricing before quoting this pump.');
   const marginPrice=chosen.baseMyr/Math.max(.0001,1-Number(rule.margin||0));
@@ -1647,7 +1648,8 @@ function calculateQuotedPrice(candidates:any[],rarityHint:any,rule:any,customerR
   const afterCommission=rule.useCommission?withTransport/Math.max(.0001,1-Number(customerRates.commission||0)):withTransport;
   const afterSetDiscount=rule.useSetDiscount?afterCommission/Math.max(.0001,1-Number(customerRates.setDiscount||0)):afterCommission;
   const beforeFuel=rule.useFinalDiscount?afterSetDiscount/Math.max(.0001,1-Number(customerRates.finalDiscount||0)):afterSetDiscount;
-  const fuelCharge=rule.useFuelCharge?Math.max(0,Number(ctx.distanceKm||0))*Math.max(Number(ctx.fuelPrice||2)-Number(ctx.fuelBasePrice||2),0):0;
+  const fuelEfficiency=Number(ctx.fuelEfficiency)>0?Number(ctx.fuelEfficiency):6.3,journeyMultiplier=ctx.returnJourney===false?1:2;
+  const fuelCharge=rule.useFuelCharge?(Math.max(0,Number(ctx.distanceKm||0))*journeyMultiplier/fuelEfficiency)*Math.max(Number(ctx.fuelPrice||2)-Number(ctx.fuelBasePrice||2),0):0;
   const unrounded=beforeFuel+fuelCharge,finalPrice=Math.ceil((unrounded-1e-9)/10)*10;
   return {finalPrice,fixedPrice:false,rarity,sourceCurrency:chosen.currency,sourcePrice:chosen.sourcePrice,multiplier:chosen.multiplier,baseMyr:chosen.baseMyr,fuelCharge,unroundedPrice:unrounded};
 }
@@ -1722,7 +1724,7 @@ async function quotePumpForCustomer(service:any,customerId:string,item:any,keySu
   if(pricingRes.error)throw new Error(`Customer-specific pricing could not be loaded: ${pricingRes.error.message||pricingRes.error}`);
   const pricingRow=(Array.isArray(pricingRes.data)?pricingRes.data[0]:pricingRes.data)||{};
   const companyRates=customerPricingRow(pricingRow);
-  const ctx={distanceKm:Number(customer.distance_km||0),fuelPrice:Number(settings.fuel_price??2),fuelBasePrice:Number(settings.fuel_base_price??2)};
+  const ctx={distanceKm:Number(customer.distance_km||0),fuelPrice:Number(settings.fuel_price??2),fuelBasePrice:Number(settings.fuel_base_price??2),fuelEfficiency:Number(settings.fuel_efficiency??6.3),returnJourney:settings.return_journey!==false};
   let candidates:any[]=[],rarity:any='common',productId='',material='';
   if(family==='CHC'){
     const model=String(item?.model||'').replace(/^CHCS\b/i,'CHC').replace(/^CHCN\b/i,'CHC').trim(),chcTable=priceGroup==='CHC_G1'?'ks_products_chc_g1':'ks_products_chc',chcLabel=priceGroup==='CHC_G1'?'CHC C4':'CHC C6';
@@ -1763,7 +1765,7 @@ async function quoteGwsForCustomer(service:any,customerId:string,product:any,qty
     service.rpc('keysuite_v41306_get_customer_pricing',{p_user_email:String(keySuiteUserEmail||''),p_customer_id:String(customerId||'')})
   ]);
   if(categoryRes.error||!categoryRes.data)throw new Error('Customer Pricing Category could not be loaded.');if(settingsRes.error)throw new Error('KeySuite pricing settings could not be loaded.');if(pricingRes.error)throw new Error(`Customer-specific pricing could not be loaded: ${pricingRes.error.message||pricingRes.error}`);
-  const category:any=categoryRes.data,settings:any=settingsRes.data||{},rates=productRates(settings,'GWS'),rule=pricingRule(category,'GWS'),pricingRow=(Array.isArray(pricingRes.data)?pricingRes.data[0]:pricingRes.data)||{},companyRates=customerPricingRow(pricingRow),ctx={distanceKm:Number(customer.distance_km||0),fuelPrice:Number(settings.fuel_price??2),fuelBasePrice:Number(settings.fuel_base_price??2)};
+  const category:any=categoryRes.data,settings:any=settingsRes.data||{},rates=productRates(settings,'GWS'),rule=pricingRule(category,'GWS'),pricingRow=(Array.isArray(pricingRes.data)?pricingRes.data[0]:pricingRes.data)||{},companyRates=customerPricingRow(pricingRow),ctx={distanceKm:Number(customer.distance_km||0),fuelPrice:Number(settings.fuel_price??2),fuelBasePrice:Number(settings.fuel_base_price??2),fuelEfficiency:Number(settings.fuel_efficiency??6.3),returnJourney:settings.return_journey!==false};
   const candidates=[
     {currency:'USD',sourcePrice:Number(product?.price_usd||0),multiplier:rates.USD,rarity:product?.rarity_usd||'common'},
     {currency:'RMB',sourcePrice:Number(product?.price_rmb||0),multiplier:rates.RMB,rarity:product?.rarity_rmb||'common'},
@@ -1887,7 +1889,7 @@ async function pricingContextForFamily(service:any,customerId:string,userEmail:s
   const priceAssignment=await requireCustomerPriceAssignment(service,customerId,userEmail,brandRef,group);
   const [categoryRes,settingsRes,pricingRes]=await Promise.all([service.from('ks_pricing_categories').select('*').eq('id',customer.pricing_category_id).maybeSingle(),service.from('ks_app_settings').select('*').eq('id','default').maybeSingle(),service.rpc('keysuite_v41306_get_customer_pricing',{p_user_email:String(userEmail||''),p_customer_id:String(customerId||'')})]);
   if(categoryRes.error||!categoryRes.data)throw new Error('Customer Pricing Category could not be loaded.');if(settingsRes.error)throw new Error('KeySuite pricing settings could not be loaded.');if(pricingRes.error)throw new Error(`Customer-specific pricing could not be loaded: ${pricingRes.error.message||pricingRes.error}`);
-  const category:any=categoryRes.data,settings:any=settingsRes.data||{},pricingRow=(Array.isArray(pricingRes.data)?pricingRes.data[0]:pricingRes.data)||{};return {customer,category,settings,rates:productRates(settings,family),rule:pricingRule(category,family),customerRates:customerPricingRow(pricingRow),priceAssignment,ctx:{distanceKm:Number(customer.distance_km||0),fuelPrice:Number(settings.fuel_price??2),fuelBasePrice:Number(settings.fuel_base_price??2)}};
+  const category:any=categoryRes.data,settings:any=settingsRes.data||{},pricingRow=(Array.isArray(pricingRes.data)?pricingRes.data[0]:pricingRes.data)||{};return {customer,category,settings,rates:productRates(settings,family),rule:pricingRule(category,family),customerRates:customerPricingRow(pricingRow),priceAssignment,ctx:{distanceKm:Number(customer.distance_km||0),fuelPrice:Number(settings.fuel_price??2),fuelBasePrice:Number(settings.fuel_base_price??2),fuelEfficiency:Number(settings.fuel_efficiency??6.3),returnJourney:settings.return_journey!==false}};
 }
 function guidedApplyProductIdentity(item:any,product:any){
   const group=String(product?.price_group||'').toUpperCase(),generation=group==='CHC_G1'?'G1':group==='CHC_G2'?'G2':String(item?.generation_code||'');
@@ -2510,6 +2512,24 @@ Deno.serve(async(req)=>{
     if(callbackQuery?.id)await telegramAnswerCallback(telegramToken,String(callbackQuery.id));
     const navigationUser=keySuiteCompanyId&&senderId&&(menuText||newRequestButton||customerButton||productButton||quickSelectionButton)?await linkedKeySuiteUser(service,keySuiteCompanyId,senderId):null;
 
+    // Keep the KeySuite inbox current for the message-first/session workflows below.
+    // Those paths return before the legacy KeyAI insert at the end of this handler.
+    // Telegram reply-keyboard choices are messages too, so retain them as follow-up
+    // activity; only global navigation/greeting commands are omitted from the inbox.
+    let capturedEnquiryId:string|null=null;
+    if(!callbackQuery&&text&&updateId!==null&&!menuText&&!newRequestButton){
+      const captured=await service.from('ks_keyai_enquiries').upsert({
+        source:'telegram',external_update_id:updateId,external_message_id:Number(message?.message_id||0)||null,
+        external_chat_id:chatId,sender_username:senderUsername||null,sender_name:senderName||null,
+        raw_message:rawTelegramText||text,status:responseMode==='nothing'?'sender_mode_nothing':'received',
+        ai_enabled:false,ai_model:null,external_sender_id:senderId||null,
+        keyai_company_id:keySuiteCompanyId||null,keyai_customer_id:senderContext.customer_id||null,
+        updated_at:new Date().toISOString()
+      },{onConflict:'source,external_update_id'}).select('id').single();
+      if(captured.error)throw captured.error;
+      capturedEnquiryId=String(captured.data.id);
+    }
+
     // V4.21.10: global navigation always wins over any pending Brand / Model choice.
     // This prevents New Request / Hi / Back from being consumed as a model-choice reply.
     if(menuText||callbackData==='menu:home'){
@@ -3070,7 +3090,7 @@ ${error instanceof Error?error.message:String(error)}`,guidedSelectedCustomerMen
         const pdfMeta=await generateCurvePdf(family,q,h,duty,env('KEYSUITE_PUBLIC_URL'),pole);
         const sent=await telegramSendDocument(telegramToken,chatId,pdfMeta.bytes,pdfMeta.filename,`${family==='ES'?esPoleLabel(pole):family} curve ready\n${duty}\nSelected: ${pdfMeta.model}`);
         const updateId=Number.isFinite(Number(update?.update_id))?Number(update.update_id):null;
-        await service.from('ks_keyai_enquiries').insert({source:'telegram',external_update_id:updateId,external_message_id:Number(message?.message_id||0)||null,external_chat_id:chatId,sender_username:senderUsername||null,sender_name:senderName||null,raw_message:`Guided Curve: ${family==='ES'?esPoleLabel(pole):family} · ${duty}`,status:sent.ok?'curve_ready':'curve_pdf_error',ai_enabled:false,ai_summary:`${family==='ES'?esPoleLabel(pole):family} · ${duty} · ${pdfMeta.model}`,ai_result:{pump_family:family,es_pole:pole||null,flow_value:q,flow_unit:'m³/hr',head_value:h,head_unit:'m',duty_text:duty,selected_model:pdfMeta.model,guided:true},external_sender_id:senderId||null,keyai_company_id:keySuiteCompanyId||null,created_at:new Date().toISOString(),updated_at:new Date().toISOString()}).then(()=>{}).catch(()=>{});
+        await service.from('ks_keyai_enquiries').upsert({source:'telegram',external_update_id:updateId,external_message_id:Number(message?.message_id||0)||null,external_chat_id:chatId,sender_username:senderUsername||null,sender_name:senderName||null,raw_message:`Guided Curve: ${family==='ES'?esPoleLabel(pole):family} · ${duty}`,status:sent.ok?'curve_ready':'curve_pdf_error',ai_enabled:false,ai_summary:`${family==='ES'?esPoleLabel(pole):family} · ${duty} · ${pdfMeta.model}`,ai_result:{pump_family:family,es_pole:pole||null,flow_value:q,flow_unit:'m³/hr',head_value:h,head_unit:'m',duty_text:duty,selected_model:pdfMeta.model,guided:true},external_sender_id:senderId||null,keyai_company_id:keySuiteCompanyId||null,updated_at:new Date().toISOString()},{onConflict:'source,external_update_id'}).then(()=>{}).catch(()=>{});
         const prior=sessionContext(session),summary=applyPumpOptionsToItem(selectPumpSummary(family,q,h,pole),pumpOptions(prior.pending_item?.options,1));session=await saveKeybotSession(service,keySuiteCompanyId,chatId,senderId,{mode:'curve',step:'curve_result',flow_m3h:q,head_m:h,context:{...prior,pending_item:summary,curve_pdf:{family,pole,q,h,duty,filename:pdfMeta.filename}}});
         await telegramSend(telegramToken,chatId,sent.ok?'Curve ready. You can adjust optional configuration or check the customer price.':'The curve was prepared but Telegram could not send the PDF. You can retry Curve PDF below.',pumpResultMenu('curve'));
         return json({ok:true,status:sent.ok?'curve_ready':'curve_pdf_error',guided:true,family,pole,model:pdfMeta.model});
@@ -3311,7 +3331,9 @@ ${keyplcBomText(bom)}`,keyplcManifoldMenu(bom));return json({ok:true,status:'key
       parent_enquiry_id:active?.id||null,conversation_id:active?(active.conversation_id||active.id):null,
       external_sender_id:senderId||null,keyai_company_id:keySuiteCompanyId||null,keyai_customer_id:senderContext.customer_id||null
     };
-    const insertResult=await service.from('ks_keyai_enquiries').insert(insertPayload).select('id').single();
+    const insertResult=capturedEnquiryId
+      ?await service.from('ks_keyai_enquiries').update(insertPayload).eq('id',capturedEnquiryId).select('id').single()
+      :await service.from('ks_keyai_enquiries').insert(insertPayload).select('id').single();
     if(insertResult.error)throw insertResult.error;
     const enquiryId=insertResult.data.id;
     const rootId=active?.id||enquiryId;

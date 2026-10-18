@@ -1,15 +1,16 @@
 {
-  "version": "4.29.05",
-  "baseline": "4.29.04",
-  "upgrade_supported_from": "4.29.04",
+  "version": "4.29.06",
+  "baseline": "4.29.05",
+  "upgrade_supported_from": "4.29.05",
   "changes": [
-    "opens the CHC C4/C6 Product PDF in a visible report tab before the macOS print/save dialog",
-    "removes the hidden desktop print frame that could make Product PDF saving appear stalled",
-    "adds late macOS Safari fit checks for the Selection C4/C6 embedded view",
-    "preserves the existing PDF content, values, layout, branding and all unrelated behavior",
-    "visible version is V4.29.05"
+    "replaces CHC Models with an all-family distinct Models counter",
+    "replaces Priced Variants with Models With Price counted once per model",
+    "adds editable Fuel Efficiency and Return Journey settings with one-way or roundtrip fuel surcharge",
+    "makes rarity model-variant based and synchronized across USD, RMB and MYR",
+    "normalizes legacy rarity conflicts using priced currencies and Fixed > Rare > Many > Common precedence",
+    "visible version is V4.29.06"
   ],
-  "new_database_migration_required": false,
-  "edge_function_deploy_required": false,
-  "notes": "Upgrade V4.29.04 to V4.29.05 by uploading the patch. No database migration or edge-function deployment is required."
+  "new_database_migration_required": true,
+  "edge_function_deploy_required": true,
+  "notes": "Upgrade V4.29.05 to V4.29.06, run supabase/migrations/20261018150000_v42906_fuel_and_model_rarity.sql, then redeploy telegram-webhook."
 }

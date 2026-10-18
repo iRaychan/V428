@@ -4,7 +4,7 @@
   let secureData={
     companies:[],users:[],categories:[],products:[],bfiProducts:[],esProducts:[],gwsProducts:[],keyplcProducts:[],manifoldProducts:[],motorProducts:[],couplingProducts:[],
     productMultipliers:{CHC:{USD:5.8,RMB:.65,MYR:1},CHC_G1:{USD:5.8,RMB:.65,MYR:1},CHC_G2:{USD:5.8,RMB:.65,MYR:1},BFI:{USD:1,RMB:1,MYR:1},ES:{USD:5.8,RMB:.65,MYR:1},GWS:{USD:5.8,RMB:.65,MYR:1},KEYPLC:{USD:5.8,RMB:.65,MYR:1},MANIFOLD:{USD:5.8,RMB:.65,MYR:1},MOTOR:{USD:5.8,RMB:.65,MYR:1},COUPLING:{USD:5.8,RMB:.65,MYR:1}},chcSealAddons:[],crSealAddons:[],
-    fuel_price:2,fuel_base_price:2,customerPricing:null,customerPricingRows:[]
+    fuel_price:2,fuel_base_price:2,fuel_efficiency:6.3,return_journey:true,customerPricing:null,customerPricingRows:[]
   };
   let access=null;
   let companyId='';
@@ -38,7 +38,9 @@
   function categoryForCustomer(customer){return secureData.categories.find(x=>x.id===customer?.pricingCategoryId)||null}
   function context(options={}){
     const customer=options.customer||selectedCustomer();
-    return {customer,distanceKm:Math.max(0,Number(options.distanceKm??customer?.distanceKm??0)),fuelPrice:Math.max(0,Number(options.fuelPrice??secureData.fuel_price??2)),fuelBasePrice:Math.max(0,Number(options.fuelBasePrice??secureData.fuel_base_price??2))};
+    const efficiency=Number(options.fuelEfficiency??secureData.fuel_efficiency??6.3);
+    const returnJourney=options.returnJourney??secureData.return_journey??true;
+    return {customer,distanceKm:Math.max(0,Number(options.distanceKm??customer?.distanceKm??0)),fuelPrice:Math.max(0,Number(options.fuelPrice??secureData.fuel_price??2)),fuelBasePrice:Math.max(0,Number(options.fuelBasePrice??secureData.fuel_base_price??2)),fuelEfficiency:Number.isFinite(efficiency)&&efficiency>0?efficiency:6.3,returnJourney:returnJourney!==false};
   }
 
   const familyLabel=family=>family==='CHC_G1'?'CHC G1':family==='CHC_G2'?'CHC G2':String(family||'');
@@ -84,11 +86,24 @@
 
   function hasPricingContext(customer=quotationCustomer()){return !!(customer&&customer.pricingCategoryId&&secureData.categories.some(x=>x.id===customer.pricingCategoryId))}
 
+  const priceIsPopulated=value=>value!==null&&value!==undefined&&String(value).trim()!==''&&Number.isFinite(Number(value));
+  const rarityPriority=Object.freeze({common:1,many:2,rare:3,fixed:4});
+  function resolveModelRarity(priceBook={},rarityBook={},variant){
+    const rows=['USD','RMB','MYR'].map(currency=>({currency,price:priceBook?.[currency]?.[variant],rarity:normalizeRarity(rarityBook?.[currency]?.[variant])}));
+    const all=[...new Set(rows.map(row=>row.rarity))];
+    if(all.length===1)return all[0];
+    // A stored zero is useful for the "Models With Price" completeness counter,
+    // but it is not a quoteable price and must not win a legacy rarity conflict.
+    const priced=rows.filter(row=>priceIsPopulated(row.price)&&Number(row.price)>0);
+    if(!priced.length)return 'common';
+    return priced.reduce((best,row)=>(rarityPriority[row.rarity]||0)>(rarityPriority[best]||0)?row.rarity:best,'common');
+  }
   function currencyCandidates(priceBook={},rarityBook={},variant,family='CHC'){
     const rates=multipliers(family);
+    const modelRarity=resolveModelRarity(priceBook,rarityBook,variant);
     return ['USD','RMB','MYR'].map(currency=>{
       const raw=priceBook?.[currency]?.[variant],valid=raw!==null&&raw!==''&&Number.isFinite(Number(raw))&&Number(raw)>0;
-      return valid?{currency,sourcePrice:Number(raw),multiplier:rates[currency],baseMyr:Number(raw)*rates[currency],rarity:normalizeRarity(rarityBook?.[currency]?.[variant])}:null;
+      return valid?{currency,sourcePrice:Number(raw),multiplier:rates[currency],baseMyr:Number(raw)*rates[currency],rarity:modelRarity}:null;
     }).filter(Boolean);
   }
 
@@ -103,7 +118,7 @@
     const fixedCandidates=requested==='fixed'?allCandidates:allCandidates.filter(row=>row.rarity==='fixed');
     if(fixedCandidates.length){
       const chosen=fixedCandidates.reduce((best,row)=>!best||row.baseMyr>best.baseMyr?row:best,null),priceContext=context(options),finalPrice=chosen.baseMyr;
-      return {family,variant,rarity:'fixed',pricingMode,fixedPrice:true,candidates:fixedCandidates,sourceCurrency:chosen.currency,sourcePrice:chosen.sourcePrice,multiplier:chosen.multiplier,baseMyr:chosen.baseMyr,margin:0,normal:0,rare:0,transport:0,commission:0,setDiscount:0,finalDiscount:0,includeCommission:false,includeSetDiscount:false,includeFinalDiscount:false,includeFuelCharge:false,marginPrice:finalPrice,afterNormal:finalPrice,afterRare:finalPrice,withTransport:finalPrice,afterCommission:finalPrice,afterSetDiscount:finalPrice,beforeFuel:finalPrice,distanceKm:priceContext.distanceKm,fuelPrice:priceContext.fuelPrice,fuelBasePrice:priceContext.fuelBasePrice,fuelCharge:0,unroundedPrice:finalPrice,finalPrice};
+      return {family,variant,rarity:'fixed',pricingMode,fixedPrice:true,candidates:fixedCandidates,sourceCurrency:chosen.currency,sourcePrice:chosen.sourcePrice,multiplier:chosen.multiplier,baseMyr:chosen.baseMyr,margin:0,normal:0,rare:0,transport:0,commission:0,setDiscount:0,finalDiscount:0,includeCommission:false,includeSetDiscount:false,includeFinalDiscount:false,includeFuelCharge:false,marginPrice:finalPrice,afterNormal:finalPrice,afterRare:finalPrice,withTransport:finalPrice,afterCommission:finalPrice,afterSetDiscount:finalPrice,beforeFuel:finalPrice,distanceKm:priceContext.distanceKm,fuelPrice:priceContext.fuelPrice,fuelBasePrice:priceContext.fuelBasePrice,fuelEfficiency:priceContext.fuelEfficiency,returnJourney:priceContext.returnJourney,journeyMultiplier:priceContext.returnJourney?2:1,fuelCharge:0,unroundedPrice:finalPrice,finalPrice};
     }
     if(!cat)return null;
     const rule=categoryRule(cat,family),allowed=new Set(rule.currencies||[]);if(!allowed.size)return null;
@@ -116,9 +131,10 @@
     const afterCommission=company.includeCommission?withTransport/Math.max(.0001,1-company.commission):withTransport;
     const afterSetDiscount=pricingMode==='quotation'&&company.includeSetDiscount?afterCommission/Math.max(.0001,1-company.setDiscount):afterCommission;
     const beforeFuel=company.includeFinalDiscount?afterSetDiscount/Math.max(.0001,1-company.finalDiscount):afterSetDiscount;
-    const fuelCharge=company.includeFuelCharge?priceContext.distanceKm*Math.max(priceContext.fuelPrice-priceContext.fuelBasePrice,0):0;
+    const journeyMultiplier=priceContext.returnJourney?2:1;
+    const fuelCharge=company.includeFuelCharge?(priceContext.distanceKm*journeyMultiplier/priceContext.fuelEfficiency)*Math.max(priceContext.fuelPrice-priceContext.fuelBasePrice,0):0;
     const unroundedPrice=beforeFuel+fuelCharge,finalPrice=roundUp10(unroundedPrice);
-    return {family,variant,rarity,pricingMode,fixedPrice:false,candidates,sourceCurrency:chosen.currency,sourcePrice:chosen.sourcePrice,multiplier:chosen.multiplier,baseMyr:chosen.baseMyr,margin:rule.margin,normal:rule.normal,rare:rule.rare,transport:rule.transport,commission:company.commission,setDiscount:company.setDiscount,finalDiscount:company.finalDiscount,includeCommission:company.includeCommission,includeSetDiscount:company.includeSetDiscount,includeFinalDiscount:company.includeFinalDiscount,includeFuelCharge:company.includeFuelCharge,marginPrice,afterNormal,afterRare,withTransport,afterCommission,afterSetDiscount,beforeFuel,distanceKm:priceContext.distanceKm,fuelPrice:priceContext.fuelPrice,fuelBasePrice:priceContext.fuelBasePrice,fuelCharge,unroundedPrice,finalPrice};
+    return {family,variant,rarity,pricingMode,fixedPrice:false,candidates,sourceCurrency:chosen.currency,sourcePrice:chosen.sourcePrice,multiplier:chosen.multiplier,baseMyr:chosen.baseMyr,margin:rule.margin,normal:rule.normal,rare:rule.rare,transport:rule.transport,commission:company.commission,setDiscount:company.setDiscount,finalDiscount:company.finalDiscount,includeCommission:company.includeCommission,includeSetDiscount:company.includeSetDiscount,includeFinalDiscount:company.includeFinalDiscount,includeFuelCharge:company.includeFuelCharge,marginPrice,afterNormal,afterRare,withTransport,afterCommission,afterSetDiscount,beforeFuel,distanceKm:priceContext.distanceKm,fuelPrice:priceContext.fuelPrice,fuelBasePrice:priceContext.fuelBasePrice,fuelEfficiency:priceContext.fuelEfficiency,returnJourney:priceContext.returnJourney,journeyMultiplier,fuelCharge,unroundedPrice,finalPrice};
   }
 
   function calculate(sourceOrBook,material='CHC',cat=category(),options={}){
@@ -195,6 +211,26 @@
     return result;
   }
 
+  function modelStatistics(){
+    const models=new Map();
+    const add=(family,product,priced)=>{const model=String(product?.model||product?.id||'').trim();if(!model)return;const key=`${family}:${model.toUpperCase()}`,old=models.get(key);models.set(key,{family,model,priced:!!priced||!!old?.priced})};
+    const bookHasPrice=book=>['USD','RMB','MYR'].some(currency=>Object.values(book?.[currency]||{}).some(priceIsPopulated));
+    const positiveBook=book=>['USD','RMB','MYR'].some(currency=>Object.values(book?.[currency]||{}).some(value=>Number(value)>0));
+    const variantHasPrice=product=>(product?.variants||[]).some(variant=>['priceUsd','priceRmb','priceMyr','price_usd','price_rmb','price_myr'].some(field=>priceIsPopulated(variant?.[field])));
+    (secureData.chcG1Products||[]).forEach(product=>add('CHC_G1',product,bookHasPrice(product.pricesByCurrency)));
+    (secureData.products||[]).forEach(product=>add('CHC_G2',product,bookHasPrice(product.pricesByCurrency)));
+    // CR imports use database zero as the workbook's blank/unpriced sentinel.
+    (secureData.crProducts||[]).forEach(product=>add('CR',product,positiveBook(product.pricesByCurrency)));
+    (secureData.bfiProducts||[]).forEach(product=>add('BFI',product,positiveBook(product.pricesByCurrency)||positiveBook(product.bfinPricesByCurrency)));
+    (secureData.esProducts||[]).forEach(product=>add('ES',product,variantHasPrice(product)));
+    (secureData.gwsProducts||[]).forEach(product=>add('GWS',product,bookHasPrice(product.pricesByCurrency)));
+    (secureData.keyplcProducts||[]).forEach(product=>add('KEYPLC',product,variantHasPrice(product)));
+    (secureData.manifoldProducts||[]).forEach(product=>add('MANIFOLD',product,variantHasPrice(product)));
+    (secureData.motorProducts||[]).forEach(product=>add('MOTOR',product,positiveBook(motorProductPriceBook(product))));
+    (secureData.couplingProducts||[]).forEach(product=>add('COUPLING',product,positiveBook(product.pricesByCurrency)));
+    const rows=[...models.values()];return {models:rows.length,modelsWithPrice:rows.filter(row=>row.priced).length,rows};
+  }
+
   function syncCompanyCategory(){categoryId=company()?.pricingCategoryId||'';if(byId('pricingCategorySelect'))byId('pricingCategorySelect').value=categoryId}
 
   function fillSelects(){
@@ -205,8 +241,8 @@
   }
 
   function renderFuelSetting(){
-    const input=byId('pricingFuelPrice'),button=byId('saveFuelPrice'),message=byId('pricingFuelMessage');if(!input||!button||!message)return;
-    if(document.activeElement!==input)input.value=Number(secureData.fuel_price??2).toFixed(2);input.disabled=!canChangeFuel();button.disabled=!canChangeFuel();button.style.display=canChangeFuel()?'inline-block':'none';message.textContent=canChangeFuel()?`Saved globally until changed. Base fuel price: ${cash(secureData.fuel_base_price??2)}/L`:`Current fuel price: ${cash(secureData.fuel_price??2)}/L`;
+    const input=byId('pricingFuelPrice'),efficiency=byId('pricingFuelEfficiency'),journey=byId('pricingReturnJourney'),button=byId('saveFuelPrice'),message=byId('pricingFuelMessage');if(!input||!efficiency||!journey||!button||!message)return;
+    if(document.activeElement!==input)input.value=Number(secureData.fuel_price??2).toFixed(2);if(document.activeElement!==efficiency)efficiency.value=Number(secureData.fuel_efficiency??6.3).toFixed(2);if(document.activeElement!==journey)journey.value=(secureData.return_journey??true)?'yes':'no';[input,efficiency,journey].forEach(control=>control.disabled=!canChangeFuel());button.disabled=!canChangeFuel();button.style.display=canChangeFuel()?'inline-block':'none';message.textContent=canChangeFuel()?`Saved globally until changed. Base fuel price: ${cash(secureData.fuel_base_price??2)}/L`:`Current settings: ${cash(secureData.fuel_price??2)}/L · ${n(secureData.fuel_efficiency??6.3,2)} km/L · Return ${(secureData.return_journey??true)?'Yes':'No'}`;
   }
 
   function ruleSummary(cat,family,mode=selectedFactorMode,customer=company()||quotationCustomer()){
@@ -214,7 +250,7 @@
     if(company.includeCommission)rows.push(['Commission',percent(company.commission)]);
     if(normalizePricingMode(mode)==='quotation'&&company.includeSetDiscount)rows.push(['Set Discount',percent(company.setDiscount)]);
     if(company.includeFinalDiscount)rows.push(['Final Discount',percent(company.finalDiscount)]);
-    if(company.includeFuelCharge)rows.push(['Fuel Charge','Customer distance × fuel price variance']);
+    if(company.includeFuelCharge)rows.push(['Fuel Charge','Distance × journey ÷ fuel efficiency × fuel price variance']);
     rows.push([`${family} Currency`,`USD (MYR ${n(rates.USD,2)}) · RMB (MYR ${n(rates.RMB,3)}) · MYR (MYR 1.000)`]);return rows;
   }
 
@@ -231,12 +267,12 @@
   }
 
   function renderSummary(){
-    const c=company(),cat=category(),quoteCustomer=quotationCustomer(),ctx=context({customer:c||quoteCustomer});byId('pricingCompanyCount').textContent=customersList().length;byId('pricingCategoryCount').textContent=(secureData.categories||[]).length;byId('pricingModelCount').textContent=(secureData.products||[]).length;byId('pricingVariantCount').textContent=variants(false).length;
+    const c=company(),cat=category(),quoteCustomer=quotationCustomer(),ctx=context({customer:c||quoteCustomer}),stats=modelStatistics();byId('pricingCompanyCount').textContent=customersList().length;byId('pricingCategoryCount').textContent=(secureData.categories||[]).length;byId('pricingModelCount').textContent=stats.models;byId('pricingVariantCount').textContent=stats.modelsWithPrice;
     let notice=`Signed in as <b>${e(access?.display_name||access?.email||'approved user')}</b>. `;if(!quoteCustomer)notice+='No quotation pricing customer selected.';else if(!hasPricingContext(quoteCustomer))notice+=`Quotation pricing customer: <b>${e(quoteCustomer.company)}</b>. No Pricing Category is assigned.`;else notice+=`Quotation pricing customer: <b>${e(quoteCustomer.company)}</b> · Category: <b>${e(categoryForCustomer(quoteCustomer)?.name||'-')}</b> · Distance: <b>${n(quoteCustomer.distanceKm,1)} km</b>.`;
     byId('pricingAccessNotice').innerHTML=notice;byId('pricingAccessNotice').classList.add('active-customer');
     byId('pricingCompanySummary').innerHTML=c?[[ 'Customer Name',c.company],['Classification',c.classification||'Other'],['Pricing Category',categoryForCustomer(c)?.name||'Not assigned'],['Assigned User',typeof customerOwnerName==='function'?customerOwnerName(c.assignedUserEmail):(c.assignedUserEmail||'-')],['Phone',c.companyPhone||'-'],['Payment Term',window.KeySuiteApp?.formatCustomerTerms?.(c.terms)||c.terms||'-'],['TIN',c.tinNumber||'-'],['Business Registration No.',c.brnNumber||'-'],['SST No.',c.sstNumber||'-'],['Address',c.address||'-'],['Distance',`${n(c.distanceKm,1)} km`]].map(([k,v])=>`<div class="pricing-kv"><b>${e(k)}</b><span>${e(v)}</span></div>`).join(''):'<p class="muted">Select a customer to view its saved details.</p>';
     document.querySelectorAll('[data-pricing-family]').forEach(button=>{const active=button.dataset.pricingFamily===selectedPricingFamily;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active))});
-    const otherRows=[['Current Fuel Price',`${cash(ctx.fuelPrice)}/L`],['Customer Distance',`${n(ctx.distanceKm,1)} km`]];
+    const otherRows=[['Current Fuel Price',`${cash(ctx.fuelPrice)}/L`],['Fuel Efficiency',`${n(ctx.fuelEfficiency,2)} km/L`],['Return Journey',ctx.returnJourney?'Yes':'No'],['Customer Distance',`${n(ctx.distanceKm,1)} km`]];
     byId('pricingCategorySummary').innerHTML=cat?[['Category Name',cat.name],['Factor View',selectedFactorMode==='assembly'?'Assembly':'Quote'],...ruleSummary(cat,selectedPricingFamily,selectedFactorMode),...otherRows].map(([k,v])=>`<div class="pricing-kv"><b>${e(k)}</b><span>${e(v)}</span></div>`).join(''):'<p class="muted">No pricing category is assigned to this customer.</p>';
     document.querySelectorAll('[data-pricing-factor-mode]').forEach(button=>{const active=button.dataset.pricingFactorMode===selectedFactorMode;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active))});
     const formulaBox=byId('pricingFormula'),formulaToggle=byId('togglePricingFormula');
@@ -451,7 +487,7 @@
     return {product:{id:'BASEPLATE-ES',model:label},material:'BASEPLATE',variant:'BASEPLATE',calc,category:cat,customer,family:'BASEPLATE',sourceExtra:{configuration:config,raw_cost_myr:Number(raw.total),baseplate_frame:frame}};
   }
 
-  function sourceSnapshot(found){return {fixed_price:!!found.calc.fixedPrice,product_family:found.family||found.calc.family||'CHC',product_id:found.product.id,material:found.material,variant:found.variant||found.material,rarity:found.calc.rarity,pricing_mode:found.calc.pricingMode||'quotation',customer_id:found.customer?.id||'',category_id:found.category?.id||'',source_currency:found.calc.sourceCurrency,currency_multiplier:found.calc.multiplier,source_price:found.calc.sourcePrice,base_myr:found.calc.baseMyr,margin:found.calc.margin,normal:found.calc.normal,rare:found.calc.rare,transport:found.calc.transport,commission:found.calc.commission,set_discount:found.calc.setDiscount,final_discount:found.calc.finalDiscount,include_commission:found.calc.includeCommission,include_set_discount:found.calc.includeSetDiscount,include_final_discount:found.calc.includeFinalDiscount,include_fuel_charge:found.calc.includeFuelCharge,distance_km:found.calc.distanceKm,fuel_price:found.calc.fuelPrice,fuel_base_price:found.calc.fuelBasePrice,fuel_charge:found.calc.fuelCharge,unrounded_price:found.calc.unroundedPrice,calculated_price:found.calc.finalPrice,...(found.enclosure?{panel_type:found.enclosure,enclosure_surcharge:Number(found.calc.enclosureSurcharge||0)}:{}),...(found.sourceExtra||{})}}
+  function sourceSnapshot(found){return {fixed_price:!!found.calc.fixedPrice,product_family:found.family||found.calc.family||'CHC',product_id:found.product.id,material:found.material,variant:found.variant||found.material,rarity:found.calc.rarity,pricing_mode:found.calc.pricingMode||'quotation',customer_id:found.customer?.id||'',category_id:found.category?.id||'',source_currency:found.calc.sourceCurrency,currency_multiplier:found.calc.multiplier,source_price:found.calc.sourcePrice,base_myr:found.calc.baseMyr,margin:found.calc.margin,normal:found.calc.normal,rare:found.calc.rare,transport:found.calc.transport,commission:found.calc.commission,set_discount:found.calc.setDiscount,final_discount:found.calc.finalDiscount,include_final_discount:found.calc.includeFinalDiscount,include_commission:found.calc.includeCommission,include_set_discount:found.calc.includeSetDiscount,include_fuel_charge:found.calc.includeFuelCharge,distance_km:found.calc.distanceKm,fuel_price:found.calc.fuelPrice,fuel_base_price:found.calc.fuelBasePrice,fuel_efficiency:found.calc.fuelEfficiency,return_journey:found.calc.returnJourney,journey_multiplier:found.calc.journeyMultiplier,fuel_charge:found.calc.fuelCharge,unrounded_price:found.calc.unroundedPrice,calculated_price:found.calc.finalPrice,...(found.enclosure?{panel_type:found.enclosure,enclosure_surcharge:Number(found.calc.enclosureSurcharge||0)}:{}),...(found.sourceExtra||{})}}
 
 
   function repriceSource(source={},mode='quotation',options={}){
@@ -497,8 +533,8 @@
     if(source.include_commission===true)withTransport*=Math.max(.0001,1-Number(source.commission||0));
     const factors=companyFactors(pricingMode,cat,family,customer),afterCommission=factors.includeCommission?withTransport/Math.max(.0001,1-factors.commission):withTransport;
     const afterSetDiscount=factors.includeSetDiscount?afterCommission/Math.max(.0001,1-factors.setDiscount):afterCommission,beforeFuel=factors.includeFinalDiscount?afterSetDiscount/Math.max(.0001,1-factors.finalDiscount):afterSetDiscount;
-    const priceContext=context({customer}),fuelCharge=factors.includeFuelCharge?priceContext.distanceKm*Math.max(priceContext.fuelPrice-priceContext.fuelBasePrice,0):0,unroundedPrice=beforeFuel+fuelCharge;
-    return {family,variant:source.variant||source.material||'',rarity:normalizeRarity(source.rarity),pricingMode,fixedPrice:false,transport:Number(source.transport||0),commission:factors.commission,setDiscount:factors.setDiscount,finalDiscount:factors.finalDiscount,includeCommission:factors.includeCommission,includeSetDiscount:factors.includeSetDiscount,includeFinalDiscount:factors.includeFinalDiscount,includeFuelCharge:factors.includeFuelCharge,beforeFuel,fuelCharge,unroundedPrice,finalPrice:roundUp10(unroundedPrice),snapshotFallback:true};
+    const priceContext=context({customer}),journeyMultiplier=priceContext.returnJourney?2:1,fuelCharge=factors.includeFuelCharge?(priceContext.distanceKm*journeyMultiplier/priceContext.fuelEfficiency)*Math.max(priceContext.fuelPrice-priceContext.fuelBasePrice,0):0,unroundedPrice=beforeFuel+fuelCharge;
+    return {family,variant:source.variant||source.material||'',rarity:normalizeRarity(source.rarity),pricingMode,fixedPrice:false,transport:Number(source.transport||0),commission:factors.commission,setDiscount:factors.setDiscount,finalDiscount:factors.finalDiscount,includeCommission:factors.includeCommission,includeSetDiscount:factors.includeSetDiscount,includeFinalDiscount:factors.includeFinalDiscount,includeFuelCharge:factors.includeFuelCharge,beforeFuel,distanceKm:priceContext.distanceKm,fuelPrice:priceContext.fuelPrice,fuelBasePrice:priceContext.fuelBasePrice,fuelEfficiency:priceContext.fuelEfficiency,returnJourney:priceContext.returnJourney,journeyMultiplier,fuelCharge,unroundedPrice,finalPrice:roundUp10(unroundedPrice),snapshotFallback:true};
   }
 
   function consolidateAssemblyPricing(components=[]){
@@ -625,9 +661,9 @@ BOM item: ${item?.model||'Unnamed item'}`,total:0,items:priced};
 
   async function saveFuelPrice(){
     if(!canChangeFuel()){alert('Your role is not allowed to change Fuel Price.');return}
-    const input=byId('pricingFuelPrice'),button=byId('saveFuelPrice'),message=byId('pricingFuelMessage'),value=Number(input?.value);if(!Number.isFinite(value)||value<0){alert('Enter a valid Fuel Price.');return}
+    const input=byId('pricingFuelPrice'),efficiencyInput=byId('pricingFuelEfficiency'),journeyInput=byId('pricingReturnJourney'),button=byId('saveFuelPrice'),message=byId('pricingFuelMessage'),value=Number(input?.value),efficiency=Number(efficiencyInput?.value),returnJourney=journeyInput?.value!=='no';if(!Number.isFinite(value)||value<0){alert('Enter a valid Fuel Price.');return}if(!Number.isFinite(efficiency)||efficiency<=0){alert('Fuel Efficiency must be greater than zero.');return}
     const client=window.KeySuiteAuth?.getClient?.();if(!client){alert('Supabase is not connected.');return}
-    const originalButton=button.innerHTML;button.disabled=true;button.textContent='…';try{const {data,error}=await client.rpc('keysuite_save_fuel_price_v124',{p_fuel_price:value});if(error)throw error;const saved=Array.isArray(data)?data[0]:data||{};secureData.fuel_price=Number(saved?.fuel_price??value);secureData.fuel_base_price=Number(saved?.fuel_base_price??secureData.fuel_base_price??2);if(window.KEYSUITE_SECURE_DATA){window.KEYSUITE_SECURE_DATA.fuel_price=secureData.fuel_price;window.KEYSUITE_SECURE_DATA.fuel_base_price=secureData.fuel_base_price}message.textContent=`Saved: ${cash(secureData.fuel_price)}/L · Base ${cash(secureData.fuel_base_price)}/L`;renderSummary();renderTable();refreshQuotePrices()}catch(error){console.error(error);alert(`Fuel Price could not be saved: ${error.message||error}. Run the V1.24 Supabase migration.`)}finally{button.disabled=!canChangeFuel();button.innerHTML=originalButton}
+    const originalButton=button.innerHTML;button.disabled=true;button.textContent='…';try{const {data,error}=await client.rpc('keysuite_save_fuel_settings_v42906',{p_fuel_price:value,p_fuel_efficiency:efficiency,p_return_journey:returnJourney});if(error)throw error;const saved=Array.isArray(data)?data[0]:data||{};secureData.fuel_price=Number(saved?.fuel_price??value);secureData.fuel_base_price=Number(saved?.fuel_base_price??secureData.fuel_base_price??2);secureData.fuel_efficiency=Number(saved?.fuel_efficiency??efficiency);secureData.return_journey=saved?.return_journey??returnJourney;if(window.KEYSUITE_SECURE_DATA){window.KEYSUITE_SECURE_DATA.fuel_price=secureData.fuel_price;window.KEYSUITE_SECURE_DATA.fuel_base_price=secureData.fuel_base_price;window.KEYSUITE_SECURE_DATA.fuel_efficiency=secureData.fuel_efficiency;window.KEYSUITE_SECURE_DATA.return_journey=secureData.return_journey}message.textContent=`Saved: ${cash(secureData.fuel_price)}/L · ${n(secureData.fuel_efficiency,2)} km/L · Return ${secureData.return_journey?'Yes':'No'}`;renderSummary();renderTable();refreshQuotePrices()}catch(error){console.error(error);alert(`Fuel settings could not be saved: ${error.message||error}. Run the V4.29.06 Supabase migration.`)}finally{button.disabled=!canChangeFuel();button.innerHTML=originalButton}
   }
 
   function exportCsv(){
@@ -774,5 +810,5 @@ ${indent}Wiring for pumps & pressure transmitter within pump skid @ 1 Lot`;
     const row=window.KeySuiteApp?.addExternalQuoteItem?.(item);if(row)showPage('quotation');
   }
 
-  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,flattenAssemblyItems,consolidateAssemblyPricing,priceAssemblyForDisplay,priceAssemblyRowsForDisplay,priceAssemblyForQuotation,findPrice,chcPriceProblem,findCrPrice,crSealAddon,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildCrAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
+  window.KeySuitePricing={init,calculate,calculatePrice,calculateManual,companyFactors,formula,resolveModelRarity,modelStatistics,quoteBlockReason,pricingSourceBlockReason,pricingSourceMarginBlockReason,ensureQuoteableCalculation,sourceSnapshot,repriceSource,flattenAssemblyItems,consolidateAssemblyPricing,priceAssemblyForDisplay,priceAssemblyRowsForDisplay,priceAssemblyForQuotation,findPrice,chcPriceProblem,findCrPrice,crSealAddon,findBfiPrice,bfiPriceStatus,bfiPriceProblem,findGwsPrice,findAutoGwsTank,findKeyplcPrice,applyPriceToQuoteRow,refreshQuotePrices,addGwsToQuotation,addEs,esDescription,addKeyplc,keyplcDescription,keyplcTitle,normalizePanelType,findEsPrice,findBaseplatePrice,buildChcAssemblyItem,buildCrAssemblyItem,buildGwsAssemblyItem,chcSealAddon,chcSealDescription,normalizeChcSealFaces,selectCustomer,refreshCustomers,hasPricingContext,syncPriceListSettings,render:()=>{renderSummary();renderTable()}};
 })();
