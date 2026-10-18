@@ -21,6 +21,7 @@ supabase/functions/telegram-webhook/index.ts
 supabase/migrations/20261018150000_v42906_fuel_and_model_rarity.sql
 sw.js
 tests/v42907-release-regression.cjs
+v39445-model-return.js
 v40001-multibrand.js
 v41200-bootstrap.js
 v42907-version-lock.js

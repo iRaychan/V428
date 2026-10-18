@@ -21,6 +21,9 @@ assert.match(read('v40001-multibrand.js'), /<h2>Fuel Settings<\/h2>/, 'General P
 assert.match(read('v40001-multibrand.js'), /id="v391FuelEfficiency"[^>]*min="0\.01"/, 'General Pricelist contains Fuel Efficiency');
 assert.match(read('v40001-multibrand.js'), /id="v391ReturnJourney"/, 'General Pricelist contains Return Journey');
 assert.match(read('v40001-multibrand.js'), /keysuite_save_fuel_settings_v42906/, 'General Pricelist saves the included fuel settings migration');
+assert.match(read('v39445-model-return.js'), /SELECTION_PAGES=new Set\(\['selector','selectorCr','selectorBfi','selectorEs'\]\)/, 'Selection pages are recognized as quotation return origins');
+assert.match(read('v39445-model-return.js'), /active==='quotation'&&!!readQuotationSelectionOrigin\(\)/, 'Quotation forces the Back button visible for a Selection route');
+assert.match(read('v39445-model-return.js'), /b\.title='Back to Selection'/, 'Quotation Back button is labelled for Selection');
 
 const elements = new Map();
 const makeElement = id => ({ id, value: '', textContent: '', innerHTML: '', disabled: false, style: {}, dataset: {}, className: '', addEventListener() {}, setAttribute() {}, removeAttribute() {}, appendChild() {}, querySelector() { return null; }, querySelectorAll() { return []; }, classList: { toggle() {}, add() {}, remove() {} } });

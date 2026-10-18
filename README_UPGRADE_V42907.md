@@ -7,6 +7,7 @@
 - Fuel surcharge uses `(Distance × Journey Multiplier ÷ Fuel Efficiency) × max(Current Fuel Price − Base Fuel Price, 0)`, where the multiplier is 2 for Return Journey Yes and 1 for No.
 - Rarity is model-variant data rather than currency data. Saving one currency applies its rarity to USD, RMB and MYR.
 - Existing rarity conflicts are normalized by retaining a unanimous value. If values differ, only quoteable priced currencies participate and the priority is Fixed, Rare, Many, then Common. With no quoteable price, the safe default is Common.
+- The Quotation page now retains a floating bottom-right Back button when opened from CHC, CR, BFI or ES Selection.
 
 ## Counter semantics
 

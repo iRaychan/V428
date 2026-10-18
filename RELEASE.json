@@ -8,6 +8,7 @@
     "adds editable Fuel Efficiency and Return Journey settings with one-way or roundtrip fuel surcharge",
     "makes rarity model-variant based and synchronized across USD, RMB and MYR",
     "normalizes legacy rarity conflicts using priced currencies and Fixed > Rare > Many > Common precedence",
+    "restores the floating Back button from Selection to Quotation",
     "visible version is V4.29.07"
   ],
   "new_database_migration_required": true,
