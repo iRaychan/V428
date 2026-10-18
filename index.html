@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#17365d">
-  <title>KeySuite V4.29.09</title>
-  <script>window.KEYSUITE_VERSION='4.29.09';window.KEYSUITE_BUILD='V4.29.09';</script>
+  <title>KeySuite V4.29.10</title>
+  <script>window.KEYSUITE_VERSION='4.29.10';window.KEYSUITE_BUILD='V4.29.10';</script>
   <link rel="manifest" href="manifest.json">
   <style>
     :root{--navy:#17365d;--blue:#2f75b5;--light:#eef3f8;--line:#cbd5e1;--text:#172033;--muted:#64748b;--ok:#15803d}
@@ -192,6 +192,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
     }
     .pricing-category-select-row select{min-width:0;width:100%;max-width:100%;box-sizing:border-box}
     .pricing-category-select-row .btn{max-width:100%;white-space:nowrap;box-sizing:border-box}
+    #pricingCompanySelect.pricing-customer-unassigned{border-color:#dc2626;background:#fff1f2;color:#991b1b;font-weight:700;box-shadow:0 0 0 3px rgba(220,38,38,.10)}
     @media(max-width:560px){
       .pricing-category-select-row{grid-template-columns:1fr}
       .pricing-category-select-row .btn{width:100%}
@@ -641,7 +642,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <body>
 <div id="loginView" class="auth-shell">
   <form id="loginForm" class="auth-card" novalidate>
-    <div class="auth-brand">KeySuite<small>V4.29.09</small></div>
+    <div class="auth-brand">KeySuite<small>V4.29.10</small></div>
     <h1>Sign in</h1>
     <p>Only approved Keylargo users can enter KeySuite.</p>
     <div id="loginMessage" class="auth-message"></div>
@@ -657,7 +658,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <div id="loadingView" class="loading-screen hidden"><div class="loading-card"><div class="spinner"></div><div id="loadingText">Checking secure access…</div></div></div>
 <div id="appView" class="app hidden">
   <aside>
-    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.29.09</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
+    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.29.10</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
     <nav>
       <button data-page="dashboard" class="active">Dashboard</button>
       <button data-page="customers">Customers</button>
@@ -682,7 +683,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       <button id="settingsButton" type="button" class="settings-button">⚙ Settings</button>
       <button id="logoutButton" type="button">Sign out</button>
     </div>
-    <div class="suite-version">KeySuite V4.29.09</div>
+    <div class="suite-version">KeySuite V4.29.10</div>
   </aside>
 
   <main>
@@ -1799,8 +1800,8 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       </div>
       <div id="pricingAccessNotice" class="notice">Secure pricing is loading.</div>
       <div class="pricing-metrics" style="margin-top:16px">
-        <div class="card metric"><span class="muted">Customers</span><b id="pricingCompanyCount">0</b></div>
-        <div class="card metric"><span class="muted">Categories</span><b id="pricingCategoryCount">0</b></div>
+        <div class="card metric"><span class="muted">Customer</span><b id="pricingCompanyCount">0</b></div>
+        <div class="card metric"><span class="muted">Assigned Category</span><b id="pricingCategoryCount">0</b></div>
         <div class="card metric"><span class="muted">Models</span><b id="pricingModelCount">0</b></div>
         <div class="card metric"><span class="muted">Models With Price</span><b id="pricingVariantCount">0</b></div>
       </div>
@@ -2180,8 +2181,8 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 })();
 </script>
 <script src="v42872-selector-first-open.js?v=42872"></script>
-<script src="v41200-bootstrap.js?v=42909"></script>
-<script src="v42909-version-lock.js?v=42909"></script>
+<script src="v41200-bootstrap.js?v=42910"></script>
+<script src="v42910-version-lock.js?v=42910"></script>
 
 <script id="v41412-static-product-generation">
 document.addEventListener('click',event=>{

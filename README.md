@@ -1,8 +1,8 @@
-# KeySuite V4.29.09 FULL CLEAN
+# KeySuite V4.29.10 FULL CLEAN
 
 Complete clean source package based on V4.29.05, with model-wide pricing coverage, editable journey fuel settings, and model-level rarity across currencies.
 
-## V4.29.09 - model pricing coverage, fuel journey and rarity
+## V4.29.10 - model pricing coverage, fuel journey and rarity
 
 - Replaces `CHC Models` with `Models`, counting distinct product models across every loaded family.
 - Replaces `Priced Variants` with `Models With Price`, counting each model once when any stored USD, RMB or MYR field is populated.

@@ -235,7 +235,15 @@
 
   function fillSelects(){
     const cs=byId('pricingCompanySelect'),cats=byId('pricingCategorySelect'),list=customersList();
-    if(cs){cs.innerHTML='<option value="">Select customer</option>'+list.map(x=>`<option value="${e(x.id)}">${e(x.company)}</option>`).join('');cs.value=list.some(x=>x.id===companyId)?companyId:''}
+    if(cs){
+      cs.innerHTML='<option value="">Select customer</option>'+list.map(x=>{
+        const assigned=!!categoryForCustomer(x),warning=assigned?'':' — ⚠ Not assigned';
+        return `<option value="${e(x.id)}"${assigned?'':' style="color:#b91c1c;background-color:#fff1f2;font-weight:700"'}>${e(x.company)}${warning}</option>`;
+      }).join('');
+      cs.value=list.some(x=>x.id===companyId)?companyId:'';
+      cs.classList.toggle('pricing-customer-unassigned',!!company()&&!categoryForCustomer(company()));
+      cs.title=company()&&!categoryForCustomer(company())?'Alert: this customer has no Pricing Category assigned.':'';
+    }
     if(cats){cats.innerHTML='<option value="">No pricing category assigned</option>'+(secureData.categories||[]).map(x=>`<option value="${e(x.id)}">${e(x.name)}</option>`).join('');cats.value=categoryId;cats.disabled=!canEditPricing()||!company()}
     const save=byId('savePricingCategory');if(save){save.style.display=canEditPricing()?'inline-block':'none';save.disabled=!company()}
   }
@@ -267,7 +275,7 @@
   }
 
   function renderSummary(){
-    const c=company(),cat=category(),quoteCustomer=quotationCustomer(),ctx=context({customer:c||quoteCustomer}),stats=modelStatistics();byId('pricingCompanyCount').textContent=customersList().length;byId('pricingCategoryCount').textContent=(secureData.categories||[]).length;byId('pricingModelCount').textContent=stats.models;byId('pricingVariantCount').textContent=stats.modelsWithPrice;
+    const c=company(),cat=category(),quoteCustomer=quotationCustomer(),ctx=context({customer:c||quoteCustomer}),stats=modelStatistics(),customerList=customersList();byId('pricingCompanyCount').textContent=customerList.length;byId('pricingCategoryCount').textContent=customerList.filter(customer=>!!categoryForCustomer(customer)).length;byId('pricingModelCount').textContent=stats.models;byId('pricingVariantCount').textContent=stats.modelsWithPrice;
     let notice=`Signed in as <b>${e(access?.display_name||access?.email||'approved user')}</b>. `;if(!quoteCustomer)notice+='No quotation pricing customer selected.';else if(!hasPricingContext(quoteCustomer))notice+=`Quotation pricing customer: <b>${e(quoteCustomer.company)}</b>. No Pricing Category is assigned.`;else notice+=`Quotation pricing customer: <b>${e(quoteCustomer.company)}</b> · Category: <b>${e(categoryForCustomer(quoteCustomer)?.name||'-')}</b> · Distance: <b>${n(quoteCustomer.distanceKm,1)} km</b>.`;
     byId('pricingAccessNotice').innerHTML=notice;byId('pricingAccessNotice').classList.add('active-customer');
     byId('pricingCompanySummary').innerHTML=c?[[ 'Customer Name',c.company],['Classification',c.classification||'Other'],['Pricing Category',categoryForCustomer(c)?.name||'Not assigned'],['Assigned User',typeof customerOwnerName==='function'?customerOwnerName(c.assignedUserEmail):(c.assignedUserEmail||'-')],['Phone',c.companyPhone||'-'],['Payment Term',window.KeySuiteApp?.formatCustomerTerms?.(c.terms)||c.terms||'-'],['TIN',c.tinNumber||'-'],['Business Registration No.',c.brnNumber||'-'],['SST No.',c.sstNumber||'-'],['Address',c.address||'-'],['Distance',`${n(c.distanceKm,1)} km`]].map(([k,v])=>`<div class="pricing-kv"><b>${e(k)}</b><span>${e(v)}</span></div>`).join(''):'<p class="muted">Select a customer to view its saved details.</p>';

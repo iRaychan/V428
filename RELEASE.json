@@ -1,8 +1,10 @@
 {
-  "version": "4.29.09",
-  "baseline": "4.29.08",
-  "upgrade_supported_from": "4.29.05, 4.29.06, 4.29.07 or 4.29.08",
+  "version": "4.29.10",
+  "baseline": "4.29.09",
+  "upgrade_supported_from": "4.29.05, 4.29.06, 4.29.07, 4.29.08 or 4.29.09",
   "changes": [
+    "replaces total Categories with Assigned Category counted by assigned customer",
+    "highlights customers without a valid pricing category assignment",
     "replaces CHC Models with an all-family distinct Models counter",
     "replaces Priced Variants with Models With Price counted once per model",
     "adds editable Fuel Efficiency and Return Journey settings with one-way or roundtrip fuel surcharge",
@@ -11,9 +13,9 @@
     "restores the floating Back button from Selection to Quotation",
     "prevents automatic quotation references resetting to 0001 while secure history loads",
     "uses one company-wide annual running sequence across all quotation prefixes",
-    "visible version is V4.29.09"
+    "visible version is V4.29.10"
   ],
   "new_database_migration_required": true,
   "edge_function_deploy_required": true,
-  "notes": "Run the included v42909 company-wide quotation sequence migration. The earlier v42906 migration and telegram-webhook deployment are needed only when upgrading from before V4.29.08."
+  "notes": "Run the included v42910 company-wide quotation sequence migration. The earlier v42906 migration and telegram-webhook deployment are needed only when upgrading from before V4.29.08."
 }

@@ -27,7 +27,7 @@
     const now=new Date(),yy=String(now.getFullYear()).slice(-2),mm=String(now.getMonth()+1).padStart(2,'0'),floor=scanRunningFloor(prefix,now);
     const supabase=client();
     if(supabase){
-      const {data,error}=await supabase.rpc('keysuite_preview_quotation_reference_v42909',{p_requested_at:now.toISOString(),p_minimum_last_number:floor});
+      const {data,error}=await supabase.rpc('keysuite_preview_quotation_reference_v42910',{p_requested_at:now.toISOString(),p_minimum_last_number:floor});
       if(!error){const result=row(data);if(result.quotation_reference)return result.quotation_reference}
       else console.warn('Company-wide quotation reference preview failed; using the loaded quotation floor.',error);
     }
