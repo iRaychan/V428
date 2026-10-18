@@ -1194,12 +1194,14 @@ function validateQuoteNoForSave(options={}){
  const formatted=formatQuoteNo(parsed),formattedKey=canonicalQuotationNumber(formatted),currentKey=canonicalQuotationNumber(currentQuote()?.no),duplicate=quotes().some(row=>canonicalQuotationNumber(row.no)===formattedKey&&String(row.id)!==String(editingQuoteId||''));if(duplicate&&formattedKey!==currentKey)throw new Error(`Quotation number ${formatted} already exists.`);
  if($('quoteNo'))$('quoteNo').value=formatted;return formatted;
 }
-function highestLocalRunning(prefix,year){
- const yy=String(year).slice(-2),rx=new RegExp(`^${String(prefix).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}[\\/-]${yy}\\d{2}[\\/-](\\d+)(?:-R\\d+|-V\\d+|\\s*\\(R\\d+\\))?$`,'i');
+function highestLocalRunning(year){
+ // The running number is company-wide for the calendar year. Prefixes identify
+ // users only; changing R to RC must not create a separate 0001 sequence.
+ const yy=String(year).slice(-2),rx=new RegExp(`^[A-Z0-9]{1,8}[\\/-]${yy}\\d{2}[\\/-](\\d+)(?:-R\\d+|-V\\d+|\\s*\\(R\\d+\\))?$`,'i');
  return quotes().reduce((maximum,row)=>{const match=String(row.no||'').match(rx);return match?Math.max(maximum,Number(match[1])||0):maximum},0);
 }
 function nextQuoteNo(){
- const d=new Date(),year=d.getFullYear(),yy=String(year).slice(-2),mm=String(d.getMonth()+1).padStart(2,'0'),prefix=assignedQuotationPrefix(),next=highestLocalRunning(prefix,year)+1;
+ const d=new Date(),year=d.getFullYear(),yy=String(year).slice(-2),mm=String(d.getMonth()+1).padStart(2,'0'),prefix=assignedQuotationPrefix(),next=highestLocalRunning(year)+1;
  return prefix?`${prefix}-${yy}${mm}-${String(next).padStart(4,'0')}`:'';
 }
 $('quoteNo')?.addEventListener('input',event=>{if(event.isTrusted)lastAutoQuotationReference='';normalizeQuoteNoInput()});
@@ -1209,10 +1211,18 @@ $('quoteNo')?.addEventListener('paste',()=>setTimeout(()=>normalizeQuoteNoInput(
 let quotationReferenceRequest=0,quotationReferenceAllocated=false,lastAutoQuotationReference='';
 function assignNewQuotationReference(){
  const input=$('quoteNo');if(!input)return;
- // V4.08.08: a new quotation number is a preview only. Never call the allocating RPC here.
+ // A new quotation number is a preview only. Never consume the server counter here.
  // The running number is synchronized only after the first successful save of the new quotation.
- quotationReferenceRequest++;quotationReferenceAllocated=false;lockedQuotePrefix=assignedQuotationPrefix();quoteNumberSuffix='';
+ const request=++quotationReferenceRequest;quotationReferenceAllocated=false;lockedQuotePrefix=assignedQuotationPrefix();quoteNumberSuffix='';
  const reference=nextQuoteNo();lastAutoQuotationReference=setQuoteNoValue(reference||'');
+ // The secure server preview sees every company quotation, including records
+ // hidden by per-user History permissions, and therefore remains authoritative.
+ window.KeySuiteQuotationReferences?.previewNext?.().then(serverReference=>{
+  if(request!==quotationReferenceRequest||editingQuoteId||quotationStatus!=='new')return;
+  const current=canonicalQuotationNumber(input.value),automatic=canonicalQuotationNumber(lastAutoQuotationReference);
+  if(current&&current!==automatic)return;
+  lastAutoQuotationReference=setQuoteNoValue(serverReference||reference||'');
+ }).catch(error=>console.warn('Company-wide quotation reference preview is not available yet.',error));
 }
 function refreshNewQuotationReference(){
  if(editingQuoteId||quotationStatus!=='new')return;

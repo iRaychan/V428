@@ -11,7 +11,7 @@
   }
   function scanRunningFloor(prefix,date=new Date()){
     if(!prefix||typeof localStorage==='undefined')return 0;
-    const yy=String(date.getFullYear()).slice(-2),safe=String(prefix).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),rx=new RegExp(`^${safe}[\\/-]${yy}\\d{2}[\\/-](\\d+)(?:-R\\d+|-V\\d+|\\s*\\(R\\d+\\))?$`,'i');let maximum=0;
+    const yy=String(date.getFullYear()).slice(-2),rx=new RegExp(`^[A-Z0-9]{1,8}[\\/-]${yy}\\d{2}[\\/-](\\d+)(?:-R\\d+|-V\\d+|\\s*\\(R\\d+\\))?$`,'i');let maximum=0;
     const visit=value=>{if(typeof value==='string'){const match=value.match(rx);if(match)maximum=Math.max(maximum,Number(match[1])||0);return}if(Array.isArray(value)){value.forEach(visit);return}if(value&&typeof value==='object')Object.values(value).forEach(visit)};
     for(let index=0;index<localStorage.length;index++){const key=localStorage.key(index),value=localStorage.getItem(key);try{visit(JSON.parse(value))}catch(_){visit(value)}}
     return maximum;
@@ -23,9 +23,14 @@
   }
   async function savePrefix(){throw new Error('Quotation prefixes are assigned by the Owner under Key → Role.')}
   async function previewNext(){
-    // V4.08.08: preview the next number without advancing the Supabase running counter.
     const prefix=state.prefix||await getPrefix();if(!prefix)throw new Error('No quotation prefix has been assigned. Please contact the Owner.');
     const now=new Date(),yy=String(now.getFullYear()).slice(-2),mm=String(now.getMonth()+1).padStart(2,'0'),floor=scanRunningFloor(prefix,now);
+    const supabase=client();
+    if(supabase){
+      const {data,error}=await supabase.rpc('keysuite_preview_quotation_reference_v42909',{p_requested_at:now.toISOString(),p_minimum_last_number:floor});
+      if(!error){const result=row(data);if(result.quotation_reference)return result.quotation_reference}
+      else console.warn('Company-wide quotation reference preview failed; using the loaded quotation floor.',error);
+    }
     return `${prefix}-${yy}${mm}-${String(floor+1).padStart(4,'0')}`;
   }
   async function allocateNext(){return previewNext()}
