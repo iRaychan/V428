@@ -1,16 +1,16 @@
 {
-  "version": "4.29.06",
-  "baseline": "4.29.05",
-  "upgrade_supported_from": "4.29.05",
+  "version": "4.29.07",
+  "baseline": "4.29.06",
+  "upgrade_supported_from": "4.29.05 or 4.29.06",
   "changes": [
     "replaces CHC Models with an all-family distinct Models counter",
     "replaces Priced Variants with Models With Price counted once per model",
     "adds editable Fuel Efficiency and Return Journey settings with one-way or roundtrip fuel surcharge",
     "makes rarity model-variant based and synchronized across USD, RMB and MYR",
     "normalizes legacy rarity conflicts using priced currencies and Fixed > Rare > Many > Common precedence",
-    "visible version is V4.29.06"
+    "visible version is V4.29.07"
   ],
   "new_database_migration_required": true,
   "edge_function_deploy_required": true,
-  "notes": "Upgrade V4.29.05 to V4.29.06, run supabase/migrations/20261018150000_v42906_fuel_and_model_rarity.sql, then redeploy telegram-webhook."
+  "notes": "Upgrade V4.29.05 or V4.29.06 to V4.29.07. The included v42906 database migration and telegram-webhook deployment are unchanged and need only be applied once."
 }

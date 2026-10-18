@@ -1,12 +1,12 @@
-# KeySuite V4.29.06 FULL CLEAN
+# KeySuite V4.29.07 FULL CLEAN
 
 Complete clean source package based on V4.29.05, with model-wide pricing coverage, editable journey fuel settings, and model-level rarity across currencies.
 
-## V4.29.06 - model pricing coverage, fuel journey and rarity
+## V4.29.07 - model pricing coverage, fuel journey and rarity
 
 - Replaces `CHC Models` with `Models`, counting distinct product models across every loaded family.
 - Replaces `Priced Variants` with `Models With Price`, counting each model once when any stored USD, RMB or MYR field is populated.
-- Adds editable Fuel Efficiency (default 6.3 km/L) and Return Journey (Yes/No) settings.
+- Adds editable Fuel Efficiency (default 6.3 km/L) and Return Journey (Yes/No) under General Pricelist → Fuel Settings.
 - Calculates Fuel Charge as `(Distance × Journey Multiplier ÷ Fuel Efficiency) × max(Current Fuel − Base Fuel, 0)`, using multiplier 2 for Return Yes and 1 for No.
 - Makes rarity model-variant based across USD, RMB and MYR. Existing conflicts retain a unanimous rarity, otherwise use priced currencies with precedence Fixed > Rare > Many > Common.
 - Requires `supabase/migrations/20261018150000_v42906_fuel_and_model_rarity.sql` and a redeploy of `telegram-webhook`.

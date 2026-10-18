@@ -1,0 +1,28 @@
+KeySuite V4.29.07 Upgrade File Manifest
+=======================================
+
+Upgrade from V4.29.05 or V4.29.06:
+
+README.md
+README_UPGRADE_V42907.md
+RELEASE.json
+UPGRADE_FILE_MANIFEST_V42907.txt
+VERIFICATION_V42907.md
+VERSION.txt
+auth.js
+bfi-v42302.js
+cr-pricelist-v42854.js
+index.html
+manifest.json
+manifold.js
+pricing.js
+pricelist.js
+supabase/functions/telegram-webhook/index.ts
+supabase/migrations/20261018150000_v42906_fuel_and_model_rarity.sql
+sw.js
+tests/v42907-release-regression.cjs
+v40001-multibrand.js
+v41200-bootstrap.js
+v42907-version-lock.js
+
+The database migration and telegram-webhook redeployment are required.
