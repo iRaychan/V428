@@ -1,6 +1,14 @@
-# KeySuite V4.29.11 FULL CLEAN
+# KeySuite V4.29.12 FULL CLEAN
 
-Complete clean source package based on V4.29.10, with protected KeyBot access for unassigned Telegram senders.
+Complete clean source package based on V4.29.11.
+
+## V4.29.12 - CR Customer assignment visibility
+
+- Adds `CR` as an independent B.G.Reich row under Key → Customer → Brand / Series Price Preference.
+- Allows a Price-authorized CR row to appear in Customer Curve / Quick Selection preference.
+- Allows assigned CR to appear in Dashboard Quick Selection.
+- Keeps all V4.29.11 KeyBot search, Telegram access and five-point curve behavior unchanged.
+- Requires no Supabase database migration and no Edge Function redeployment.
 
 ## V4.29.11 - KeyBot access, scoped search and multi-point curves
 

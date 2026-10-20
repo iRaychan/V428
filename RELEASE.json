@@ -1,19 +1,14 @@
 {
-  "version": "4.29.11",
-  "baseline": "4.29.10",
-  "upgrade_supported_from": "4.29.10",
+  "version": "4.29.12",
+  "baseline": "4.29.11",
+  "upgrade_supported_from": "4.29.11",
   "changes": [
-    "blocks unassigned Telegram senders before the KeyBot menu and guided workflows",
-    "replaces the Customer, Product, Selection and New Request keyboard with a removed keyboard",
-    "tells unassigned senders to contact their administrator to request access",
-    "keeps unassigned senders registered and visible for administrator assignment",
-    "treats CHC and VMS as the same assigned CHC hydraulic scope",
-    "restricts CHC, BFI and ES numeric series searches to the requested series or pole",
-    "maps exact CHCS and CHCN curve identities to SS304 and SS316",
-    "sizes and plots up to five duty points on one pump curve",
-    "visible version is V4.29.11"
+    "adds CR to Customer Brand / Series Price Preference and Customer Quick Selection assignment",
+    "shows assigned CR in Dashboard Quick Selection",
+    "retains all V4.29.11 KeyBot access, search and multi-point curve behavior",
+    "visible version is V4.29.12"
   ],
   "new_database_migration_required": false,
-  "edge_function_deploy_required": true,
-  "notes": "Upload the V4.29.11 application files and redeploy the included telegram-webhook Edge Function. KeyBot now supports assigned-scope CHC/VMS search, numeric CHC/BFI/ES filtering, CHCS/CHCN material identity, and up to five duty points on one curve. No database migration is required."
+  "edge_function_deploy_required": false,
+  "notes": "Upload the V4.29.12 website files to GitHub. No Supabase database migration or Edge Function redeployment is required."
 }

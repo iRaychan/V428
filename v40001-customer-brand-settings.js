@@ -52,13 +52,14 @@
   const bgReich=()=>brands().find(b=>low(b.brand_key)==='b.g.reich'||low(b.brand_name)==='b.g.reich')||null;
   const isMaster=b=>!!b&&(low(b.brand_type)==='master'||low(b.brand_key)==='b.g.reich'||low(b.brand_name)==='b.g.reich');
   const mappings=()=>((api()?.state?.mappings)||[]).filter(m=>m&&m.active!==false);
-  const HYDRAULIC_FAMILIES=['CHC','BFI','ES'];
-  const PRICE_GROUPS=['CHC_G1','CHC_G2','BFI','ES','MOTOR','BASEPLATE','COUPLING','KEYPLC','MANIFOLD','GWS'];
+  const HYDRAULIC_FAMILIES=['CHC','CR','BFI','ES'];
+  const PRICE_GROUPS=['CHC_G1','CHC_G2','CR','BFI','ES','MOTOR','BASEPLATE','COUPLING','KEYPLC','MANIFOLD','GWS'];
   const FAMILIES=HYDRAULIC_FAMILIES;
   const normalizeGroup=v=>String(v??'').trim().toUpperCase().replace(/\s+/g,'_');
   const hydraulicFamily=v=>{
     const g=normalizeGroup(v);
     if(g==='CHC'||g==='CHC_G1'||g==='CHC_G2')return 'CHC';
+    if(g==='CR')return 'CR';
     if(g==='BFI')return 'BFI';
     if(g==='ES')return 'ES';
     return '';
@@ -89,6 +90,7 @@
       if(isMaster(b)){
         out.push({brand:b,family:'CHC',productGroup:'CHC_G1',key:keyOf(b.id,'CHC_G1')});
         out.push({brand:b,family:'CHC',productGroup:'CHC_G2',key:keyOf(b.id,'CHC')});
+        out.push({brand:b,family:'CR',productGroup:'CR',key:keyOf(b.id,'CR')});
         out.push({brand:b,family:'BFI',productGroup:'BFI',key:keyOf(b.id,'BFI')});
         out.push({brand:b,family:'ES',productGroup:'ES',key:keyOf(b.id,'ES')});
         return;
@@ -97,6 +99,7 @@
       // V4.21.02: CHC G1 and G2 are independent hydraulic Selection entries.
       if(groups.includes('CHC_G1'))out.push({brand:b,family:'CHC',productGroup:'CHC_G1',key:keyOf(b.id,'CHC_G1')});
       if(groups.includes('CHC_G2')||groups.includes('CHC'))out.push({brand:b,family:'CHC',productGroup:'CHC_G2',key:keyOf(b.id,'CHC')});
+      if(groups.includes('CR'))out.push({brand:b,family:'CR',productGroup:'CR',key:keyOf(b.id,'CR')});
       if(groups.includes('BFI'))out.push({brand:b,family:'BFI',productGroup:'BFI',key:keyOf(b.id,'BFI')});
       if(groups.includes('ES'))out.push({brand:b,family:'ES',productGroup:'ES',key:keyOf(b.id,'ES')});
     });
@@ -115,6 +118,7 @@
       if(isMaster(b)){
         out.push({brand:b,priceGroup:'CHC_G1',family:'CHC',selectionKey:keyOf(b.id,'CHC_G1'),key:priceKeyOf(b.id,'CHC_G1')});
         out.push({brand:b,priceGroup:'CHC_G2',family:'CHC',selectionKey:keyOf(b.id,'CHC'),key:priceKeyOf(b.id,'CHC_G2')});
+        out.push({brand:b,priceGroup:'CR',family:'CR',selectionKey:keyOf(b.id,'CR'),key:priceKeyOf(b.id,'CR')});
         out.push({brand:b,priceGroup:'BFI',family:'BFI',selectionKey:keyOf(b.id,'BFI'),key:priceKeyOf(b.id,'BFI')});
         out.push({brand:b,priceGroup:'ES',family:'ES',selectionKey:keyOf(b.id,'ES'),key:priceKeyOf(b.id,'ES')});
         out.push({brand:b,priceGroup:'MOTOR',family:'MOTOR',selectionKey:'',key:priceKeyOf(b.id,'MOTOR'),label:'Motor'});
@@ -123,13 +127,13 @@
       const groups=[...new Set(
         mappings().filter(m=>String(m.brand_id)===String(b.id))
           .map(m=>normalizedPriceGroup(m.master_family))
-          .filter(g=>['CHC_G1','CHC_G2','BFI','ES','MOTOR'].includes(g))
+          .filter(g=>['CHC_G1','CHC_G2','CR','BFI','ES','MOTOR'].includes(g))
       )];
       groups.forEach(g=>out.push({
         brand:b,
         priceGroup:g,
-        family:g==='ES'?'ES':g==='BFI'?'BFI':g==='MOTOR'?'MOTOR':'CHC',
-        selectionKey:g==='CHC_G1'?keyOf(b.id,'CHC_G1'):g==='CHC_G2'?keyOf(b.id,'CHC'):g==='BFI'?keyOf(b.id,'BFI'):g==='ES'?keyOf(b.id,'ES'):'',
+        family:g==='ES'?'ES':g==='BFI'?'BFI':g==='CR'?'CR':g==='MOTOR'?'MOTOR':'CHC',
+        selectionKey:g==='CHC_G1'?keyOf(b.id,'CHC_G1'):g==='CHC_G2'?keyOf(b.id,'CHC'):g==='CR'?keyOf(b.id,'CR'):g==='BFI'?keyOf(b.id,'BFI'):g==='ES'?keyOf(b.id,'ES'):'',
         key:priceKeyOf(b.id,g),
         label:g==='MOTOR'?'Motor':''
       }));
@@ -153,7 +157,7 @@
     return priceBrands().filter(b=>allowed.has(String(b.id)));
   }
   function priceGroupLabel(group){
-    return ({CHC_G1:'CHC C4',CHC_G2:'CHC C6',BFI:'BFI',ES:'End Suction',MOTOR:'Motor',BASEPLATE:'Baseplate',COUPLING:'Coupling',KEYPLC:'KeyPLC Panel',MANIFOLD:'Manifold',GWS:'GWS Tank'})[normalizedPriceGroup(group)]||String(group||'');
+    return ({CHC_G1:'CHC C4',CHC_G2:'CHC C6',CR:'CR',BFI:'BFI',ES:'End Suction',MOTOR:'Motor',BASEPLATE:'Baseplate',COUPLING:'Coupling',KEYPLC:'KeyPLC Panel',MANIFOLD:'Manifold',GWS:'GWS Tank'})[normalizedPriceGroup(group)]||String(group||'');
   }
   function priceEntrySeriesLabel(entry){
     if(entry.label)return String(entry.label);
@@ -615,10 +619,10 @@
   }
   function isSelectionAllowed(brandId,priceGroup,cid=currentPreferenceCustomerId()){
     const group=normalizedPriceGroup(priceGroup);
-    if(!['CHC_G1','CHC_G2','BFI','ES'].includes(group))return false;
+    if(!['CHC_G1','CHC_G2','CR','BFI','ES'].includes(group))return false;
     if(isPriceAllowed(brandId,group,cid)!==true)return false;
     const pref=cache.get(String(cid));if(!pref)return false;
-    const selectionKey=group==='CHC_G1'?keyOf(brandId,'CHC_G1'):group==='CHC_G2'?keyOf(brandId,'CHC'):group==='BFI'?keyOf(brandId,'BFI'):keyOf(brandId,'ES');
+    const selectionKey=group==='CHC_G1'?keyOf(brandId,'CHC_G1'):group==='CHC_G2'?keyOf(brandId,'CHC'):group==='CR'?keyOf(brandId,'CR'):group==='BFI'?keyOf(brandId,'BFI'):keyOf(brandId,'ES');
     return new Set(pref.keys||[]).has(selectionKey);
   }
   function isTeskMeteringEnabled(cid=currentPreferenceCustomerId()){
@@ -639,7 +643,8 @@
     const family=String(source.product_family||source.family||pump.keysuite_product_family||row?.dataset?.v391Family||'').toUpperCase();
     if(!group){
       if(family==='BFI')group='BFI';
-      if(family==='ES')group='ES';
+      else if(family==='ES')group='ES';
+      else if(family==='CR')group='CR';
       else if(family==='CHC')group=String(source.generation_code||pump.keysuite_generation_code||'G2').toUpperCase()==='G1'?'CHC_G1':'CHC_G2';
       else if(family==='MOTOR')group='MOTOR';
       else if(['BASEPLATE','COUPLING','KEYPLC','MANIFOLD'].includes(family))group=family;

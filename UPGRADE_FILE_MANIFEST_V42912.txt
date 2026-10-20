@@ -1,0 +1,21 @@
+KeySuite V4.29.12 Upgrade File Manifest
+=======================================
+
+Upgrade from V4.29.11:
+
+README.md
+README_UPGRADE_V42912.md
+RELEASE.json
+UPGRADE_FILE_MANIFEST_V42912.txt
+VERIFICATION_V42912.md
+VERSION.txt
+index.html
+manifest.json
+sw.js
+tests/v42912-release-regression.cjs
+v40001-customer-brand-settings.js
+v40201-quick-selection.js
+v41200-bootstrap.js
+v42912-version-lock.js
+
+Website-only release. No Supabase migration or Edge Function redeployment is required.
