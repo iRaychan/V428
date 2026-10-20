@@ -1,6 +1,16 @@
-# KeySuite V4.29.12 FULL CLEAN
+# KeySuite V4.29.13 FULL CLEAN
 
-Complete clean source package based on V4.29.11.
+Complete clean source package based on V4.29.12.
+
+## V4.29.13 - Motor price changes and KeyHQ
+
+- Keeps KeyHQ in the main sidebar between KeyBot and KeyCore.
+- Includes the multi-storey KeyHQ building with departments, elevator movement, AI employee activity, tasks and approvals.
+- Applies CHC efficiency changes using the exact included and replacement motor records.
+- Blocks a higher-efficiency quote when its source motor price is not higher than the included motor, instead of silently showing the same price.
+- Ensures a genuine efficiency upgrade produces at least one visible RM10 quotation step when normal rounding would hide the difference.
+- Adds the IE replacement price adjustment to the quotation item description.
+- Requires no Supabase database migration or Edge Function redeployment.
 
 ## V4.29.12 - CR Customer assignment visibility
 

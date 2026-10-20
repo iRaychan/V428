@@ -1581,6 +1581,11 @@ window.addEventListener('message',function(event){
  const pricedSelection=window.KeySuitePricing?.findPrice?.(quotationModel,{seal,elastomer,keysuite_seal:seal,keysuite_elastomer:elastomer,generation_code:p.generation_code,motor_hp:Number(p.motor_hp||0),motor_kw:Number(p.motor_kw||0),pole:Number(p.pole||2),motor_efficiency_class:p.motor_efficiency_class,bareShaft:bare});
  if(!pricedSelection){alert(window.KeySuitePricing?.chcPriceProblem?.(quotationModel,{generation_code:p.generation_code,motor_hp:Number(p.motor_hp||0),motor_kw:Number(p.motor_kw||0),pole:Number(p.pole||2),motor_efficiency_class:p.motor_efficiency_class,bareShaft:bare})||`Pump price not found: ${quotationModel}.`);return}
  if(!window.KeySuitePricing?.ensureQuoteableCalculation?.(pricedSelection?.calc,quotationModel))return;
+ const motorReplacement=pricedSelection.calc?.motorReplacement;
+ if(motorReplacement&&!motorReplacement.bareShaft){
+   const adjustment=Number(motorReplacement.priceAdjustmentFinal||0),sign=adjustment>=0?'+':'−';
+   lines.splice(2,0,`Motor price adjustment: ${motorReplacement.includedEfficiency} → ${motorReplacement.selectedEfficiency} (${sign}RM ${Math.abs(adjustment).toFixed(2)})`);
+ }
  const rows=[...document.querySelectorAll('.quote-item')];
  const empty=rows.length===1&&!rows[0].querySelector('.item-model').value&&!rows[0].querySelector('.item-description').value&&!+rows[0].querySelector('.item-price').value;
  const row=empty?rows[0]:quoteItemRow({});
