@@ -23,4 +23,51 @@ assert.match(telegramWebhook, /Please contact your administrator to request acce
 assert.match(telegramWebhook.slice(gate, menu), /telegramRemoveKeyboard\(\)/, 'the unassigned response removes the keyboard');
 assert.match(telegramWebhook.slice(gate, menu), /automated_reply:true/, 'the access notice is reported as an automated reply');
 
-console.log('V4.29.11 unassigned Telegram access regression: PASS');
+assert.match(
+  telegramWebhook,
+  /if\(series==='CHC'\)return \['CHC_G1','CHC_G2'\]\.includes\(group\)/,
+  'CHC Fast Search spans all assigned selling brands mapped to either CHC generation'
+);
+assert.match(
+  telegramWebhook,
+  /seriesMatch=raw\.match\(\/\\b\(CHC\|VMS\|SVM\|BFI\|HMS\|ES\).*request\.series_filter=/,
+  'CHC, VMS, BFI, HMS and ES numeric input is retained as a hydraulic series filter'
+);
+assert.match(
+  telegramWebhook,
+  /initial=await guidedSizeSelectedProducts\(service,companyId,wanted,q,h,240,240,requestedEsPole,String\(parsed\.series_filter\|\|''\)\)/,
+  'Fast Search passes the numeric series filter to hydraulic sizing'
+);
+
+assert.match(telegramWebhook, /\(CHCS\|CHCN\|CHC\|VMS\)/, 'CHCS and CHCN exact models are recognised');
+assert.match(telegramWebhook, /prefix==='CHCS'\?'SS304':prefix==='CHCN'\?'SS316':'Standard'/, 'CHCS and CHCN map to SS304 and SS316');
+assert.match(telegramWebhook, /function keybotDutyPoints\(text:any,limit=5\)/, 'up to five duty points are parsed');
+assert.match(telegramWebhook, /keybotDutyPoints\(text,5\)\.count===lines\.length/, 'multiple bare duty rows are not mistaken for Customer plus Product');
+assert.match(telegramWebhook, /A maximum of 5 duty points can be plotted on one curve\./, 'a sixth duty point is rejected clearly');
+assert.match(telegramWebhook, /pumpModelMeetsDutyPoints\(/, 'multi-point suitability filters candidate models');
+assert.match(telegramWebhook, /curveIdentity\.duty_points=requestedDuties/, 'exact-model curves receive all requested duty points');
+
+const curvePdf = read('supabase/functions/telegram-webhook/curve-pdf.ts');
+assert.match(curvePdf, /export function pumpModelMeetsDutyPoints/, 'the hydraulic engines validate every duty point');
+assert.match(curvePdf, /duties\?:Array<\{point:XY,label:string\}>/, 'curve charts accept multiple labelled duty markers');
+assert.match(curvePdf, /`D\$\{i\+1\}`/, 'curve duty points are labelled D1 through D5');
+assert.match(curvePdf, /dutyPoints\.length>1&&forcedD<=0/, 'ES curves use one multi-duty impeller selection');
+assert.match(curvePdf, /\(\?:CHC\|BFI\|ES\)/, 'numeric family filtering covers CHC, BFI and ES');
+
+const esCorePath = path.join(root, 'supabase/functions/telegram-webhook/es-core.js');
+const esDataPath = path.join(root, 'supabase/functions/telegram-webhook/es-data.js');
+if (fs.existsSync(esCorePath) && fs.existsSync(esDataPath)) {
+  const esCore = require(esCorePath);
+  const esData = require(esDataPath);
+  const esDuties = [1, 2, 3, 4, 5].map((flow, i) => ({
+    label: `D${i + 1}`,
+    totalFlowLps: flow,
+    headM: 10 - i,
+    pumps: 1
+  }));
+  const esMulti = esCore.selectPumpsMulti(esData, { dutyPoints: esDuties, mode: 'trim', rpm: 2900 });
+  assert.ok(esMulti.length > 0, 'ES selector returns a model that satisfies five duty points');
+  assert.strictEqual(esMulti[0].dutyPoints.length, 5, 'the selected ES result retains all five duty points');
+}
+
+console.log('V4.29.11 Telegram access, series filtering and five-point curve regression: PASS');

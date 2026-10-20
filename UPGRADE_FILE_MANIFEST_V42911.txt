@@ -12,6 +12,7 @@ VERSION.txt
 index.html
 manifest.json
 supabase/functions/telegram-webhook/index.ts
+supabase/functions/telegram-webhook/curve-pdf.ts
 sw.js
 tests/v42911-release-regression.cjs
 v41200-bootstrap.js

@@ -85,6 +85,7 @@ type ChartSpec={
   points:XY[];
   duty:XY;
   dutyLabel?:string;
+  duties?:Array<{point:XY,label:string}>;
   series?:Array<{points:XY[],label?:string,color?:any,width?:number,dash?:number[]}>;
   bep?:XY|null;
   bepLabel?:string;
@@ -160,7 +161,7 @@ async function embedReportLogo(pdf:any,value:any,baseUrl:any,optimizePdf=true){
   return await embedPublicJpg(pdf,baseUrl,'assets/keybot-pdf/report-logo.jpg');
 }
 function sampleFit(f:any,count=120,core:any=CHC_CORE){return core.sampleFit(f,count)}
-// V4.28.57: Point 1 is display-only shut-off power and is always 68% of
+// V4.28.58: Point 1 is display-only shut-off power and is always 68% of
 // Point 2 (the first positive-flow source point). Selection, duty calculations,
 // motor sizing and every later source point remain unchanged.
 function keysuitePowerSmoothFit(fit:any){
@@ -358,7 +359,9 @@ function drawReportHeader(page:any,logo:any,bold:any,model:string){
   page.drawLine({start:{x,y:lineY},end:{x:right,y:lineY},thickness:2.2,color:BLUE});
 }
 function drawDutyDrive(page:any,bold:any,font:any,duty:string,motorHp:number,pole:number,hz:number){
-  drawCentered(page,bold,duty,306,712,11.5,RED);
+  const duties=String(duty||'').split(/\s+·\s+/).filter(Boolean);
+  if(duties.length>1){drawCentered(page,bold,duties.slice(0,3).join(' · '),244,718,8.2,RED);if(duties.length>3)drawCentered(page,bold,duties.slice(3).join(' · '),244,704,8.2,RED);}
+  else drawCentered(page,bold,duty,306,712,11.5,RED);
   drawRight(page,font,`${fmt(motorHp,2)} HP ${pole}P`,564,723,11,BLUE);
   drawRight(page,font,`${fmt(hz,1)} Hz`,564,707,11,BLUE);
 }
@@ -379,7 +382,7 @@ function drawFrozenChart(page:any,font:any,bold:any,x:number,y:number,w:number,h
   page.drawRectangle({x,y,width:w,height:h,borderWidth:.7,borderColor:rgb(.80,.87,.91),color:rgb(.995,.998,1)});
   const pad={l:58,r:24,t:14,b:43},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
   const allSeries=(s.series&&s.series.length?s.series:[{points:s.points}]);
-  const allY=allSeries.flatMap(z=>z.points.map(p=>p.y)).concat([s.duty.y,s.bep?.y||0]).filter(finite);
+  const allY=allSeries.flatMap(z=>z.points.map(p=>p.y)).concat([s.duty.y,s.bep?.y||0,...(s.duties||[]).map(d=>d.point.y)]).filter(finite);
   const xAxis=(xAxisShared&&xAxisShared.max&&xAxisShared.step)?xAxisShared:niceAxis(Number(xAxisShared)||1,5);
   const yAxis=s.yMax?niceAxis(Number(s.yMax),5):niceAxis(Math.max(1,...allY)*1.03,5);
   if(s.yMax){yAxis.max=Number(s.yMax);yAxis.step=niceAxis(Number(s.yMax),5).step;}
@@ -409,11 +412,13 @@ function drawFrozenChart(page:any,font:any,bold:any,x:number,y:number,w:number,h
       if(finite(ep.x)&&finite(ep.y))page.drawText(ser.label,{x:Math.min(x+w-90,X(ep.x)+7),y:Y(ep.y)-2,size:7.6,font:bold,color});
     }
   });
-  drawMarker(page,bold,X,Y,s.duty,s.dutyLabel||'',RED,7,5);
+  if(s.duties?.length){
+    s.duties.forEach((d:any,i:number)=>drawMarker(page,bold,X,Y,d.point,d.label||`D${i+1}`,RED,7,(i%2===0?5:-12)));
+  }else drawMarker(page,bold,X,Y,s.duty,s.dutyLabel||'',RED,7,5);
   drawMarker(page,bold,X,Y,s.bep||null,s.bepLabel||'BEP',GREEN,7,5);
 }
 function drawPage1(page:any,logo:any,font:any,bold:any,args:any){
-  drawReportHeader(page,logo,bold,args.model);drawDutyDrive(page,bold,font,args.dutyText,args.motorHp,args.pole,args.hz);
+  drawReportHeader(page,logo,bold,args.model);drawDutyDrive(page,bold,font,args.curveDutyText||args.dutyText,args.motorHp,args.pole,args.hz);
   const x=47,w=517,maxFlow=Math.max(1,...args.charts.flatMap((z:ChartSpec)=>(z.series&&z.series.length?z.series.flatMap(s=>s.points):z.points).map((p:any)=>p.x)),args.q),xAxis=niceAxis(maxFlow,5);
   drawFrozenChart(page,font,bold,x,505,w,190,args.charts[0],xAxis);
   drawFrozenChart(page,font,bold,x,347,w,154,args.charts[1],xAxis);
@@ -667,7 +672,7 @@ export function selectPumpSummary(family:string,q:number,h:number,esPole=0,force
 export function selectPumpCandidates(family:string,q:number,h:number,esPole=0,limit=6,seriesFilter:string=''){
   const fam=String(family||'').toUpperCase(),max=Math.max(1,Math.min(240,Math.trunc(Number(limit)||6))),filter=String(seriesFilter||'').trim().toUpperCase();
   if(!(Number(q)>0&&Number(h)>0))return [];
-  const filterModel=(model:any)=>{if(!filter)return true;const n=(filter.match(/\b(?:CHC|ES)\s*(\d{1,3})\b/i)||[])[1];if(!n)return true;return new RegExp(`^(?:CHC|ES)\\s*${Number(n)}-`,'i').test(String(model||''));};
+  const filterModel=(model:any)=>{if(!filter)return true;const n=(filter.match(/\b(?:CHC|BFI|ES)\s*(\d{1,3})\b/i)||[])[1];if(!n)return true;return new RegExp(`^(?:CHC|BFI|ES)\\s*${Number(n)}-`,'i').test(String(model||''));};
   if(isChcFamily(fam)){
     const engine=chcEngine(fam),all=(engine.db?.models||[]).filter((m:any)=>filterModel(m.model)).map((m:any)=>engine.core.evaluateModel(engine.db,m,Number(q),Number(h),50)).filter(Boolean),headSuitable=all.filter((x:any)=>Number(x.margin)>=-.01),suitable=headSuitable.filter((x:any)=>Number(x.motor_kw)+1e-9>=Number(x.shaft));
     let rows=suitable.length?suitable:headSuitable.length?headSuitable:all.filter((x:any)=>Number(x.margin)<-.01&&Number(x.predHead)>=Number(h)*.95-1e-9).sort((a:any,b:any)=>Number(b.predHead)-Number(a.predHead));
@@ -675,7 +680,7 @@ export function selectPumpCandidates(family:string,q:number,h:number,esPole=0,li
     return rows.slice(0,max).map((x:any,rank:number)=>({brand:'B.G.Reich',family:'CHC',series:engine.label,generation_code:engine.generation,keysuite_generation_code:engine.generation,model:String(x.model||''),motor_kw:Number(x.motor_kw||0),motor_hp:Number(x.motor_hp||0),motor_efficiency_class:Number(x.motor_hp||0)>0&&Number(x.motor_hp)<=0.75+1e-9?'IE1':String(engine.motorEff||'IE3'),efficiency:Number(x.eff||0),npshr:Number(x.npsh||0),rpm:Number(x.rpm||engine.db?.curves?.[x.series]?.speed_rpm||2900),pole:2,stages:Number(x.stages||0),connection:String(x.connection||'-'),requested_flow_m3h:Number(q),requested_head_m:Number(h),available_head_m:Number(x.predHead||0),undersized:Number(x.margin)<-.01,head_shortfall_pct:Number(x.margin)<-.01?Math.max(0,(Number(h)-Number(x.predHead))/Number(h)*100):0,selector_core_version:engine.core.VERSION,selector_rank:rank+1}));
   }
   if(isBfiFamily(fam)){
-    const result=BFI_CORE.select(BFI_DB,Number(q),Number(h),50),rows=Array.isArray(result?.candidates)?result.candidates:[];
+    const result=BFI_CORE.select(BFI_DB,Number(q),Number(h),50),rows=(Array.isArray(result?.candidates)?result.candidates:[]).filter((x:any)=>filterModel(x.model));
     return rows.slice(0,max).map((x:any,rank:number)=>{const base=String(x.model||'').replace(/T$/i,''),phases=Array.isArray(x.phases)&&x.phases.length?x.phases:['3Ph'],phase=phases.includes('3Ph')?'3Ph':String(phases[0]||'1Ph'),display=phase==='3Ph'?`${base}T`:base;return {brand:'B.G.Reich',family:'BFI',series:String(x.series||'BFI'),model:base,base_model:base,display_model:display,quotation_model:display,motor_phase:phase,motor_efficiency_class:Number(x.motor_hp||0)>0&&Number(x.motor_hp)<=0.75+1e-9?'IE1':phase==='1Ph'?'IE1':'IE2',motor_kw:Number(x.motor_kw||0),motor_hp:Number(x.motor_hp||0),efficiency:Number(x.eff||0),npshr:Number(x.npsh||0),rpm:Number(x.rpm||2900),pole:2,stages:Number(x.stages||0),connection:String(x.connection||'-'),requested_flow_m3h:Number(q),requested_head_m:Number(h),selector_core_version:BFI_CORE.VERSION,selector_rank:rank+1};});
   }
   if(fam==='ES'){
@@ -687,12 +692,35 @@ export function selectPumpCandidates(family:string,q:number,h:number,esPole=0,li
   return [];
 }
 
+export function pumpModelMeetsDutyPoints(family:string,model:any,esPole:any,dutyPoints:any[]){
+  const fam=String(family||'').toUpperCase(),points=(Array.isArray(dutyPoints)?dutyPoints:[]).slice(0,5).map((p:any)=>({flow_m3h:Number(p?.flow_m3h),head_m:Number(p?.head_m)})).filter((p:any)=>p.flow_m3h>0&&p.head_m>0);
+  if(points.length<2)return true;
+  if(isChcFamily(fam)){
+    const engine=chcEngine(fam),wanted=String(model||'').replace(/^VMS\b/i,'CHC').replace(/^CHCS\b/i,'CHC').replace(/^CHCN\b/i,'CHC').trim().toUpperCase(),row=(engine.db?.models||[]).find((x:any)=>String(x.model||'').toUpperCase()===wanted);
+    return !!row&&points.every((p:any)=>{const r=engine.core.evaluateModel(engine.db,row,p.flow_m3h,p.head_m,50);return !!r&&Number(r.margin)>=-.01&&Number(r.motor_kw)+1e-9>=Number(r.shaft);});
+  }
+  if(isBfiFamily(fam)){
+    const raw=String(model||'').trim(),enhanced=/E$/i.test(raw),wanted=raw.replace(/[TE]$/i,'').toUpperCase(),row=(BFI_DB?.models||[]).find((x:any)=>String(x.model||'').toUpperCase()===wanted);
+    return !!row&&points.every((p:any)=>{const r=enhanced?evaluateEnhancedBfi(row,p.flow_m3h,p.head_m):BFI_CORE.evaluateModel(BFI_DB,row,p.flow_m3h,p.head_m,50);return !!r&&Number(r.margin)>=-.01&&Number(r.motor_kw)+1e-9>=Number(r.shaft);});
+  }
+  if(fam==='ES'){
+    const pole=Number(esPole),rpm=pole===2?2900:pole===4?1450:0,core=(globalThis as any).ESCore,db=(globalThis as any).ES_SELECTOR_DB,wanted=String(model||'').replace(/^ES\s+/i,'').trim().toUpperCase();
+    if(!rpm||!core||!db||!wanted)return false;
+    const results=core.selectPumpsMulti(db,{dutyPoints:points.map((p:any,i:number)=>({label:`D${i+1}`,totalFlowLps:p.flow_m3h/3.6,headM:p.head_m,pumps:1})),mode:'trim',rpm});
+    return (Array.isArray(results)?results:[]).some((r:any)=>String(r?.pump?.model||'').toUpperCase()===wanted);
+  }
+  return false;
+}
+
 export async function generateCurvePdf(family:string,q:number,h:number,dutyText:string,baseUrl:string,esPole=0,forcedModel:string='',displayIdentity:any=null){
   const optimizePdf=displayIdentity?.optimized_pdf!==false;
   const fam=String(family||'').toUpperCase(),isChc=isChcFamily(fam),isBfi=isBfiFamily(fam),engine=isChc?chcEngine(fam):null;
+  const suppliedDutyPoints=(Array.isArray(displayIdentity?.duty_points)?displayIdentity.duty_points:[]).slice(0,5).map((p:any)=>({flow_m3h:Number(p?.flow_m3h),head_m:Number(p?.head_m),duty_text:String(p?.duty_text||'').trim()})).filter((p:any)=>p.flow_m3h>0&&p.head_m>0);
+  const dutyPoints=suppliedDutyPoints.length?suppliedDutyPoints:[{flow_m3h:Number(q),head_m:Number(h),duty_text:String(dutyText||'').trim()}];
   let model='',motorKw=0,motorHp=0,eff=0,npsh=0,selectionShaft=0,dutyBrakeHp=0,rpm=0,pole=2,hz=50;
   let suction='-',discharge='-',stages=0,impellerMm=0,maxPressure=0,dim:any={},esPs:any=null,weightKg=0,phase='3Ph';
   let headPoints:XY[]=[],effPoints:XY[]=[],powerPoints:XY[]=[],npsPoints:XY[]=[];
+  let selectedEs:any=null;
   let warning='';
 
   if(isChc){
@@ -714,8 +742,13 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
   }else if(fam==='ES'){
     pole=Number(esPole);if(pole!==2&&pole!==4)throw new Error('ES selection requires 2 Pole or 4 Pole.');
     let s:any=esSelect(q,h,pole,forcedModel);if(!s)throw new Error(`No ES ${pole} Pole model can meet ${fmt(q)} m³/hr @ ${fmt(h)} Mtr.`);
-    const core=(globalThis as any).ESCore,forcedD=Number(displayIdentity?.es_impeller_mm||0),motorLimitHp=Number(displayIdentity?.es_motor_limit_hp||0),motorLimitKw=motorLimitHp*0.745699872;
+    const core=(globalThis as any).ESCore,db=(globalThis as any).ES_SELECTOR_DB,forcedD=Number(displayIdentity?.es_impeller_mm||0),motorLimitHp=Number(displayIdentity?.es_motor_limit_hp||0),motorLimitKw=motorLimitHp*0.745699872;
+    if(dutyPoints.length>1&&forcedD<=0){
+      const wanted=String(forcedModel||'').replace(/^ES\s+/i,'').trim().toUpperCase(),rpmFilter=pole===2?2900:1450,results=core.selectPumpsMulti(db,{dutyPoints:dutyPoints.map((p:any,i:number)=>({label:`D${i+1}`,totalFlowLps:p.flow_m3h/3.6,headM:p.head_m,pumps:1})),mode:'trim',rpm:rpmFilter}),match=(Array.isArray(results)?results:[]).find((r:any)=>!wanted||String(r?.pump?.model||'').toUpperCase()===wanted);
+      if(match){const pump=match.pump,d=match.dutyPoints?.[0]||{},perf=d.performance||match.performance||{},motor=match.motor||d.motor||{},points=core.curvePoints(pump,Number(match.impellerMm),Number(match.speedRatio||1),240)||[];s={result:match,pump,duty:d,perf,motor,points,pole,rpm:rpmFilter};}
+    }
     if(forcedD>0&&String(forcedModel||'').trim()){const pump=s.pump,perf=core.performance(pump,forcedD,q/3.6,1)||{},motor=perf?.shaftKw!=null?core.sizeMotor(pump,forcedD,1,perf)||{}:{},points=core.curvePoints(pump,forcedD,1,240)||[];s={result:{impellerMm:forcedD,speedRatio:1},pump,duty:{performance:perf,motor},perf,motor,points,pole,rpm:Number(pump.rpm||0)};}
+    selectedEs=s;
     model=`ES ${s.pump.model}`;motorKw=motorLimitHp>0?motorLimitKw:Number(s.motor.motorKw||0);motorHp=motorLimitHp>0?motorLimitHp:Number(s.motor.motorHp||0);eff=Number(s.perf.efficiencyPct||0);npsh=Number(s.perf.npshrM||0);
     selectionShaft=Number(s.perf.shaftKw||0);dutyBrakeHp=Number(s.perf.bhp||selectionShaft*1.34102209);rpm=Number(s.perf.rpm||s.pump.rpm||0);hz=Number(s.perf.frequencyHz||50);
     suction=String(s.pump.dimensions?.suction||'-');discharge=String(s.pump.dimensions?.discharge||'-');impellerMm=Number(s.result.impellerMm||0);maxPressure=Number(s.pump.dimensions?.casing_pressure_bar||0);dim=s.pump.dimensions||{};
@@ -731,7 +764,7 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
   const fittedBep=bepFromEff(headPoints,effPoints),bep=fam==='ES'&&displayIdentity?.es_rated_is_bep===true?{x:q,y:h}:fittedBep;
   let headEnvelope:any=null;
   if(fam==='ES'){
-    const core=(globalThis as any).ESCore,selected=esSelect(q,h,pole,forcedModel),pump=selected?.pump,ratio=Number(selected?.result?.speedRatio||1);
+    const core=(globalThis as any).ESCore,selected=selectedEs||esSelect(q,h,pole,forcedModel),pump=selected?.pump,ratio=Number(selected?.result?.speedRatio||1);
     if(pump){
       const maxD=Number(core.dmax(pump)),minD=Number(core.dmin(pump)),selD=Number(selected.result.impellerMm);
       const defs:any[]=[];const add=(d:number)=>{if(!defs.some(x=>Math.abs(x-d)<.01))defs.push(d)};
@@ -752,12 +785,14 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
     const maxPumpFlow=Math.max(...headPoints.map(p=>Number(p.x)||0)),systemMaxFlow=Math.min(maxPumpFlow,q*Math.sqrt(1.05)),system=systemPoints(q,h,systemMaxFlow);
     headEnvelope=[{points:headPoints,label:`Selected Ø${fmt(impellerMm,impellerMm%1?1:0)}`,color:BLUE,width:PDF_CURVE_WIDTH_PT},{points:system,label:'System Curve',color:rgb(.46,.50,.53),width:PDF_CURVE_WIDTH_PT}];
   }
+  if(String(forcedModel||'').trim()&&dutyPoints.some((p:any)=>{const minQ=headPoints.length?Math.min(...headPoints.map(x=>x.x)):0,maxQ=headPoints.length?Math.max(...headPoints.map(x=>x.x)):0,pred=p.flow_m3h>=minQ&&p.flow_m3h<=maxQ?interpolate(headPoints,p.flow_m3h):NaN;return p.flow_m3h<minQ-1e-9||p.flow_m3h>maxQ+1e-9||!finite(pred)||p.head_m>pred*1.01;}))warning='One or more requested duty points are outside this model\'s curve.';
   const xLabel='Flow (m³/hr)';
+  const chartDuties=(points:XY[],head=false)=>dutyPoints.map((p:any,i:number)=>({point:{x:p.flow_m3h,y:head?p.head_m:interpolate(points,p.flow_m3h)},label:`D${i+1}`})).filter((d:any)=>finite(d.point.x)&&finite(d.point.y));
   const charts:ChartSpec[]=[
-    {yLabel:'Head (m)',points:headPoints,series:headEnvelope,duty:{x:q,y:h},bep,bepLabel:'BEP',xLabel,dutyLabel:''},
-    {yLabel:'Efficiency (%)',points:effPoints,duty:{x:q,y:eff},xLabel,yMax:100,dutyLabel:`${fmt(eff,1)}%`},
-    {yLabel:fam==='ES'?'Total Power (HP)':'Power (HP)',points:powerPoints,duty:{x:q,y:brakeHp},xLabel,dutyLabel:`${fmt(brakeHp,1)} HP`},
-    {yLabel:fam==='ES'?'NPSH (m)':'NPSHr (m)',points:npsPoints,duty:{x:q,y:npsh},xLabel,dutyLabel:`${fmt(npsh,1)} Mtr`}
+    {yLabel:'Head (m)',points:headPoints,series:headEnvelope,duty:{x:q,y:h},duties:chartDuties(headPoints,true),bep,bepLabel:'BEP',xLabel,dutyLabel:''},
+    {yLabel:'Efficiency (%)',points:effPoints,duty:{x:q,y:eff},duties:chartDuties(effPoints),xLabel,yMax:100,dutyLabel:`${fmt(eff,1)}%`},
+    {yLabel:fam==='ES'?'Total Power (HP)':'Power (HP)',points:powerPoints,duty:{x:q,y:brakeHp},duties:chartDuties(powerPoints),xLabel,dutyLabel:`${fmt(brakeHp,1)} HP`},
+    {yLabel:fam==='ES'?'NPSH (m)':'NPSHr (m)',points:npsPoints,duty:{x:q,y:npsh},duties:chartDuties(npsPoints),xLabel,dutyLabel:`${fmt(npsh,1)} Mtr`}
   ];
   const pdf=await PDFDocument.create(),regular=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold);
   const font={regular,bold};
@@ -794,7 +829,8 @@ export async function generateCurvePdf(family:string,q:number,h:number,dutyText:
 
   const displayBrand=String(displayIdentity?.brand||'B.G.Reich').trim()||'B.G.Reich',displaySeries=String(displayIdentity?.series||(isChc?String(engine?.label||'CHC'):isBfi?'BFI':'ES')).trim()||(isChc?String(engine?.label||'CHC'):isBfi?'BFI':'ES');let displayModel=String(displayIdentity?.model||model).trim()||model;if(isBfi){const enhanced=!!displayIdentity?.enhanced||!!displayIdentity?.enhanced_curve||/E$/i.test(displayModel)||/E$/i.test(String(forcedModel||'')),aliased=displayModel.replace(/[TE]$/i,'');displayModel=enhanced?aliased+'E':phase==='3Ph'?aliased+'T':aliased;}
   const enhanced=isBfi&&(!!displayIdentity?.enhanced||!!displayIdentity?.enhanced_curve||/E$/i.test(displayModel));
-  const pageArgs={family:isChc?'CHC':fam,brand:displayBrand,series:displaySeries,model:displayModel,masterModel:model,dutyText,q,motorHp,motorKw,pole,hz,rpm,enhanced,eff,npsh,brakeHp,suction,discharge,stages,impellerMm,maxPressure,dim,esPumpset:esPs,motorTech:mt,motorEfficiencyClass:isChc?chcMotorEff:isBfi?bfiMotorEff:'IE3',pumpset,bfiDimension,weightKg,phase,material:materialFor(isChc?'CHC':fam,displayIdentity?.material||displayModel),charts};
+  const curveDutyText=dutyPoints.length>1?dutyPoints.map((p:any,i:number)=>`D${i+1} ${fmt(p.flow_m3h,1)} m³/hr @ ${fmt(p.head_m,1)} m`).join(' · '):dutyText;
+  const pageArgs={family:isChc?'CHC':fam,brand:displayBrand,series:displaySeries,model:displayModel,masterModel:model,dutyText,curveDutyText,dutyPoints,q,motorHp,motorKw,pole,hz,rpm,enhanced,eff,npsh,brakeHp,suction,discharge,stages,impellerMm,maxPressure,dim,esPumpset:esPs,motorTech:mt,motorEfficiencyClass:isChc?chcMotorEff:isBfi?bfiMotorEff:'IE3',pumpset,bfiDimension,weightKg,phase,material:materialFor(isChc?'CHC':fam,displayIdentity?.material||displayModel),charts};
 
   const p1=pdf.addPage(LETTER);drawPage1(p1,logo,regular,bold,pageArgs);
   const p2=pdf.addPage(LETTER);drawPage2(p2,logo,font,bold,pageArgs);

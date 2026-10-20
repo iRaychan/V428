@@ -7,9 +7,13 @@
     "replaces the Customer, Product, Selection and New Request keyboard with a removed keyboard",
     "tells unassigned senders to contact their administrator to request access",
     "keeps unassigned senders registered and visible for administrator assignment",
+    "treats CHC and VMS as the same assigned CHC hydraulic scope",
+    "restricts CHC, BFI and ES numeric series searches to the requested series or pole",
+    "maps exact CHCS and CHCN curve identities to SS304 and SS316",
+    "sizes and plots up to five duty points on one pump curve",
     "visible version is V4.29.11"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": true,
-  "notes": "Upload the V4.29.11 application files and redeploy the included telegram-webhook Edge Function. No database migration is required."
+  "notes": "Upload the V4.29.11 application files and redeploy the included telegram-webhook Edge Function. KeyBot now supports assigned-scope CHC/VMS search, numeric CHC/BFI/ES filtering, CHCS/CHCN material identity, and up to five duty points on one curve. No database migration is required."
 }

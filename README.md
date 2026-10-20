@@ -2,7 +2,14 @@
 
 Complete clean source package based on V4.29.10, with protected KeyBot access for unassigned Telegram senders.
 
-## V4.29.11 - unassigned Telegram access notice
+## V4.29.11 - KeyBot access, scoped search and multi-point curves
+
+- KeyBot Fast Search treats `CHC` as the shared CHC hydraulic family across all curve-enabled Brand / Series entries available through the user's Role or linked Company assignment.
+- `CHC` and `VMS` use the same assigned CHC hydraulic scope.
+- `CHC 2` searches only hydraulic CHC 2 models within that assignment scope; `BFI 10` likewise searches only BFI 10.
+- `ES` searches both 2 Pole and 4 Pole; `ES 2P` and `ES 4P` restrict the search to the selected pole.
+- Exact `CHCS` models use SS304 identity and exact `CHCN` models use SS316 identity on the generated curve.
+- Accepts up to five Flow @ Head rows, sizes one suitable model across every point, and plots D1 through D5 on one curve report.
 
 - Prevents unassigned Telegram senders from seeing Customer, Product, Selection or New Request controls.
 - Removes any existing KeyBot reply keyboard for an unassigned sender.
