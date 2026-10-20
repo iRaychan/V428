@@ -1,6 +1,15 @@
-# KeySuite V4.29.10 FULL CLEAN
+# KeySuite V4.29.11 FULL CLEAN
 
-Complete clean source package based on V4.29.05, with model-wide pricing coverage, editable journey fuel settings, and model-level rarity across currencies.
+Complete clean source package based on V4.29.10, with protected KeyBot access for unassigned Telegram senders.
+
+## V4.29.11 - unassigned Telegram access notice
+
+- Prevents unassigned Telegram senders from seeing Customer, Product, Selection or New Request controls.
+- Removes any existing KeyBot reply keyboard for an unassigned sender.
+- Replies: `Your Telegram account is not assigned yet.` followed by `Please contact your administrator to request access.`
+- Keeps the sender registered and visible for administrator assignment.
+- Requires a redeploy of `supabase/functions/telegram-webhook`.
+- Requires no database migration.
 
 ## V4.29.10 - model pricing coverage, fuel journey and rarity
 

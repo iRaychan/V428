@@ -1,21 +1,15 @@
 {
-  "version": "4.29.10",
-  "baseline": "4.29.09",
-  "upgrade_supported_from": "4.29.05, 4.29.06, 4.29.07, 4.29.08 or 4.29.09",
+  "version": "4.29.11",
+  "baseline": "4.29.10",
+  "upgrade_supported_from": "4.29.10",
   "changes": [
-    "replaces total Categories with Assigned Category counted by assigned customer",
-    "highlights customers without a valid pricing category assignment",
-    "replaces CHC Models with an all-family distinct Models counter",
-    "replaces Priced Variants with Models With Price counted once per model",
-    "adds editable Fuel Efficiency and Return Journey settings with one-way or roundtrip fuel surcharge",
-    "makes rarity model-variant based and synchronized across USD, RMB and MYR",
-    "normalizes legacy rarity conflicts using priced currencies and Fixed > Rare > Many > Common precedence",
-    "restores the floating Back button from Selection to Quotation",
-    "prevents automatic quotation references resetting to 0001 while secure history loads",
-    "uses one company-wide annual running sequence across all quotation prefixes",
-    "visible version is V4.29.10"
+    "blocks unassigned Telegram senders before the KeyBot menu and guided workflows",
+    "replaces the Customer, Product, Selection and New Request keyboard with a removed keyboard",
+    "tells unassigned senders to contact their administrator to request access",
+    "keeps unassigned senders registered and visible for administrator assignment",
+    "visible version is V4.29.11"
   ],
-  "new_database_migration_required": true,
+  "new_database_migration_required": false,
   "edge_function_deploy_required": true,
-  "notes": "Run the included v42910 company-wide quotation sequence migration. The earlier v42906 migration and telegram-webhook deployment are needed only when upgrading from before V4.29.08."
+  "notes": "Upload the V4.29.11 application files and redeploy the included telegram-webhook Edge Function. No database migration is required."
 }

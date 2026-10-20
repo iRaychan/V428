@@ -2530,6 +2530,13 @@ Deno.serve(async(req)=>{
       capturedEnquiryId=String(captured.data.id);
     }
 
+    // Unassigned Telegram senders remain visible in the KeyBot sender list, but
+    // must not see the Customer, Product, Selection or New Request controls.
+    if(responseMode==='nothing'){
+      await telegramSend(telegramToken,chatId,'Your Telegram account is not assigned yet.\n\nPlease contact your administrator to request access.',telegramRemoveKeyboard());
+      return json({ok:true,status:'sender_mode_nothing',response_mode:responseMode,automated_reply:true});
+    }
+
     // V4.21.10: global navigation always wins over any pending Brand / Model choice.
     // This prevents New Request / Hi / Back from being consumed as a model-choice reply.
     if(menuText||callbackData==='menu:home'){
