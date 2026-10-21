@@ -637,7 +637,7 @@ async function quotePumpsetSelection(items=[],meta={}){
  syncAutomaticComponents(d);const requiredSections=['pump','motor','coupling','baseplate'],missingSections=requiredSections.filter(section=>!(d.items||[]).some(item=>item.section===section));if(missingSections.length){alert(`Unable to create a complete ES Pumpset automatically. Missing: ${missingSections.map(section=>labels[section]||section).join(', ')}. Move to Pumpset to review the selection.`);return false}if(blockMissingPumpsetSourceCosts(d.items||[]))return false;if(blockAssemblyMargin(d.items||[]))return false;rebuildDescription(d);
  syncQuoteUnitPrice(d);const unitPrice=quoteUnitPrice(d);if(!(unitPrice>0)){alert('Quotation pricing is not available for this Pumpset.');return false}
  const displayPricing=consolidatedPricing(d,'assembly');const pricingSource={...(displayPricing?.source||{}),product_family:'ASSEMBLY',pricing_mode:'carried_final',source_kind:'PUMPSET_DIRECT_ES',carried_final_price:true,calculated_price:Number(unitPrice||0)};
- window.KeySuiteApp?.selectCustomerForQuotation?.(customerId);window.KeySuiteApp?.showPage?.('quotation');
+ if(await window.KeySuiteApp?.selectCustomerForQuotation?.(customerId)===false)return false;window.KeySuiteApp?.showPage?.('quotation');
  const pumpData=meta.pumpData||items.find(item=>item.section==='pump'&&item.pumpData)?.pumpData||null;
  const row=window.KeySuiteApp?.addExternalQuoteItem?.({model:d.model_item,qty:d.quote_qty,unitPrice:Number(unitPrice||0),description:d.description,unit:'set',sourceType:'pumpset',pricingSource,pumpData,displayCapacity:!!d.display_capacity,capacityValue:d.capacity_value||'',capacityUnit:d.capacity_unit||'m³/hr',headValue:d.head_value||'',headUnit:d.head_unit||'Mtr'});
  if(!row){alert('Unable to add the ES Pumpset to Quotation.');return false}
@@ -645,7 +645,7 @@ async function quotePumpsetSelection(items=[],meta={}){
 }
 async function toQuotation(){
  read();if(!current?.items?.length){alert('Add at least one component first.');return}if(!current.customer_id){alert('Select a customer for this assembly.');return}if(blockAssemblyMargin(current.items||[]))return;
- window.KeySuiteApp?.selectCustomerForQuotation?.(current.customer_id);const description=normalizeDescriptionIndentation(String(current.description||'')).trim();let unitPrice=0,pricingSource=null;
+ if(await window.KeySuiteApp?.selectCustomerForQuotation?.(current.customer_id)===false)return;const description=normalizeDescriptionIndentation(String(current.description||'')).trim();let unitPrice=0,pricingSource=null;
  if(type==='pumpset'&&blockMissingPumpsetSourceCosts(current.items||[]))return;
  // V4.28.71: Assembly/System already owns the final unit price shown to the user.
  // Carry that exact value into Quotation; repricing the BOM here applies Fuel again.

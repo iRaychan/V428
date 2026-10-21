@@ -23,7 +23,7 @@ stable
 security definer
 set search_path=''
 as $$
-  with references as (
+  with reference_rows as (
     select upper(coalesce(a.quotation_no,'')) as quotation_no
     from public.ks_quotation_archive_v409 a
     where a.company_id=trim(coalesce(p_company_id,''))
@@ -36,7 +36,7 @@ as $$
       quotation_no,
       '^[A-Z0-9]{1,8}[/-]([0-9]{2})[0-9]{2}[/-]([0-9]{1,4})(?:-R[0-9]+|-V[0-9]+|[[:space:]]*[(]R[0-9]+[)])?$'
     ) as parts
-    from references
+    from reference_rows
   )
   select coalesce(max((parts)[2]::integer),0)
   from parsed

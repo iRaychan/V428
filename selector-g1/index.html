@@ -166,6 +166,23 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
 .pdf-independent[hidden]{display:none!important}
 .pdf-independent .setting-title{margin-top:0}
 
+/* V4.29.15: C4 uses the established standard Selector responsive container. */
+html,body{width:100%;max-width:100%;min-width:0;overflow-x:hidden}
+main,.result-area,#out,.curve-grid,.curve-grid>*,.chart-stack,.chart-stack>*{min-width:0;max-width:100%}
+main,.result-area,#out,.curve-grid{width:100%}
+body:not(.product-frame)>header{display:block;background:#fff}
+body:not(.product-frame)>header .brand-wrap{display:flex;max-width:1220px}
+body:not(.product-frame) main{display:grid;max-width:1220px;margin:20px auto;padding:0 15px 18px;grid-template-columns:330px minmax(0,1fr);gap:17px;align-items:start}
+body:not(.product-frame) aside.inputs{display:block;width:auto;max-width:none}
+body:not(.product-frame) .result-area{display:grid;gap:17px;max-width:none;min-width:0}
+body:not(.product-frame) #out{display:block;min-height:0}
+body:not(.product-frame) .curve-grid{grid-template-columns:minmax(0,1.55fr) minmax(310px,.85fr);align-items:stretch}
+body:not(.product-frame) .curve-grid>.chart-main{height:554px}
+body:not(.product-frame) .chart-stack{display:grid;grid-template-rows:repeat(3,178px);gap:10px}
+body:not(.product-frame) .chart-stack>.chart-card{height:178px}
+@media(max-width:1050px){body:not(.product-frame) main{grid-template-columns:300px minmax(0,1fr)}body:not(.product-frame) .curve-grid{grid-template-columns:1fr}}
+@media(max-width:850px){body:not(.product-frame) main{grid-template-columns:1fr}}
+
 </style>
 
 <meta name="theme-color" content="#14497a">

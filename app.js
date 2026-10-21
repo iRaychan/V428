@@ -346,7 +346,10 @@ function cacheSecureQuotes(rows){const deduped=dedupeQuotationRows(rows);secureQ
 function isMissingRpc(error,name){const text=String(error?.message||error||'').toLowerCase();return text.includes(String(name||'').toLowerCase())&&(text.includes('not found')||text.includes('does not exist')||text.includes('schema cache'))}
 async function rpcSaveQuotation(client,payload){
  const companyId=currentCompanyId();
- let result=await client.rpc('keysuite_save_quotation_v409',{p_company_id:companyId,p_quotation:payload});
+ let result=await client.rpc('keysuite_save_quotation_v42915',{p_company_id:companyId,p_quotation:payload});
+ if(result.error&&isMissingRpc(result.error,'keysuite_save_quotation_v42915')){
+  result=await client.rpc('keysuite_save_quotation_v409',{p_company_id:companyId,p_quotation:payload});
+ }
  if(result.error&&isMissingRpc(result.error,'keysuite_save_quotation_v409')){
   result=await client.rpc('keysuite_save_quotation_v40805',{p_quotation:payload});
   if(result.error&&isMissingRpc(result.error,'keysuite_save_quotation_v40805'))result=await client.rpc('keysuite_save_quotation_v40803',{p_quotation:payload});
@@ -357,7 +360,12 @@ async function rpcSaveQuotation(client,payload){
 async function saveQuoteRemote(q,{quiet=false}={}){
  const client=quotationClient();if(!client||quotationSyncMode!=='supabase')return q;
  const payload=remoteQuotePayload(q),result=await rpcSaveQuotation(client,payload);if(result.error)throw result.error;
- let saved={...normalizeRemoteQuote((Array.isArray(result.data)?result.data[0]:result.data)||payload),id:payload.id,no:payload.no};
+ const response=Array.isArray(result.data)?result.data[0]:result.data;
+ if(response?.status==='conflict'){
+  const error=new Error('Quotation number has already been used.');error.code='quotation_number_conflict';error.attemptedReference=response.attempted_reference||payload.no;error.nextReference=response.next_reference||'';throw error;
+ }
+ const savedPayload=response?.status==='saved'?(response.saved||payload):(response||payload);
+ let saved={...normalizeRemoteQuote(savedPayload),id:payload.id,no:payload.no};
  // Re-read secure history after a save so remoteStorageId is taken from the actual database row,
  // while the logical quotation ID remains the exact ID of the version that was saved.
  try{
@@ -621,7 +629,9 @@ function ensureQuotationPricingContext(action='continue'){
 function quotationPricingSourceError(row){
  if(!row?.dataset?.pricingSource)return '';
  let source={};try{source=JSON.parse(row.dataset.pricingSource||'{}')}catch(_){return 'Cannot quote: Pricing source data is invalid.'}
- return window.KeySuitePricing?.pricingSourceBlockReason?.(source)||'';
+ const reason=window.KeySuitePricing?.pricingSourceBlockReason?.(source)||'';
+ if(row.dataset.descriptionManuallyEdited==='true'&&Number(row.querySelector('.item-price')?.value||0)>0&&/^Pump price not found:\s*CHC item\.?$/i.test(reason))return '';
+ return reason;
 }
 function ensureQuotationSourcePricing(action='continue'){
  const rows=[...document.querySelectorAll('.quote-item')];
@@ -654,7 +664,7 @@ function renderStartCustomerMenu(query=''){
  const rows=arr.map(c=>`<button type="button" class="start-customer-option" data-start-customer-id="${esc(c.id)}"><b>${esc(c.company)}</b><small>${esc(c.classification||'Other')}${c.terms!=null?` · ${esc(formatCustomerTerms(c))}`:''}</small></button>`).join('');
  menu.innerHTML=`<div class="start-customer-menu-title">${esc(title)}</div>${rows||'<div class="start-customer-empty">No matching customer.</div>'}<button type="button" class="start-new-customer" id="startNewCustomerMenu">+ New Customer</button>`;
  menu.hidden=false;
- menu.querySelectorAll('[data-start-customer-id]').forEach(button=>button.addEventListener('click',()=>{const id=button.dataset.startCustomerId||'';if($('startCustomer'))$('startCustomer').value=id;switchDashboardCustomer(id);closeStartCustomerMenu()}));
+ menu.querySelectorAll('[data-start-customer-id]').forEach(button=>button.addEventListener('click',async()=>{const id=button.dataset.startCustomerId||'';if($('startCustomer'))$('startCustomer').value=id;await switchDashboardCustomer(id);closeStartCustomerMenu()}));
  menu.querySelector('#startNewCustomerMenu')?.addEventListener('click',()=>{closeStartCustomerMenu();showPage('customers');openNewCustomer()});
 }
 function refreshStartContacts(customerId,preferred){
@@ -697,7 +707,7 @@ function applyQuotationCustomerSelection(customerId,{refreshPrices=true}={}){
  syncStartCustomer(id);updateQuotationStateUi();
  return customer;
 }
-function switchDashboardCustomer(customerId){
+async function switchDashboardCustomer(customerId){
  const nextId=String(customerId||''),currentId=String($('qCustomer')?.value||quotationPricingCustomerId||'');
  if(nextId===currentId){syncStartCustomer(nextId);return true}
  if(quoteHasItems()&&!isQuotationSealed()){
@@ -705,7 +715,7 @@ function switchDashboardCustomer(customerId){
    if(!editingQuoteId&&quotationStatus==='new'){
      alert('This new quotation has unsaved items. Save it or remove the items before changing customer.');syncStartCustomer(currentId);return false;
    }
-   if(!saveQuote({silent:true})){syncStartCustomer(currentId);return false}
+   if(!await saveQuote({silent:true})){syncStartCustomer(currentId);return false}
  }
  newQuote();applyQuotationCustomerSelection(nextId);
  const next=customers().find(x=>x.id===nextId);
@@ -774,7 +784,7 @@ function persistQuoteStatus(status,action){
  const arr=quotes(),i=arr.findIndex(q=>q.id===editingQuoteId);if(i<0)return false;
  quotationStatus=status;quotationAudit=quoteAudit(action,{from:arr[i].status||'saved',to:status});arr[i]={...arr[i],status,audit:quotationAudit,sealedAt:status==='sealed'?new Date().toISOString():'',sealedBy:status==='sealed'?currentEmail():'',updatedByEmail:currentEmail(),updatedAt:new Date().toISOString()};if(Array.isArray(secureQuotes))cacheSecureQuotes(arr);else store.set('ks_quotes',arr);saveQuoteRemote(arr[i],{quiet:true}).catch(error=>console.error('Quotation status sync failed',error));refreshAll();updateQuotationStateUi();return true;
 }
-function sealQuotation(){
+async function sealQuotation(){
  if(!editingQuoteId){alert('Save the quotation before sealing it.');return}
  if(!canEditQuotation(true))return;
  if(!ensureQuotationPricingContext('seal this quotation'))return;
@@ -786,7 +796,7 @@ function sealQuotation(){
    const more=unpriced.length>5?`\n…and ${unpriced.length-5} more item${unpriced.length-5===1?'':'s'}.`:'';
    alert(`Every item must have a Unit Price before the quotation can be sealed.\n\nUnpriced item${unpriced.length===1?'':'s'}:\n• ${names}${more}`);return;
  }
- if(!saveQuote({silent:true}))return;persistQuoteStatus('sealed','sealed');alert('Quotation sealed. PDF output is now available.');
+ if(!await saveQuote({silent:true}))return;persistQuoteStatus('sealed','sealed');alert('Quotation sealed. PDF output is now available.');
 }
 function unsealQuotation(){if(!isQuotationSealed())return;persistQuoteStatus('saved','unsealed');alert('Quotation unsealed and editable again. PDF output has been disabled until it is sealed again.')}
 function localCalendarDate(date=new Date()){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,'0'),d=String(date.getDate()).padStart(2,'0');return `${y}-${m}-${d}`}
@@ -927,11 +937,11 @@ function refreshCustomers(){
 }
 
 
-function selectCustomerForQuotation(customerId){
+async function selectCustomerForQuotation(customerId){
  const id=String(customerId||''),c=customers().find(x=>x.id===id);if(!c)return false;
  const currentId=String($('qCustomer')?.value||quotationPricingCustomerId||'');
  if(currentId!==id){
-   if(!switchDashboardCustomer(id))return false;
+   if(!await switchDashboardCustomer(id))return false;
  }else syncStartCustomer(id);
  showCustomerDetail(c.id);refreshCustomerList();return true;
 }
@@ -988,15 +998,16 @@ function updateQuotationContactInfo(){
 function quoteItemRow(data={}){
  const wrap=document.createElement('div');wrap.className='quote-item collapsed';wrap.draggable=false;wrap.dataset.quoteUnit=normalizeQuoteUnit(data.unit);const couplingItem=isCouplingQuoteData(data),motorItem=!couplingItem&&isMotorQuoteData(data),noCapacityItem=!couplingItem&&(motorItem||isNoCapacityQuoteData(data)),family=quoteProductFamily(data);wrap.dataset.quoteKind=couplingItem?'coupling':motorItem?'motor':noCapacityItem?'static':'standard';if(family)wrap.dataset.quoteFamily=family;
  if(data.pumpData)wrap.dataset.pumpData=JSON.stringify(data.pumpData);if(data.pricingSource)wrap.dataset.pricingSource=typeof data.pricingSource==='string'?data.pricingSource:JSON.stringify(data.pricingSource);if(data.couplingData)wrap.dataset.couplingData=JSON.stringify(data.couplingData);if(data.motorData)wrap.dataset.motorData=JSON.stringify(data.motorData);
+ if(data.descriptionManuallyEdited)wrap.dataset.descriptionManuallyEdited='true';
  const savedRemark=String(data.internalRemark??data.remark??'').trim();if(savedRemark)wrap.dataset.internalRemark=savedRemark;
  const normalizedDescription=normalizeDescriptionIndentation(data.description||''),rawDescription=motorItem?normalizedDescription:stripQuotationBrand(normalizedDescription),capacityState=capacityStateFromData(data,rawDescription),shaftState=shaftStateFromData(data,rawDescription),description=couplingItem?shaftText(rawDescription,shaftState):motorItem?normalizeMotorQuotationDescription(rawDescription):capacityText(rawDescription,capacityState),baseModel=couplingItem?normalizeCouplingQuoteModel(data.model||'',data):stripQuotationBrand(data.model||''),cleanModel=(!couplingItem&&!noCapacityItem)?capacityModelText(baseModel,capacityState):baseModel;
  const infoRow=couplingItem?`<div class="quote-capacity-row quote-shaft-row no-print"><label class="quote-capacity-toggle"><input class="item-display-shaft" type="checkbox" ${shaftState.displayShaftInfo?'checked':''}> Display Shaft Information</label><div><label>Pump Shaft (mm)</label><input class="item-pump-shaft" type="number" min="0" step="any" value="${esc(shaftState.pumpShaft)}"></div><div><label>Motor Shaft (mm)</label><input class="item-motor-shaft" type="number" min="0" step="any" value="${esc(shaftState.motorShaft)}"></div><div><label>Motor Pole</label><select class="item-motor-pole">${[2,4,6,8].map(pole=>`<option value="${pole}" ${Number(shaftState.motorPole)===pole?'selected':''}>${pole} Pole · ${motorSpeedForPole(pole).toLocaleString('en-MY')} rpm</option>`).join('')}</select></div></div>`:noCapacityItem?'':`<div class="quote-capacity-row no-print"><label class="quote-capacity-toggle"><input class="item-display-capacity" type="checkbox" ${capacityState.displayCapacity?'checked':''}> Display Capacity</label><div><label>Capacity</label><div class="capacity-input-pair"><input class="item-capacity-value" type="number" min="0" step="any" value="${esc(capacityState.capacityValue)}"><select class="item-capacity-unit">${capacityOptions(CAPACITY_UNITS,capacityState.capacityUnit)}</select></div></div><span class="capacity-at">@</span><div><label>Head</label><div class="capacity-input-pair"><input class="item-head-value" type="number" min="0" step="any" value="${esc(capacityState.headValue)}"><select class="item-head-unit">${capacityOptions(HEAD_UNITS,capacityState.headUnit)}</select></div></div></div>`;
  wrap.innerHTML=`<div class="quote-item-head"><button type="button" class="item-status-indicator no-print" aria-label="Item status" data-tooltip="Checking item..."></button><span class="item-remark-indicator no-print" aria-hidden="true"></span><span class="drag-handle no-print" draggable="true" role="button" tabindex="0" aria-label="Drag item to reorder" title="Drag to reorder">☰</span><button type="button" class="collapse-item no-print" title="Expand item">▼</button><b>Item #<span class="item-number"></span></b><span class="item-summary-model">${esc(cleanModel||'New Item')}</span><span class="item-summary-qty">Qty: ${printQty(data.qty??1,data.unit)}</span><span class="item-summary-total">RM 0.00</span></div><div class="quote-item-body"><div class="quote-item-grid"><div><label>Model / Item</label><input class="item-model" list="quotationModelItemOptions" value="${esc(cleanModel)}"></div><div><label>Quantity</label><input class="item-qty" type="number" min="1" value="${data.qty??1}"></div><div><label>Unit Price (RM)</label><input class="item-price" type="number" min="0" step="0.01" value="${data.unitPrice??0}"></div></div>${infoRow}<div style="margin-top:12px"><label>Description</label><textarea class="item-description">${esc(description)}</textarea></div><div class="quote-total" style="margin-top:10px;font-size:16px">Item Total: <span class="item-total">RM 0.00</span></div><div class="item-body-actions no-print"><button type="button" class="btn secondary duplicate-quote-item" title="Duplicate">Copy</button><button type="button" class="btn secondary remark-quote-item" title="Add internal remarks">Remarks</button><button type="button" class="btn danger remove-quote-item" title="Delete">Delete</button></div></div>`;
- $('quoteItems').appendChild(wrap);const toggle=()=>{wrap.classList.toggle('collapsed');wrap.querySelector('.collapse-item').textContent=wrap.classList.contains('collapsed')?'▼':'▲';wrap.querySelector('.collapse-item').title=wrap.classList.contains('collapsed')?'Expand item':'Collapse item'};wrap.querySelector('.collapse-item').onclick=toggle;wrap.querySelector('.remove-quote-item').onclick=()=>{if(!canEditQuotation(true))return;wrap.remove();renumberQuoteItems();calcTotal();updateQuotationStateUi()};wrap.querySelector('.duplicate-quote-item').onclick=()=>{if(!canEditQuotation(true))return;const d=getQuoteItemData(wrap);const copy=quoteItemRow(d);wrap.after(copy);renumberQuoteItems();calcTotal();updateQuotationStateUi()};wrap.querySelector('.remark-quote-item').onclick=()=>openItemRemark(wrap);wrap.querySelector('.item-price')?.addEventListener('input',()=>{delete wrap.dataset.pricingSource});
+ $('quoteItems').appendChild(wrap);const toggle=()=>{wrap.classList.toggle('collapsed');wrap.querySelector('.collapse-item').textContent=wrap.classList.contains('collapsed')?'▼':'▲';wrap.querySelector('.collapse-item').title=wrap.classList.contains('collapsed')?'Expand item':'Collapse item'};wrap.querySelector('.collapse-item').onclick=toggle;wrap.querySelector('.remove-quote-item').onclick=()=>{if(!canEditQuotation(true))return;wrap.remove();renumberQuoteItems();calcTotal();updateQuotationStateUi()};wrap.querySelector('.duplicate-quote-item').onclick=()=>{if(!canEditQuotation(true))return;const d=getQuoteItemData(wrap);const copy=quoteItemRow(d);wrap.after(copy);renumberQuoteItems();calcTotal();updateQuotationStateUi()};wrap.querySelector('.remark-quote-item').onclick=()=>openItemRemark(wrap);wrap.querySelector('.item-price')?.addEventListener('input',()=>{delete wrap.dataset.pricingSource});wrap.querySelector('.item-description')?.addEventListener('input',event=>{if(event.isTrusted)wrap.dataset.descriptionManuallyEdited='true'});
  if(couplingItem){wrap.querySelector('.item-display-shaft')?.addEventListener('change',()=>syncQuoteShaftDescription(wrap));wrap.querySelectorAll('.item-pump-shaft,.item-motor-shaft').forEach(control=>control.addEventListener('input',()=>syncQuoteShaftDescription(wrap)));wrap.querySelector('.item-motor-pole')?.addEventListener('change',()=>syncQuoteShaftDescription(wrap));wrap.querySelector('.item-model')?.addEventListener('input',()=>updateQuoteShaftWarnings(wrap));setQuoteShaftEnabled(wrap)}else if(!noCapacityItem){wrap.querySelector('.item-display-capacity')?.addEventListener('change',()=>syncQuoteCapacityDescription(wrap));wrap.querySelectorAll('.item-capacity-value,.item-head-value').forEach(control=>control.addEventListener('input',()=>syncQuoteCapacityDescription(wrap)));wrap.querySelectorAll('.item-capacity-unit,.item-head-unit').forEach(control=>control.addEventListener('change',()=>syncQuoteCapacityDescription(wrap)));setQuoteCapacityEnabled(wrap)}
  wrap.querySelectorAll('input,textarea').forEach(x=>x.addEventListener('input',()=>{calcTotal();refreshItemExportButtons();updateQuotePageIndicators()}));const dragHandle=wrap.querySelector('.drag-handle');dragHandle.addEventListener('dragstart',e=>{if(!canEditQuotation()){e.preventDefault();return}wrap.classList.add('is-dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','quote-item')});dragHandle.addEventListener('dragend',()=>{wrap.classList.remove('is-dragging');document.querySelectorAll('.quote-item').forEach(x=>x.classList.remove('drag-over'));renumberQuoteItems();calcTotal()});wrap.addEventListener('dragover',e=>{e.preventDefault();if(!wrap.classList.contains('is-dragging'))wrap.classList.add('drag-over')});wrap.addEventListener('dragleave',()=>wrap.classList.remove('drag-over'));wrap.addEventListener('drop',e=>{e.preventDefault();wrap.classList.remove('drag-over');const moving=document.querySelector('.quote-item.is-dragging');if(!moving||moving===wrap)return;const rect=wrap.getBoundingClientRect();wrap.parentNode.insertBefore(moving,e.clientY<rect.top+rect.height/2?wrap:wrap.nextSibling)});syncItemRemarkUi(wrap);renumberQuoteItems();calcTotal();return wrap;
 }
-function getQuoteItemData(r){const coupling=r.dataset.quoteKind==='coupling',motor=r.dataset.quoteKind==='motor',staticItem=r.dataset.quoteKind==='static',rawModel=stripQuotationBrand(r.querySelector('.item-model').value.trim()),base={model:rawModel,qty:+r.querySelector('.item-qty').value||0,unit:normalizeQuoteUnit(r.dataset.quoteUnit),unitPrice:+r.querySelector('.item-price').value||0,internalRemark:String(r.dataset.internalRemark||'').trim(),pumpData:r.dataset.pumpData?JSON.parse(r.dataset.pumpData):null,motorData:r.dataset.motorData?JSON.parse(r.dataset.motorData):null,pricingSource:r.dataset.pricingSource?JSON.parse(r.dataset.pricingSource):null,couplingData:r.dataset.couplingData?JSON.parse(r.dataset.couplingData):null};if(coupling){const shaftInfo=quoteShaftState(r);return {...base,model:normalizeCouplingQuoteModel(base.model,{...base,couplingData:base.couplingData}),isCoupling:true,productFamily:'COUPLING',shaftInfo,description:normalizeDescriptionIndentation(shaftText(r.querySelector('.item-description').value,shaftInfo)).trim()}}if(motor)return {...base,isMotor:true,productFamily:'MOTOR',description:normalizeDescriptionIndentation(normalizeMotorQuotationDescription(r.querySelector('.item-description').value)).trim()};if(staticItem)return {...base,productFamily:r.dataset.quoteFamily||quoteProductFamily(base),description:normalizeDescriptionIndentation(stripCapacityDescription(stripQuotationBrand(r.querySelector('.item-description').value))).trim()};const capacity=quoteCapacityState(r);return {...base,model:splitCapacityModel(rawModel).base,description:normalizeDescriptionIndentation(capacityText(stripQuotationBrand(r.querySelector('.item-description').value),capacity)).trim(),...capacity}}
+function getQuoteItemData(r){const coupling=r.dataset.quoteKind==='coupling',motor=r.dataset.quoteKind==='motor',staticItem=r.dataset.quoteKind==='static',rawModel=stripQuotationBrand(r.querySelector('.item-model').value.trim()),base={model:rawModel,qty:+r.querySelector('.item-qty').value||0,unit:normalizeQuoteUnit(r.dataset.quoteUnit),unitPrice:+r.querySelector('.item-price').value||0,internalRemark:String(r.dataset.internalRemark||'').trim(),descriptionManuallyEdited:r.dataset.descriptionManuallyEdited==='true',pumpData:r.dataset.pumpData?JSON.parse(r.dataset.pumpData):null,motorData:r.dataset.motorData?JSON.parse(r.dataset.motorData):null,pricingSource:r.dataset.pricingSource?JSON.parse(r.dataset.pricingSource):null,couplingData:r.dataset.couplingData?JSON.parse(r.dataset.couplingData):null};if(coupling){const shaftInfo=quoteShaftState(r);return {...base,model:normalizeCouplingQuoteModel(base.model,{...base,couplingData:base.couplingData}),isCoupling:true,productFamily:'COUPLING',shaftInfo,description:normalizeDescriptionIndentation(shaftText(r.querySelector('.item-description').value,shaftInfo)).trim()}}if(motor)return {...base,isMotor:true,productFamily:'MOTOR',description:normalizeDescriptionIndentation(normalizeMotorQuotationDescription(r.querySelector('.item-description').value)).trim()};if(staticItem)return {...base,productFamily:r.dataset.quoteFamily||quoteProductFamily(base),description:normalizeDescriptionIndentation(stripCapacityDescription(stripQuotationBrand(r.querySelector('.item-description').value))).trim()};const capacity=quoteCapacityState(r);return {...base,model:splitCapacityModel(rawModel).base,description:normalizeDescriptionIndentation(capacityText(stripQuotationBrand(r.querySelector('.item-description').value),capacity)).trim(),...capacity}}
 
 function renumberQuoteItems(){[...document.querySelectorAll('.quote-item')].forEach((r,i)=>r.querySelector('.item-number').textContent=i+1);refreshItemExportButtons()}
 
@@ -1191,7 +1202,7 @@ function validateQuoteNoForSave(options={}){
  const month=Number(parsed.yymm.slice(2));if(month<1||month>12)throw new Error('Quotation YYMM must contain a valid month from 01 to 12.');
  if(Number(parsed.running)<1)throw new Error('Quotation running number must be from 0001 to 9999.');
  const expected=String(lockedQuotePrefix||assignedQuotationPrefix()).toUpperCase();if(!expected||parsed.prefix!==expected)throw new Error('The quotation prefix is assigned by the Owner and cannot be amended.');
- const formatted=formatQuoteNo(parsed),formattedKey=canonicalQuotationNumber(formatted),currentKey=canonicalQuotationNumber(currentQuote()?.no),duplicate=quotes().some(row=>canonicalQuotationNumber(row.no)===formattedKey&&String(row.id)!==String(editingQuoteId||''));if(duplicate&&formattedKey!==currentKey)throw new Error(`Quotation number ${formatted} already exists.`);
+ const formatted=formatQuoteNo(parsed),formattedKey=canonicalQuotationNumber(formatted),currentKey=canonicalQuotationNumber(currentQuote()?.no),duplicate=quotes().some(row=>canonicalQuotationNumber(row.no)===formattedKey&&String(row.id)!==String(editingQuoteId||''));if(quotationSyncMode!=='supabase'&&duplicate&&formattedKey!==currentKey)throw new Error(`Quotation number ${formatted} already exists.`);
  if($('quoteNo'))$('quoteNo').value=formatted;return formatted;
 }
 function highestLocalRunning(year){
@@ -1246,6 +1257,7 @@ function calcTotal(){
   else if(pricingError){status='error';error++;tooltip=`RED — PRICING BLOCKED\n${pricingError}`;}
   else if(price<=0){status='error';error++;tooltip='RED — PRICE REQUIRED\nThis draft can be saved.\nEnter a Unit Price before sealing the quotation.';}
   else if(!description){status='warning';warning++;tooltip='YELLOW — WARNING\nDescription is empty.\nThe quotation can be sealed, but please review this item.';}
+  else if(r.dataset.descriptionManuallyEdited==='true'){status='warning';warning++;tooltip='YELLOW — MANUALLY EDITED\nDescription was amended manually.\nPricing is retained and the quotation can be sealed after review.';}
   else{status='complete';complete++;tooltip='GREEN — COMPLETE\nModel, quantity, price and description are ready.\nReady to seal and export.';}
   r.classList.add(`status-${status}`);const indicator=r.querySelector('.item-status-indicator');if(indicator){indicator.dataset.tooltip=tooltip;indicator.setAttribute('aria-label',tooltip.replace(/\n/g,' — '));}
   total+=itemTotal;
@@ -1259,7 +1271,7 @@ function applyQuotationTemplateDefaults(snapshot,force=false){
  const set=(id,value)=>{const node=$(id);if(node&&value!=null&&String(value).trim()!=='')node.value=String(value)};
  set('delivery',settings.delivery);set('payment',settings.payment);set('validity',settings.validity);set('priceBasis',settings.priceBasis);return true
 }
-function saveQuote(options={}){
+async function saveQuote(options={}){
  if(isQuotationSealed()){if(!options.silent)alert('This quotation is Sealed and cannot be saved.');return false}
  if(!ensureQuotationPricingContext('save this quotation'))return false;
  const isFirstSave=!editingQuoteId&&quotationStatus==='new';
@@ -1280,12 +1292,25 @@ function saveQuote(options={}){
   project:$('project').value,project2:'',customerReference:$('customerReference').value,delivery:$('delivery').value,delivery2:$('delivery2').value,validity:$('validity').value,priceBasis:$('priceBasis').value,payment:$('payment').value,remarks:$('remarks').value,total:calcTotal(),
   createdByEmail:existing?.createdByEmail||currentEmail(),createdByName:existing?.createdByName||currentProfile().display_name||currentEmail(),updatedByEmail:currentEmail(),createdAt:existing?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()
  };
- let arr=quotes().slice(),i=arr.findIndex(x=>String(x.id)===String(q.id));if(i>=0)arr[i]=q;else{arr=arr.filter(x=>canonicalQuotationNumber(x.no)!==canonicalQuotationNumber(q.no));arr.unshift(q)}if(Array.isArray(secureQuotes))cacheSecureQuotes(arr);else store.set('ks_quotes',arr);
- saveQuoteRemote(q).then(()=>{
-  // V4.08.08: only the first successful secure save consumes/synchronizes the base running number.
-  if(isFirstSave)window.KeySuiteQuotationReferences?.registerUsed?.(quotationNo).catch(error=>console.warn('Quotation running number could not be synchronized.',error));
- }).catch(error=>{console.error(error);quotationSyncError=String(error?.message||error);renderQuotationHistoryNotice();if(!options.silent)alert(`Quotation was saved on this device, but secure history sync failed: ${error.message||error}`)});
- editingQuoteId=q.id;quotationStatus=q.status||'saved';quotationPricingCustomerId=q.pricingCustomerId;quotationPricingCustomerSnapshot=customerSnapshot(q.pricingCustomerSnapshot);setQuoteNoValue(q.no);refreshAll();updateQuotationStateUi();if(!options.silent)alert(`${q.documentType} saved.`);return true
+ let remoteSaved=q;
+ try{
+  remoteSaved=await saveQuoteRemote(q);
+ }catch(error){
+  console.error(error);quotationSyncError=String(error?.message||error);renderQuotationHistoryNotice();
+  if(error?.code==='quotation_number_conflict'){
+   const attempted=parseQuoteNo(error.attemptedReference||quotationNo),next=parseQuoteNo(error.nextReference||'');
+   const attemptedDigits=String(attempted?.running||String(error.attemptedReference||quotationNo).match(/(\d{1,4})(?!.*\d)/)?.[1]||'0').padStart(4,'0').slice(-4);
+   const nextDigits=String(next?.running||String(error.nextReference||'').match(/(\d{1,4})(?!.*\d)/)?.[1]||'0').padStart(4,'0').slice(-4);
+   if(error.nextReference){setQuoteNoValue(error.nextReference);quotationReferenceAllocated=true}
+   alert(`Quotation number ${attemptedDigits} has already been used.\nThe number has been updated to ${nextDigits}. Please save again.`);return false;
+  }
+  alert(`Quotation could not be saved to secure history: ${error.message||error}`);return false;
+ }
+ const committed={...q,...(remoteSaved?.remoteStorageId?{remoteStorageId:remoteSaved.remoteStorageId}:{})};
+ let arr=quotes().slice(),i=arr.findIndex(x=>String(x.id)===String(committed.id));if(i>=0)arr[i]=committed;else{arr=arr.filter(x=>canonicalQuotationNumber(x.no)!==canonicalQuotationNumber(committed.no));arr.unshift(committed)}if(Array.isArray(secureQuotes))cacheSecureQuotes(arr);else store.set('ks_quotes',arr);
+ // The V4.29.15 save RPC claims the number atomically. This call also keeps older installations synchronized during a staged deployment.
+ if(isFirstSave)window.KeySuiteQuotationReferences?.registerUsed?.(quotationNo).catch(error=>console.warn('Quotation running number could not be synchronized.',error));
+ editingQuoteId=committed.id;quotationStatus=committed.status||'saved';quotationPricingCustomerId=committed.pricingCustomerId;quotationPricingCustomerSnapshot=customerSnapshot(committed.pricingCustomerSnapshot);setQuoteNoValue(committed.no);refreshAll();updateQuotationStateUi();if(!options.silent)alert(`${committed.documentType} saved.`);return true
 }
 function loadQuote(id){
  const q=quotes().find(x=>x.id===id);if(!q)return;quotationSessionId=q.assemblySessionId||`quote:${id}`;window.KeySuiteAssembly?.resetForNewQuotation?.();editingQuoteId=id;quotationStatus=q.status||'saved';quotationRevisionOf=q.revisionOf||'';quotationRevisionRootId=q.revisionRootId||'';quotationRevisionNumber=Number(q.revisionNumber||0);quotationAudit=Array.isArray(q.audit)?q.audit:[];
@@ -1413,7 +1438,7 @@ function chcAssemblyQuoteItem(p={}){
  const frequencyText=enhanced?'60Hz':`${formatDutyNumber(Number(p.frequency_hz||50),1)}Hz`;
  const motorLine=`c/w\t${hp||'-'}HP 2Pole ${p.motor_efficiency_class||'IE3'} Motor (${p.motor_voltage||415}V / ${p.motor_phase||'3Ph'} / ${frequencyText})`;
  const materialLine=`${material} / ${chcSealDescription(seal,elastomer)}`;
- const dutyText=!p.product_mode&&hasDutyPoint(p)?quotationDutyText(p):'';
+ const dutyText=hasDutyPoint(p)?quotationDutyText(p):'';
  const modelDutyText=dutyText;
  const description=[dutyText?`Capacity: ${dutyText}`:'',`B.G.Reich Vertical Multistage Pump Model: ${displayQuotationModel||'-'}`,bare?'(Bare shaft pump only)':motorLine,`Suction & Discharge: ${suctionDischarge}`,`Material: ${materialLine}`].filter(Boolean).join('\n');
  return {model:displayQuotationModel,pricingModel:quotationModel,description};
@@ -1568,7 +1593,7 @@ window.addEventListener('message',function(event){
  const frequencyText=enhanced?'60Hz':`${formatDutyNumber(Number(p.frequency_hz||50),1)}Hz`;
  const motorLine=`c/w\t${hp||'-'}HP 2Pole ${p.motor_efficiency_class||'IE3'} Motor (${p.motor_voltage||415}V / ${p.motor_phase||'3Ph'} / ${frequencyText})`;
  const materialLine=`${material} / ${chcSealDescription(seal,elastomer)}`;
- const dutyText=!p.product_mode&&hasDutyPoint(p)?quotationDutyText(p):'';
+ const dutyText=hasDutyPoint(p)?quotationDutyText(p):'';
  const modelDutyText=dutyText;
  const itemModel=[displayQuotationModel,modelDutyText].filter(Boolean).join(' — ');
  const lines=[
@@ -1581,11 +1606,6 @@ window.addEventListener('message',function(event){
  const pricedSelection=window.KeySuitePricing?.findPrice?.(quotationModel,{seal,elastomer,keysuite_seal:seal,keysuite_elastomer:elastomer,generation_code:p.generation_code,motor_hp:Number(p.motor_hp||0),motor_kw:Number(p.motor_kw||0),pole:Number(p.pole||2),motor_efficiency_class:p.motor_efficiency_class,bareShaft:bare});
  if(!pricedSelection){alert(window.KeySuitePricing?.chcPriceProblem?.(quotationModel,{generation_code:p.generation_code,motor_hp:Number(p.motor_hp||0),motor_kw:Number(p.motor_kw||0),pole:Number(p.pole||2),motor_efficiency_class:p.motor_efficiency_class,bareShaft:bare})||`Pump price not found: ${quotationModel}.`);return}
  if(!window.KeySuitePricing?.ensureQuoteableCalculation?.(pricedSelection?.calc,quotationModel))return;
- const motorReplacement=pricedSelection.calc?.motorReplacement;
- if(motorReplacement&&!motorReplacement.bareShaft){
-   const adjustment=Number(motorReplacement.priceAdjustmentFinal||0),sign=adjustment>=0?'+':'−';
-   lines.splice(2,0,`Motor price adjustment: ${motorReplacement.includedEfficiency} → ${motorReplacement.selectedEfficiency} (${sign}RM ${Math.abs(adjustment).toFixed(2)})`);
- }
  const rows=[...document.querySelectorAll('.quote-item')];
  const empty=rows.length===1&&!rows[0].querySelector('.item-model').value&&!rows[0].querySelector('.item-description').value&&!+rows[0].querySelector('.item-price').value;
  const row=empty?rows[0]:quoteItemRow({});
