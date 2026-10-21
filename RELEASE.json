@@ -1,15 +1,15 @@
 {
-  "version": "4.29.13",
-  "baseline": "4.29.12",
-  "upgrade_supported_from": "4.29.12",
+  "version": "4.29.14",
+  "baseline": "4.29.13",
+  "upgrade_supported_from": "4.29.13",
   "changes": [
-    "adds embedded KeyHQ between KeyBot and KeyCore",
-    "applies and displays CHC motor-efficiency price adjustments",
-    "blocks silent same-price higher-efficiency motor upgrades",
-    "retains all V4.29.12 CR assignment behavior",
-    "visible version is V4.29.13"
+    "calculates CHC motor substitutions as existing pump minus included motor final plus replacement motor final",
+    "retains the motor-adjusted unit price through the Brand pricing pass",
+    "shows Smartech CHC 8-4 IE2-to-IE4 as RM2,090 with a RM340 adjustment",
+    "retains all V4.29.13 KeyHQ and pricing behavior",
+    "visible version is V4.29.14"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upload the V4.29.13 website files to GitHub. No Supabase database migration or Edge Function redeployment is required."
+  "notes": "Upload the V4.29.14 website files to GitHub. No Supabase database migration or Edge Function redeployment is required."
 }

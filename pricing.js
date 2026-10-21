@@ -342,6 +342,9 @@
   const positivePrice=(book,currency,key)=>{const value=Number(book?.[currency]?.[key]);return Number.isFinite(value)&&value>0?value:null};
   const normalizedEfficiency=value=>{const m=String(value||'').trim().toUpperCase().replace(/\s+/g,'').match(/^IE([1-5])$/);return m?`IE${m[1]}`:''};
   const efficiencyRank=value=>Number((normalizedEfficiency(value).match(/\d+/)||[])[0]||0);
+  function motorCalculationSnapshot(calc={}){
+    return {fixed_price:!!calc.fixedPrice,rarity:calc.rarity,base_myr:Number(calc.baseMyr||0),margin:Number(calc.margin||0),normal:Number(calc.normal||0),rare:Number(calc.rare||0),transport:Number(calc.transport||0),commission:Number(calc.commission||0),set_discount:Number(calc.setDiscount||0),final_discount:Number(calc.finalDiscount||0),include_commission:calc.includeCommission!==false,include_set_discount:calc.includeSetDiscount!==false,include_final_discount:calc.includeFinalDiscount!==false,include_fuel_charge:calc.includeFuelCharge!==false,fuel_charge:Number(calc.fuelCharge||0),unrounded_price:Number(calc.unroundedPrice||0),calculated_price:Number(calc.finalPrice||0)};
+  }
   function motorMatchesSpec(product,{hp,kw,pole,efficiency}){
     const hpMatch=Number(hp)>0&&Math.abs(Number(product?.hp||0)-Number(hp))<.001;
     const kwMatch=Number(kw)>0&&Math.abs(Number(product?.kw??product?.motor_kw??0)-Number(kw))<.001;
@@ -366,10 +369,14 @@
     // with the MOTOR pricing rule.
     const pricedMotor=(efficiency)=>{const product=exactPricedMotor({hp,kw,pole,efficiency});if(!product)return null;const motorCalc=calculatePrice(motorProductPriceBook(product),'MOTOR',cat,'MOTOR',{...options,customer,rarityBook:motorProductRarityBook(product),rarity:product.rarity||'common'});return motorCalc?{product,calc:motorCalc}:null},includedMatch=pricedMotor(included),replacementMatch=pricedMotor(selected);if(!includedMatch||!replacementMatch)return null;
     const includedMotor=includedMatch.product,replacementMotor=replacementMatch.product,includedCalc=includedMatch.calc,replacementCalc=replacementMatch.calc;
-    const includedMotorRawPriceMyr=Number(includedCalc.baseMyr||0),replacementMotorRawPriceMyr=bareShaft?0:Number(replacementCalc.baseMyr||0),replacementMotorQuotedPrice=bareShaft?0:Number(replacementCalc.finalPrice||0),preMotorReplacementPrice=Number(calc.finalPrice||0);
+    const includedMotorRawPriceMyr=Number(includedCalc.baseMyr||0),includedMotorQuotedPrice=Number(includedCalc.finalPrice||0),replacementMotorRawPriceMyr=bareShaft?0:Number(replacementCalc.baseMyr||0),replacementMotorQuotedPrice=bareShaft?0:Number(replacementCalc.finalPrice||0),preMotorReplacementPrice=Number(calc.finalPrice||0);
     const higherEfficiency=!bareShaft&&efficiencyRank(selected)>efficiencyRank(included);
     const sameOrLowerSourcePrice=higherEfficiency&&replacementMotorRawPriceMyr<=includedMotorRawPriceMyr+1e-9;
-    const priceAdjustmentBeforeRounding=replacementMotorQuotedPrice-includedMotorRawPriceMyr,unrounded=Math.max(0,preMotorReplacementPrice+priceAdjustmentBeforeRounding);
+    // Complete-pump motor substitutions use like-for-like quoted motor values:
+    // existing pump quote - included motor final + replacement motor final.
+    // Bare-shaft pricing retains the historic raw-cost deduction.
+    const includedMotorDeduction=bareShaft?includedMotorRawPriceMyr:includedMotorQuotedPrice;
+    const priceAdjustmentBeforeRounding=replacementMotorQuotedPrice-includedMotorDeduction,unrounded=Math.max(0,preMotorReplacementPrice+priceAdjustmentBeforeRounding);
     let finalPrice=roundUp10(unrounded),minimumUpgradeStepApplied=false;
     // A genuine higher-efficiency motor with a higher source cost must create a
     // visible quotation change even when both totals land in the same RM10 band.
@@ -377,7 +384,7 @@
     const motorPricingError=sameOrLowerSourcePrice
       ?`Cannot quote: ${selected} motor ${replacementMotor.model} does not have a higher source price than included ${included} motor ${includedMotor.model}. Update the Motor Price List before quoting this efficiency upgrade.`
       :'';
-    return {...calc,...(motorPricingError?{motorPricingError}:{}),preMotorReplacementPrice,motorReplacement:{bareShaft,includedEfficiency:included,selectedEfficiency:bareShaft?'':selected,requestedHp:hp,requestedKw:kw,pole,includedMotorId:includedMotor.id,includedMotorModel:includedMotor.model,includedMotorHp:Number(includedMotor.hp||0),includedMotorRawPriceMyr,replacementMotorId:bareShaft?'':replacementMotor.id,replacementMotorModel:bareShaft?'':replacementMotor.model,replacementMotorHp:bareShaft?0:Number(replacementMotor.hp||0),replacementMotorRawPriceMyr,replacementMotorQuotedPrice,priceAdjustmentBeforeRounding,priceAdjustmentFinal:finalPrice-preMotorReplacementPrice,minimumUpgradeStepApplied,unroundedPrice:unrounded},unroundedPrice:unrounded,finalPrice};
+    return {...calc,...(motorPricingError?{motorPricingError}:{}),preMotorReplacementPrice,motorReplacement:{bareShaft,includedEfficiency:included,selectedEfficiency:bareShaft?'':selected,requestedHp:hp,requestedKw:kw,pole,includedMotorId:includedMotor.id,includedMotorModel:includedMotor.model,includedMotorHp:Number(includedMotor.hp||0),includedMotorRawPriceMyr,includedMotorQuotedPrice,includedMotorDeduction,includedMotorPricingSource:motorCalculationSnapshot(includedCalc),replacementMotorId:bareShaft?'':replacementMotor.id,replacementMotorModel:bareShaft?'':replacementMotor.model,replacementMotorHp:bareShaft?0:Number(replacementMotor.hp||0),replacementMotorRawPriceMyr,replacementMotorQuotedPrice,replacementMotorPricingSource:bareShaft?null:motorCalculationSnapshot(replacementCalc),priceAdjustmentBeforeRounding,priceAdjustmentFinal:finalPrice-preMotorReplacementPrice,minimumUpgradeStepApplied,unroundedPrice:unrounded},unroundedPrice:unrounded,finalPrice};
   }
   function pumpDefaultMotorEfficiency(hp,normal){const value=Number(hp||0);return value>0&&value<=0.75+1e-9?'IE1':String(normal||'IE3').toUpperCase()}
 

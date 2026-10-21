@@ -418,7 +418,21 @@
     const afterSet=source?.include_set_discount===false?afterCommission:afterCommission/(1-safe(source?.set_discount));
     const beforeFuel=source?.include_final_discount===false?afterSet:afterSet/(1-safe(source?.final_discount));
     const fuel=source?.include_fuel_charge===false?0:num(source?.fuel_charge,0),unrounded=beforeFuel+fuel;
-    return {withTransport,afterBrand,unrounded,final:roundUp10(unrounded)};
+    const baseResult={withTransport,afterBrand,unrounded,final:roundUp10(unrounded)};
+    const motorReplacement=source?.motor_replacement;
+    if(!motorReplacement||motorReplacement.bareShaft)return baseResult;
+    const includedSource=motorReplacement.includedMotorPricingSource||motorReplacement.included_motor_pricing_source;
+    const replacementSource=motorReplacement.replacementMotorPricingSource||motorReplacement.replacement_motor_pricing_source;
+    if(includedSource&&replacementSource){
+      const included=calculateWithBrandMargin(includedSource,brandMargin),replacement=calculateWithBrandMargin(replacementSource,brandMargin);
+      const replacementUnrounded=Math.max(0,baseResult.final-included.final+replacement.final);
+      return {...baseResult,motorIncludedFinal:included.final,motorReplacementFinal:replacement.final,unrounded:replacementUnrounded,final:roundUp10(replacementUnrounded)};
+    }
+    // Compatibility for V4.29.13 snapshots: retain their recorded motor delta
+    // instead of discarding it and restoring the unmodified pump price.
+    const legacyAdjustment=num(motorReplacement.priceAdjustmentFinal??motorReplacement.price_adjustment_final,0);
+    const replacementUnrounded=Math.max(0,baseResult.final+legacyAdjustment);
+    return {...baseResult,unrounded:replacementUnrounded,final:roundUp10(replacementUnrounded)};
   }
   function applyBrandMargin(row,{resetBase=false}={}){
     if(!row||state.applyingMargin)return;const price=row.querySelector('.item-price');if(!price)return;
@@ -1183,6 +1197,6 @@
     let appTries=0;const waitApp=()=>{appTries++;if(window.KeySuiteApp&&window.KeySuitePricing){wrapPricing();wrapApp();observeQuote();observeProductDisplay();bindSelectionDefaults();addCustomerBrandSection();bindMaterialContext();if(state.coreReady){renderProductTree();decorateProductDisplay()}return}if(appTries<60)setTimeout(waitApp,250);else console.warn('KeySuite V4.01: pricing/app wrappers were not ready; Brand navigation remains available.');};waitApp();
   }
 
-  window.KeySuiteV391={version:VERSION,state,effectiveRate,roundUp01,roundUp10,loadData,waitForBrands,setSelectedBrand,brandContext,brandSeriesFor,customerAllowsProduct,stampRowBrand,applyAllRows,decorateProductDisplay,chcMasterSeriesFromMaterial,currentChcMaterial,currentMasterSeries,renderProductTree,renderSelectorTree,repairBrandUi,repairQuotationBrands,clearSelectorPresentationContext,postBrandContext,displayModelAlias};window.KeySuiteV40001=window.KeySuiteV391;window.KeySuiteV392=window.KeySuiteV391;window.KeySuiteV393=window.KeySuiteV391;window.KeySuiteV3941=window.KeySuiteV391;window.KeySuiteV3942=window.KeySuiteV391;window.KeySuiteV3943=window.KeySuiteV391;window.KeySuiteV3944=window.KeySuiteV391;window.KeySuiteV39443=window.KeySuiteV391;window.KeySuiteV39444=window.KeySuiteV391;window.KeySuiteV39445=window.KeySuiteV391;window.KeySuiteV39446=window.KeySuiteV391;window.KeySuiteV39449=window.KeySuiteV391;window.KeySuiteV394410=window.KeySuiteV391;
+  window.KeySuiteV391={version:VERSION,state,effectiveRate,roundUp01,roundUp10,calculateWithBrandMargin,loadData,waitForBrands,setSelectedBrand,brandContext,brandSeriesFor,customerAllowsProduct,stampRowBrand,applyAllRows,decorateProductDisplay,chcMasterSeriesFromMaterial,currentChcMaterial,currentMasterSeries,renderProductTree,renderSelectorTree,repairBrandUi,repairQuotationBrands,clearSelectorPresentationContext,postBrandContext,displayModelAlias};window.KeySuiteV40001=window.KeySuiteV391;window.KeySuiteV392=window.KeySuiteV391;window.KeySuiteV393=window.KeySuiteV391;window.KeySuiteV3941=window.KeySuiteV391;window.KeySuiteV3942=window.KeySuiteV391;window.KeySuiteV3943=window.KeySuiteV391;window.KeySuiteV3944=window.KeySuiteV391;window.KeySuiteV39443=window.KeySuiteV391;window.KeySuiteV39444=window.KeySuiteV391;window.KeySuiteV39445=window.KeySuiteV391;window.KeySuiteV39446=window.KeySuiteV391;window.KeySuiteV39449=window.KeySuiteV391;window.KeySuiteV394410=window.KeySuiteV391;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
