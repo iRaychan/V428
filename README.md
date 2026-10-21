@@ -1,4 +1,12 @@
-# KeySuite V4.29.15 FULL CLEAN
+# KeySuite V4.29.16 FULL CLEAN
+
+## V4.29.16 - Quotation integrity and native KeyHQ
+
+- Concurrent quotation saves automatically take the next available company running number.
+- New quotations and updates are distinguished explicitly; item quantities are normalized and restored.
+- Owners can view and edit all company quotations; assigned users can view and edit only their own.
+- KeyHQ is a lazy-loaded native KeySuite module with eight expandable floors, rooftop basketball and futsal, shared login/roles, Level 3 KeyBot enquiry animation, role-gated message projection, Sims-style idle activities, Kuala Lumpur automatic day/night lighting and manual previews.
+- The existing `keylargo-logo.png` is used unchanged and illuminated only with runtime glow styling.
 
 Complete clean source package based on V4.29.14.
 

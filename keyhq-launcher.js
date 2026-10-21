@@ -27,9 +27,36 @@
     node.id='keyhqOverlay';
     node.setAttribute('role','region');
     node.setAttribute('aria-label','KeyHQ virtual headquarters');
-    node.innerHTML='<iframe id="keyhqFrame" title="KeyHQ virtual headquarters" loading="eager"></iframe>';
+    node.innerHTML='<iframe id="keyhqFrame" title="KeyHQ virtual headquarters" loading="lazy"></iframe>';
     document.body.appendChild(node);
     return node;
+  }
+
+  const demoEvents=[
+    {sender:'Demo · Acme Engineering',message:'Need 2 duty + 1 standby booster pumps, 180 m³/hr at 48 m head.'},
+    {sender:'Demo · KL Contractor',message:'Please recommend a transfer pump for a 12-storey building.'}
+  ];
+
+  function canProjector(){
+    const role=String(window.KEYSUITE_ACCESS?.role||'').toLowerCase();
+    return role==='owner'||role==='admin'||Boolean(window.KeySuitePermissions?.can?.('keyai_access',role));
+  }
+
+  async function keyhqContext(){
+    const access=window.KEYSUITE_ACCESS||{},profile=window.KEYSUITE_PROFILE||{},context={name:profile.display_name||access.display_name||profile.email||access.email||'Keylargo User',email:profile.email||access.email||'',role:access.role||'user',companyId:access.company_id||profile.company_id||'',canProjector:canProjector(),liveTelegram:false,events:demoEvents};
+    const client=window.KeySuiteAuth?.getClient?.();if(!client)return context;
+    try{
+      const settings=await client.functions.invoke('keysuite-keyai',{body:{action:'get_settings'}}),row=Array.isArray(settings.data?.settings)?settings.data.settings[0]:settings.data?.settings||{};
+      if(settings.error||!row.telegram_connected)return context;
+      const inbox=await client.functions.invoke('keysuite-keyai',{body:{action:'list_inbox',limit:8}}),items=Array.isArray(inbox.data?.items)?inbox.data.items:[];
+      const events=items.map(item=>({sender:item.sender_name||item.sender_username||item.sender_id||'Telegram enquiry',message:item.raw_message||item.ai_summary||'New KeyBot enquiry'})).filter(item=>item.message);
+      return {...context,liveTelegram:true,events:events.length?events:demoEvents};
+    }catch(error){console.warn('KeyHQ is using demo Telegram events.',error);return context}
+  }
+
+  async function sendContext(){
+    const frame=document.getElementById('keyhqFrame');if(!frame?.contentWindow)return;
+    frame.contentWindow.postMessage({type:'KEYHQ_CONTEXT',context:await keyhqContext()},'*');
   }
 
   function open(){
@@ -38,6 +65,7 @@
     node.classList.add('keyhq-open');
     document.body.classList.add('keyhq-active');
     document.getElementById('keyhqNavButton')?.classList.add('active');
+    if(frame.contentDocument?.readyState==='complete')sendContext();
   }
 
   function close(){
@@ -51,7 +79,9 @@
     document.getElementById('keyhqNavButton')?.addEventListener('click',open);
     window.addEventListener('message',event=>{
       const frame=document.getElementById('keyhqFrame');
-      if(event.source===frame?.contentWindow&&event.data?.type==='KEYHQ_CLOSE')close();
+      if(event.source!==frame?.contentWindow)return;
+      if(event.data?.type==='KEYHQ_CLOSE')close();
+      if(event.data?.type==='KEYHQ_READY')sendContext();
     });
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))close()});
   }

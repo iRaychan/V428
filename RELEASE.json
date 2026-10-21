@@ -1,16 +1,21 @@
 {
-  "version": "4.29.15",
-  "baseline": "4.29.14",
-  "upgrade_supported_from": "4.29.14",
+  "version": "4.29.16",
+  "baseline": "4.29.15",
+  "upgrade_supported_from": "4.29.15",
   "changes": [
-    "removes the internal motor price adjustment line from quotation descriptions while retaining the corrected final price",
-    "claims quotation numbers atomically and returns the next four-digit running number on a concurrent conflict",
-    "treats manually amended descriptions as yellow review items that remain sealable",
-    "carries plotted CHC Product duty points into quotation capacity and head",
-    "applies the standard responsive Selector container to CHC C4",
-    "visible version is V4.29.15"
+    "automatically resolves one concurrent quotation-number collision during save",
+    "distinguishes quotation inserts from updates and confirms the committed action and number",
+    "normalizes quotation qty and quantity fields across browser and database round-trips",
+    "limits non-owner quotation history and updates to the signed-in user's own records while Owners retain company-wide access",
+    "integrates KeyHQ as a lazy-loaded native KeySuite module with shared identity and roles",
+    "adds an eight-floor expandable Sims-style HQ, rooftop basketball and futsal, and toilet, pantry and game facilities on every floor",
+    "adds Level 3 KeyBot enquiry desk animation and a role-authorized message projector",
+    "uses demo Telegram events unless the live KeyBot Telegram connection reports connected",
+    "adds Asia/Kuala_Lumpur Auto lighting plus Day and Night manual preview",
+    "uses the unchanged Keylargo logo asset with runtime neon illumination",
+    "visible version is V4.29.16"
   ],
   "new_database_migration_required": true,
   "edge_function_deploy_required": false,
-  "notes": "Apply supabase/migrations/20261018190000_v42910_company_wide_quotation_sequence.sql and then supabase/migrations/20261021194500_v42915_atomic_quotation_claim.sql, then upload the V4.29.15 website files. No Edge Function redeployment is required."
+  "notes": "Apply the V4.29.15 prerequisite migrations if not already installed, then apply 20261021213000_v42916_quotation_integrity_and_scope.sql and 20261021213001_v42916_verify.sql before uploading the V4.29.16 website files. No Edge Function redeployment is required."
 }

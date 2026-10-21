@@ -3,51 +3,44 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#070b13">
-  <title>KeyHQ — A KeySuite Workspace</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#07101d">
+  <title>KeyHQ · KeySuite V4.29.16</title>
+  <link rel="stylesheet" href="styles.css?v=42916">
 </head>
-<body>
+<body data-theme="night">
   <div class="app-shell">
     <aside class="rail">
-      <a class="suite-brand" href="#keysuite" id="keySuiteLink" aria-label="Open KeySuite"><span class="suite-mark">K</span><span><strong>KeySuite</strong><small>AI Operating System</small></span></a>
-      <div class="product-label">WORKSPACES</div>
-      <nav aria-label="KeySuite products">
+      <a class="suite-brand" href="#keysuite" id="keySuiteLink" aria-label="Return to KeySuite"><img src="../keylargo-logo.png" alt="Keylargo"><span><strong>KeySuite</strong><small>Shared secure workspace</small></span></a>
+      <div class="product-label">NATIVE MODULES</div>
+      <nav aria-label="KeySuite modules">
         <a class="product-link" href="#keysuite" data-app="keysuite"><span class="product-icon">⌘</span><span><b>KeySuite</b><small>Command center</small></span></a>
         <a class="product-link active" href="#keyhq"><span class="product-icon keyhq-icon">HQ</span><span><b>KeyHQ</b><small>Virtual headquarters</small></span><i></i></a>
       </nav>
-      <div class="rail-bottom"><button class="utility-button" aria-label="Settings"><span>⚙</span> Settings</button><div class="owner"><span>KL</span><div><b>Keylargo</b><small>Workspace owner</small></div></div></div>
+      <div class="rail-bottom"><div class="session-card"><span id="userInitials">KL</span><div><b id="userName">Keylargo User</b><small id="userRole">Secure session</small></div></div><button id="returnButton" class="utility-button" type="button">← Return to KeySuite</button></div>
     </aside>
     <main>
-      <header class="topbar"><div class="brand"><span>KEYSUITE</span><b>/</b> KEYHQ <em>MULTI-STOREY</em></div><div class="status"><i></i><span>6 AI employees online</span><time id="clock">--:--</time></div></header>
+      <header class="topbar">
+        <div class="brand"><span>KEYSUITE</span><b>/</b> KEYHQ <em>V4.29.16</em></div>
+        <div class="theme-preview" aria-label="Lighting preview"><button data-theme-mode="auto" class="active">Auto</button><button data-theme-mode="day">Day</button><button data-theme-mode="night">Night</button></div>
+        <div class="status"><i></i><span id="eventMode">Demo Telegram events</span><time id="clock">--:-- MYT</time></div>
+      </header>
       <section class="stage" id="stage">
-        <canvas id="hqCanvas" aria-label="Interactive multi-storey 3D view of Keylargo headquarters"></canvas>
-        <div class="stage-title"><small>LIVE BUILDING</small><h1>KeyHQ Tower</h1><p id="floorSummary">Five connected storeys. One coordinated AI team.</p></div>
-        <div class="floor-selector" aria-label="Choose a storey">
-          <span>STOREYS</span>
-          <button class="floor-button" data-floor="4"><b>05</b><span>Executive</span><i>Boardroom</i></button>
-          <button class="floor-button" data-floor="3"><b>04</b><span>Creative</span><i>Studio</i></button>
-          <button class="floor-button" data-floor="2"><b>03</b><span>Growth</span><i>Laboratory</i></button>
-          <button class="floor-button" data-floor="1"><b>02</b><span>Operations</span><i>Mission control</i></button>
-          <button class="floor-button active" data-floor="0"><b>01</b><span>Lobby</span><i>Reception</i></button>
-          <button class="floor-button overview" data-floor="all"><b>∞</b><span>Full tower</span><i>Exploded view</i></button>
-        </div>
-        <div class="camera-controls" aria-label="Camera controls"><button id="rotateLeft" aria-label="Rotate left">↶</button><button id="zoomIn" aria-label="Zoom in">＋</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="resetCamera" aria-label="Reset camera">⌂</button></div>
-        <div class="hint" id="hint"><span>↔</span> Drag to orbit · Scroll to zoom · Select a storey</div>
-        <aside class="team-panel glass"><div class="panel-heading"><div><small>TEAM PULSE</small><h2>AI workforce</h2></div><b>6</b></div><div id="teamList" class="team-list"></div></aside>
-        <aside class="agent-card glass hidden" id="agentCard" aria-live="polite">
-          <button id="closeCard" class="close" aria-label="Close employee details">×</button>
-          <div class="agent-header"><div class="portrait" id="cardPortrait"></div><div><span id="cardStatus">● WORKING NOW</span><h2 id="cardName"></h2><p id="cardRole"></p></div></div>
-          <div class="location-line"><span>LOCATION</span><b id="cardLocation"></b></div>
-          <div class="assignment"><small>CURRENT ASSIGNMENT</small><strong id="cardTask"></strong><div class="progress"><i id="cardProgress"></i></div><div class="progress-meta"><span id="cardProgressText"></span><span id="cardEta"></span></div></div>
-          <button class="assign-button" id="elevatorButton">Send to another floor ↑</button>
-        </aside>
-        <aside class="elevator-panel glass" id="elevatorPanel"><div class="elevator-visual"><div class="elevator-track"><i id="elevatorCar"></i></div><span>↕</span></div><div><small>ELEVATOR</small><strong id="elevatorStatus">Car at Lobby</strong><p id="elevatorPassenger">Ready for passengers</p></div></aside>
-        <div class="activity glass" id="activity"><span class="activity-icon">↕</span><div><small>BUILDING ACTIVITY</small><p><b>Sage</b> arrived at Operations</p></div></div>
+        <canvas id="hqCanvas" aria-label="Interactive Sims-style eight-floor KeyHQ with rooftop facilities"></canvas>
+        <div class="skyline" aria-hidden="true"></div>
+        <div class="stage-title"><small>LIVE EXPANDABLE BUILDING</small><h1>KeyHQ Tower</h1><p id="floorSummary">Eight connected floors plus rooftop recreation.</p></div>
+        <img class="tower-logo" src="../keylargo-logo.png" alt="Keylargo">
+        <div class="floor-selector" id="floorSelector" aria-label="Choose a floor"></div>
+        <div class="camera-controls" aria-label="Camera controls"><button id="rotateLeft" aria-label="Rotate left">↶</button><button id="zoomIn" aria-label="Zoom in">＋</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="resetCamera" aria-label="Full tower">⌂</button></div>
+        <div class="hint"><span>↔</span> Drag to orbit · Scroll to zoom · Select a floor</div>
+        <aside class="team-panel glass"><div class="panel-heading"><div><small>TEAM PULSE</small><h2>KeyHQ workforce</h2></div><b id="teamCount">8</b></div><div id="teamList" class="team-list"></div></aside>
+        <aside class="agent-card glass hidden" id="agentCard" aria-live="polite"><button id="closeCard" class="close" aria-label="Close employee details">×</button><div class="agent-header"><div class="portrait" id="cardPortrait"></div><div><span id="cardStatus"></span><h2 id="cardName"></h2><p id="cardRole"></p></div></div><div class="location-line"><span>LOCATION</span><b id="cardLocation"></b></div><div class="assignment"><small>CURRENT ACTIVITY</small><strong id="cardTask"></strong><div class="progress"><i id="cardProgress"></i></div><div class="progress-meta"><span id="cardProgressText"></span><span id="cardEta"></span></div></div><button class="assign-button" id="elevatorButton">Send to another floor ↑</button></aside>
+        <aside class="projector glass" id="projector"><div class="projector-head"><div><small>LEVEL 3 · KEYBOT DESK</small><h2>Enquiry projector</h2></div><span id="projectorAccess">LOCKED</span></div><div id="projectorMessage" class="projector-message">Waiting for an authorized KeyBot message.</div><div class="projector-meta"><span id="projectorSource">Demo feed</span><button id="nextMessage" type="button">Next</button></div></aside>
+        <aside class="elevator-panel glass"><div class="elevator-visual"><div class="elevator-track"><i id="elevatorCar"></i></div><span>↕</span></div><div><small>ELEVATOR</small><strong id="elevatorStatus">Car at Lobby</strong><p id="elevatorPassenger">Ready</p></div></aside>
+        <div class="activity glass" id="activity"><span class="activity-icon">♢</span><div><small>SIMS ACTIVITY</small><p><b>Atlas</b> is getting coffee</p></div></div>
         <div id="toast" class="toast"></div>
       </section>
     </main>
   </div>
-  <script src="app.js"></script>
+  <script src="app.js?v=42916"></script>
 </body>
 </html>
