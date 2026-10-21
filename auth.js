@@ -1,5 +1,10 @@
 (() => {
   'use strict';
+  if(window.__KEYSUITE_AUTH_V42917_ACTIVE__)return;
+  window.__KEYSUITE_AUTH_V42917_ACTIVE__=true;
+  // A just-activated service worker can briefly expose a cached pre-V4.29.17
+  // shell. Retire its client before this cache-busted Auth runtime takes over.
+  try{window.KeySuiteAuth?.getClient?.()?.auth?.dispose?.()}catch(_){}
   const el=id=>document.getElementById(id);
   let client=null;
   let session=null;
@@ -7,13 +12,49 @@
   let profile=null;
   let pendingSignatureData=null;
   let removeSignatureRequested=false;
-  const AUTH_TIMEOUT_MS=12000;
+  const AUTH_REQUEST_TIMEOUT_MS=6000;
+  const AUTH_STARTUP_TIMEOUT_MS=8000;
   let authSubscription=null;
 
-  function authTimeout(label='Authentication'){
-    return new Promise((_,reject)=>setTimeout(()=>{const error=new Error(`${label} timed out. Please try again.`);error.code='KEYSUITE_AUTH_TIMEOUT';reject(error)},AUTH_TIMEOUT_MS));
+  function timeoutError(label='Authentication'){
+    const error=new Error(`${label} timed out. Please try again.`);error.code='KEYSUITE_AUTH_TIMEOUT';return error;
   }
-  function boundedAuth(promise,label){return Promise.race([Promise.resolve(promise),authTimeout(label)])}
+  function withDeadline(promise,label,timeoutMs=AUTH_STARTUP_TIMEOUT_MS){
+    let timer=0;
+    return Promise.race([
+      Promise.resolve(promise),
+      new Promise((_,reject)=>{timer=setTimeout(()=>reject(timeoutError(label)),timeoutMs)})
+    ]).finally(()=>clearTimeout(timer));
+  }
+  function timeoutFetch(input,init={},timeoutMs=AUTH_REQUEST_TIMEOUT_MS){
+    const controller=new AbortController();
+    const upstream=init?.signal;
+    const abort=()=>controller.abort(upstream?.reason);
+    if(upstream){if(upstream.aborted)abort();else upstream.addEventListener('abort',abort,{once:true})}
+    const timer=setTimeout(()=>controller.abort(timeoutError('Authentication request')),timeoutMs);
+    return fetch(input,{...init,signal:controller.signal}).catch(error=>{
+      if(controller.signal.aborted&&!upstream?.aborted)throw timeoutError('Authentication request');
+      throw error;
+    }).finally(()=>{
+      clearTimeout(timer);
+      if(upstream)upstream.removeEventListener?.('abort',abort);
+    });
+  }
+  function createAuthClient(){
+    const cfg=window.KEYSUITE_CONFIG;
+    return window.supabase.createClient(cfg.supabaseUrl.trim(),cfg.supabaseAnonKey.trim(),{
+      global:{fetch:timeoutFetch},
+      auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+    });
+  }
+  function disposeAuthClient(){
+    try{authSubscription?.unsubscribe?.()}catch(_){}
+    authSubscription=null;
+    try{client?.auth?.dispose?.()}catch(_){}
+  }
+  function readInitialSession(authClient=client,timeoutMs=AUTH_STARTUP_TIMEOUT_MS){
+    return withDeadline(authClient.auth.getSession(),'Session check',timeoutMs);
+  }
   function installAuthListener(){
     if(authSubscription)return;
     const result=client.auth.onAuthStateChange((event,nextSession)=>{
@@ -282,7 +323,7 @@
     event.preventDefault();message('');if(!client){message('Supabase is not configured. Keep your working config.js in the repository.','info');return}
     const email=el('loginEmail').value.trim().toLowerCase(),password=el('loginPassword').value;if(!email||!password){message('Enter both email and password.');return}
     busy(true);
-    try{const {data,error}=await boundedAuth(client.auth.signInWithPassword({email,password}),'Sign in');if(error||!data?.session){busy(false);message(friendly(error));return}await enter(data.session)}
+    try{const {data,error}=await client.auth.signInWithPassword({email,password});if(error||!data?.session){busy(false);message(friendly(error));return}await enter(data.session)}
     catch(error){busy(false);message(friendly(error))}
   }
   async function signOut(){el('logoutButton').disabled=true;try{await client?.auth.signOut()}catch(error){console.warn(error)}session=null;access=null;profile=null;window.KEYSUITE_SECURE_DATA=null;window.KEYSUITE_ACCESS=null;window.KEYSUITE_PROFILE=null;window.KeySuitePermissions?.setMatrix?.(window.KeySuitePermissions?.DEFAULTS||{});window.KeySuiteAuthority?.reset?.();el('logoutButton').disabled=false;showLogin('You have signed out.','info')}
@@ -464,12 +505,12 @@
     el('settingsRemoveSignature')?.addEventListener('click',()=>{pendingSignatureData='';removeSignatureRequested=true;el('settingsSignatureUpload').value='';renderSignaturePreview();settingsMessage('Signature will be removed when you save.','info')});
     if(!configReady()){showLogin('Your existing config.js is missing or incomplete. Keep the config.js that already works on GitHub.','info');return}
     if(!window.supabase?.createClient){showLogin('The Supabase library could not be loaded. Check the internet connection.');return}
-    const cfg=window.KEYSUITE_CONFIG;client=window.supabase.createClient(cfg.supabaseUrl.trim(),cfg.supabaseAnonKey.trim(),{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    client=createAuthClient();
     showLoading('Checking existing session…');
     try{
-      // Complete the initial session read before subscribing. Older Supabase clients can
-      // deadlock Safari when listener initialization races a persisted-session refresh.
-      const {data,error}=await boundedAuth(client.auth.getSession(),'Session check');
+      // Supabase 2.118 uses lockless auth coordination. The fetch deadline aborts a
+      // stalled expired-token refresh; the outer deadline also covers SDK/storage stalls.
+      const {data,error}=await readInitialSession();
       if(error){showLogin(error.message);return}
       installAuthListener();
       if(data?.session)await enter(data.session);
@@ -478,11 +519,18 @@
       else showLogin();
     }catch(error){
       console.error('[KeySuite V4.29.17] Initial session check failed.',error);
+      // Do not keep a timed-out auth instance: its initialization promise may remain
+      // unresolved and would make the next sign-in hang on the same client.
+      if(error?.code==='KEYSUITE_AUTH_TIMEOUT'){
+        disposeAuthClient();
+        client=createAuthClient();
+      }
       installAuthListener();
-      showLogin(error?.code==='KEYSUITE_AUTH_TIMEOUT'?'The saved session could not be checked. You can sign in again.':friendly(error),'info');
+      showLogin(error?.code==='KEYSUITE_AUTH_TIMEOUT'?'The saved session did not respond. Please sign in again.':friendly(error),'info');
     }
   }
 
   window.KeySuiteAuth={getClient:()=>client,getSession:()=>session,getAccess:()=>access,getProfile:()=>profile,openSettings,refreshSecure,getAuthRedirectUrl:authRedirectUrl};
+  if(window.KEYSUITE_TEST_MODE===true)window.KeySuiteAuthTest={readInitialSession,withDeadline,timeoutFetch,timeoutError};
   init();
 })();

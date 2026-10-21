@@ -27,13 +27,19 @@ assert.match(read('v41200-bootstrap.js'),/KEYSUITE_VERSION='4\.29\.17'/);
 assert.match(sw,/keysuite-v42917/);
 assert.match(sw,/v42917-version-lock\.js/);
 
-assert.match(auth,/const AUTH_TIMEOUT_MS=12000/);
-assert.match(auth,/function boundedAuth\(promise,label\)/);
-assert.match(auth,/await boundedAuth\(client\.auth\.getSession\(\),'Session check'\)/);
-assert.match(auth,/await boundedAuth\(client\.auth\.signInWithPassword/);
-const getSessionAt=auth.indexOf("boundedAuth(client.auth.getSession(),'Session check')");
+assert.match(auth,/const AUTH_REQUEST_TIMEOUT_MS=6000/);
+assert.match(auth,/const AUTH_STARTUP_TIMEOUT_MS=8000/);
+assert.match(auth,/__KEYSUITE_AUTH_V42917_ACTIVE__/);
+assert.match(auth,/KeySuiteAuth\?\.getClient\?\.\(\)\?\.auth\?\.dispose/);
+assert.match(auth,/function timeoutFetch\(input,init=\{\},timeoutMs=AUTH_REQUEST_TIMEOUT_MS\)/);
+assert.match(auth,/global:\{fetch:timeoutFetch\}/);
+assert.match(auth,/await readInitialSession\(\)/);
+assert.match(auth,/disposeAuthClient\(\)/);
+assert.doesNotMatch(auth,/boundedAuth/);
+const getSessionAt=auth.indexOf('await readInitialSession()');
 const listenerAt=auth.indexOf('installAuthListener();',getSessionAt);
 assert.ok(getSessionAt>=0&&listenerAt>getSessionAt,'auth listener must be installed after the initial session read');
+assert.match(auth,/client=createAuthClient\(\)/);
 assert.match(auth,/showLogin\(error\?\.code==='KEYSUITE_AUTH_TIMEOUT'/);
 
 // The Safari patch must not alter the V4.29.16 quotation or KeyHQ implementations.

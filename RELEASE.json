@@ -5,8 +5,10 @@
   "changes": [
     "prevents Safari from waiting indefinitely while checking a persisted session",
     "pins the Supabase browser SDK to 2.118.0",
-    "defers the auth-state subscription until the initial session check settles",
-    "bounds session-check and sign-in waits and restores the login UI on failure",
+    "uses Supabase 2.118.0 lockless Auth coordination and defers the auth-state subscription until the initial session check settles",
+    "actively aborts stalled Auth requests after six seconds and bounds startup at eight seconds",
+    "disposes and replaces a timed-out Auth client before enabling sign-in",
+    "prevents duplicate Auth clients while Safari activates the new service-worker shell",
     "automatically resolves one concurrent quotation-number collision during save",
     "distinguishes quotation inserts from updates and confirms the committed action and number",
     "normalizes quotation qty and quantity fields across browser and database round-trips",

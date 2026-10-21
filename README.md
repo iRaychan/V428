@@ -4,8 +4,8 @@
 
 - Prevents Safari from remaining indefinitely on “Checking existing session…”.
 - Pins the browser Supabase client to 2.118.0 instead of loading a moving major-version URL.
-- Completes the initial session read before registering the authentication-state listener.
-- Adds bounded session-check and sign-in waits so an SDK failure returns to a usable login screen.
+- Uses Supabase 2.118.0 lockless Auth coordination and completes the initial session read before registering the authentication-state listener.
+- Aborts stalled Auth requests after six seconds, applies an eight-second startup ceiling, and replaces a timed-out client before enabling sign-in.
 - Preserves all V4.29.16 quotation integrity corrections and the integrated KeyHQ module.
 
 ## V4.29.16 - Quotation integrity and native KeyHQ
