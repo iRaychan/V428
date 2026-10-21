@@ -7,6 +7,26 @@
   let profile=null;
   let pendingSignatureData=null;
   let removeSignatureRequested=false;
+  const AUTH_TIMEOUT_MS=12000;
+  let authSubscription=null;
+
+  function authTimeout(label='Authentication'){
+    return new Promise((_,reject)=>setTimeout(()=>{const error=new Error(`${label} timed out. Please try again.`);error.code='KEYSUITE_AUTH_TIMEOUT';reject(error)},AUTH_TIMEOUT_MS));
+  }
+  function boundedAuth(promise,label){return Promise.race([Promise.resolve(promise),authTimeout(label)])}
+  function installAuthListener(){
+    if(authSubscription)return;
+    const result=client.auth.onAuthStateChange((event,nextSession)=>{
+      if(event==='PASSWORD_RECOVERY'){
+        authFlowMode='recovery';
+        recoveryFlowPending=true;
+        inviteFlowPending=false;
+        if(nextSession)session=nextSession;
+      }
+      if(event==='SIGNED_OUT'){session=null;access=null;profile=null;showLogin()}
+    });
+    authSubscription=result?.data?.subscription||result||true;
+  }
 
   function initialAuthFlow(){
     try{
@@ -261,7 +281,9 @@
   async function signIn(event){
     event.preventDefault();message('');if(!client){message('Supabase is not configured. Keep your working config.js in the repository.','info');return}
     const email=el('loginEmail').value.trim().toLowerCase(),password=el('loginPassword').value;if(!email||!password){message('Enter both email and password.');return}
-    busy(true);const {data,error}=await client.auth.signInWithPassword({email,password});if(error||!data?.session){busy(false);message(friendly(error));return}await enter(data.session)
+    busy(true);
+    try{const {data,error}=await boundedAuth(client.auth.signInWithPassword({email,password}),'Sign in');if(error||!data?.session){busy(false);message(friendly(error));return}await enter(data.session)}
+    catch(error){busy(false);message(friendly(error))}
   }
   async function signOut(){el('logoutButton').disabled=true;try{await client?.auth.signOut()}catch(error){console.warn(error)}session=null;access=null;profile=null;window.KEYSUITE_SECURE_DATA=null;window.KEYSUITE_ACCESS=null;window.KEYSUITE_PROFILE=null;window.KeySuitePermissions?.setMatrix?.(window.KeySuitePermissions?.DEFAULTS||{});window.KeySuiteAuthority?.reset?.();el('logoutButton').disabled=false;showLogin('You have signed out.','info')}
   async function refreshSecure(){if(!session)return;await enter(session)}
@@ -443,22 +465,22 @@
     if(!configReady()){showLogin('Your existing config.js is missing or incomplete. Keep the config.js that already works on GitHub.','info');return}
     if(!window.supabase?.createClient){showLogin('The Supabase library could not be loaded. Check the internet connection.');return}
     const cfg=window.KEYSUITE_CONFIG;client=window.supabase.createClient(cfg.supabaseUrl.trim(),cfg.supabaseAnonKey.trim(),{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-    client.auth.onAuthStateChange((event,nextSession)=>{
-      if(event==='PASSWORD_RECOVERY'){
-        authFlowMode='recovery';
-        recoveryFlowPending=true;
-        inviteFlowPending=false;
-        if(nextSession)session=nextSession;
-      }
-      if(event==='SIGNED_OUT'){session=null;access=null;profile=null;showLogin()}
-    });
     showLoading('Checking existing session…');
-    const {data,error}=await client.auth.getSession();
-    if(error){showLogin(error.message);return}
-    if(data?.session)await enter(data.session);
-    else if(inviteFlowPending)showLogin('This invitation link is invalid or has expired. Ask the Owner to send a new invitation.','error');
-    else if(recoveryFlowPending)showLogin('This password reset link is invalid or has expired. Use Forgot Password to request a new link.','error');
-    else showLogin();
+    try{
+      // Complete the initial session read before subscribing. Older Supabase clients can
+      // deadlock Safari when listener initialization races a persisted-session refresh.
+      const {data,error}=await boundedAuth(client.auth.getSession(),'Session check');
+      if(error){showLogin(error.message);return}
+      installAuthListener();
+      if(data?.session)await enter(data.session);
+      else if(inviteFlowPending)showLogin('This invitation link is invalid or has expired. Ask the Owner to send a new invitation.','error');
+      else if(recoveryFlowPending)showLogin('This password reset link is invalid or has expired. Use Forgot Password to request a new link.','error');
+      else showLogin();
+    }catch(error){
+      console.error('[KeySuite V4.29.17] Initial session check failed.',error);
+      installAuthListener();
+      showLogin(error?.code==='KEYSUITE_AUTH_TIMEOUT'?'The saved session could not be checked. You can sign in again.':friendly(error),'info');
+    }
   }
 
   window.KeySuiteAuth={getClient:()=>client,getSession:()=>session,getAccess:()=>access,getProfile:()=>profile,openSettings,refreshSecure,getAuthRedirectUrl:authRedirectUrl};

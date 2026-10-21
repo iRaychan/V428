@@ -1,0 +1,14 @@
+CHANGELOG_V42917.md
+README.md
+README_UPGRADE_V42917.md
+RELEASE.json
+UPGRADE_FILE_MANIFEST_V42917.txt
+VERIFICATION_V42917.md
+VERSION.txt
+auth.js
+index.html
+manifest.json
+sw.js
+tests/v42917-release-regression.cjs
+v41200-bootstrap.js
+v42917-version-lock.js

@@ -1,4 +1,12 @@
-# KeySuite V4.29.16 FULL CLEAN
+# KeySuite V4.29.17 FULL CLEAN
+
+## V4.29.17 - Safari authentication startup recovery
+
+- Prevents Safari from remaining indefinitely on “Checking existing session…”.
+- Pins the browser Supabase client to 2.118.0 instead of loading a moving major-version URL.
+- Completes the initial session read before registering the authentication-state listener.
+- Adds bounded session-check and sign-in waits so an SDK failure returns to a usable login screen.
+- Preserves all V4.29.16 quotation integrity corrections and the integrated KeyHQ module.
 
 ## V4.29.16 - Quotation integrity and native KeyHQ
 
@@ -8,7 +16,7 @@
 - KeyHQ is a lazy-loaded native KeySuite module with eight expandable floors, rooftop basketball and futsal, shared login/roles, Level 3 KeyBot enquiry animation, role-gated message projection, Sims-style idle activities, Kuala Lumpur automatic day/night lighting and manual previews.
 - The existing `keylargo-logo.png` is used unchanged and illuminated only with runtime glow styling.
 
-Complete clean source package based on V4.29.14.
+Complete clean source package continuing from V4.29.16.
 
 ## V4.29.15 - Quotation workflow and C4 layout amendments
 

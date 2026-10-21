@@ -1,8 +1,12 @@
 {
-  "version": "4.29.16",
-  "baseline": "4.29.15",
-  "upgrade_supported_from": "4.29.15",
+  "version": "4.29.17",
+  "baseline": "4.29.16",
+  "upgrade_supported_from": "4.29.16",
   "changes": [
+    "prevents Safari from waiting indefinitely while checking a persisted session",
+    "pins the Supabase browser SDK to 2.118.0",
+    "defers the auth-state subscription until the initial session check settles",
+    "bounds session-check and sign-in waits and restores the login UI on failure",
     "automatically resolves one concurrent quotation-number collision during save",
     "distinguishes quotation inserts from updates and confirms the committed action and number",
     "normalizes quotation qty and quantity fields across browser and database round-trips",
@@ -13,9 +17,10 @@
     "uses demo Telegram events unless the live KeyBot Telegram connection reports connected",
     "adds Asia/Kuala_Lumpur Auto lighting plus Day and Night manual preview",
     "uses the unchanged Keylargo logo asset with runtime neon illumination",
-    "visible version is V4.29.16"
+    "preserves all V4.29.16 quotation corrections and integrated KeyHQ functions",
+    "visible version is V4.29.17"
   ],
-  "new_database_migration_required": true,
+  "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Apply the V4.29.15 prerequisite migrations if not already installed, then apply 20261021213000_v42916_quotation_integrity_and_scope.sql and 20261021213001_v42916_verify.sql before uploading the V4.29.16 website files. No Edge Function redeployment is required."
+  "notes": "Upgrade from V4.29.16 by replacing the files in UPGRADE_FILE_MANIFEST_V42917.txt. No new database migration or Edge Function deployment is required for V4.29.17."
 }
