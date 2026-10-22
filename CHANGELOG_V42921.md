@@ -7,11 +7,14 @@
 - Added secure, persistent company floor configuration for Owners and Admins, up to four expansion floors.
 - Added differentiated departmental furniture, enclosed amenity zones, circulation walls and clearer floor plans.
 - Furnished each WC with a toilet bowl, cistern and wall-mounted urinal, and each pantry with a table, legs and seating.
+- Upgraded desks with separate monitors, stands, illuminated screens, keyboards, mice, computer towers, table legs and detailed chairs.
+- Added pantry counters, sinks, mugs and appliances plus a game room with sofa, TV, console and controller.
+- Added source-aware ambient idle movement: agents without active work can visibly take pantry, designated smoking, restroom or console-game breaks without changing their real connected status.
 - Rebuilt the tower as a solid modern headquarters with a complete façade, windows, entrance canopy, landscaped base and rooftop courts.
 - Changed floor selection to a large Sims-style cutaway workspace with character-like agents instead of a transparent stacked-floor diagram.
 - Re-rendered the original Keylargo artwork as deep-blue outlined neon tubing with a narrow cool-white core, mounted directly to the upper façade without a signboard. Its perspective now rotates with the building.
 - Replaced line-drawn agent limbs with filled chibi characters including hair, faces, jackets, hands, legs and shoes.
-- Added internal asset revision `42921r3` and a fresh service-worker cache to prevent Safari from retaining an earlier V4.29.21 KeyHQ scene.
+- Added internal asset revision `42921r4` and a fresh service-worker cache to prevent Safari from retaining earlier V4.29.21 KeyHQ scenes.
 - Retired the obsolete KeyAI-project inbox dependency: KeySuite Supabase is now the only enquiry source of record.
 - Made the KeyBot projector verify the company-scoped KeySuite inbox directly; it never substitutes demo content for a failed live feed.
 - Preserved the V4.29.20 quotation save, numbering, history, backup and role-scope behavior.
