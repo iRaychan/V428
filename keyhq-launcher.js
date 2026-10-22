@@ -75,10 +75,8 @@
     const client=window.KeySuiteAuth?.getClient?.();context.floorConfig=await loadFloorConfig(client,companyId);
     if(!client||!context.canProjector){context.agents=agentSignals(context);return context}
     try{
-      const settings=await client.functions.invoke('keysuite-keyai',{body:{action:'get_settings'}}),row=Array.isArray(settings.data?.settings)?settings.data.settings[0]:settings.data?.settings||{};
-      if(settings.error)throw settings.error;
-      if(!row.telegram_connected){context.eventMode='demo';context.events=demoEvents;context.agents=agentSignals(context);return context}
       const inbox=await client.functions.invoke('keysuite-keyai',{body:{action:'list_inbox',limit:100}});if(inbox.error)throw inbox.error;
+      if(inbox.data?.error||inbox.data?.ok===false)throw new Error(String(inbox.data?.error||'The KeySuite enquiry feed did not verify.'));
       const items=Array.isArray(inbox.data?.items)?inbox.data.items:[];
       context.events=items.map(item=>({id:String(item.id||''),sender:item.sender_name||item.sender_username||item.sender_id||'Telegram enquiry',message:item.raw_message||item.ai_summary||'New KeyBot enquiry',status:String(item.status||'received'),createdAt:String(item.created_at||''),isDemo:false})).filter(item=>item.id&&item.message);
       context.eventMode=context.events.length?'live':'empty';

@@ -23,7 +23,8 @@ if (!launcher.includes("event.data?.type==='KEYHQ_CLOSE'")) {
 if (!keyhq.includes('Interactive Sims-style expandable KeyHQ')) {
   throw new Error('The expandable KeyHQ application is missing.');
 }
-if (!launcher.includes('KEYHQ_CONTEXT') || !launcher.includes('telegram_connected')) throw new Error('Shared KeySuite context or Telegram mode detection is missing.');
+if (!launcher.includes('KEYHQ_CONTEXT') || !launcher.includes("action:'list_inbox'")) throw new Error('Shared KeySuite context or company inbox connection is missing.');
+if (!launcher.includes("inbox.data?.error") || !launcher.includes("inbox.data?.ok===false")) throw new Error('KeyHQ does not surface a failed inbox verification.');
 if (!launcher.includes("context.eventMode=context.events.length?'live':'empty'")) throw new Error('Live and connected-empty Telegram modes are not separated.');
 if (/progress:\d+|eta:'/.test(fs.readFileSync(path.join(root, 'keyhq', 'app.js'), 'utf8'))) throw new Error('KeyHQ still contains fabricated agent progress or ETA values.');
 if (!launcher.includes("event.origin!==location.origin")) throw new Error('Same-origin KeyHQ messaging guard is missing.');

@@ -309,30 +309,21 @@ Deno.serve(async(req)=>{
     }
 
     if(action==='list_inbox'){
-      const migration=ctx.isOwner?await importLegacyIfNeeded(service):{needed:false,imported:false,skipped:true,reason:'Legacy history import is Owner-only.'};
-      const catchup=ctx.isOwner?await syncLegacyLatest(service):{enabled:false,synced:0,skipped:true};
+      // The retired KeyAI project is no longer part of the live request path.
+      // All imported history now lives in KeySuite and is company-scoped below.
+      const migration={needed:false,imported:true,skipped:true,reason:'KeySuite is the active source of record.'};
+      const catchup={enabled:false,synced:0,skipped:true,reason:'Legacy KeyAI synchronization is retired.'};
       const limit=Math.max(1,Math.min(200,Math.trunc(Number(body?.limit)||100)));
       const result=await service.from('ks_keyai_enquiries')
         .select('id,source,sender_username,sender_name,raw_message,status,ai_enabled,ai_model,ai_summary,ai_result,ai_error,clarification_question,clarification_questions,conversation_id,parent_enquiry_id,external_message_id,external_update_id,created_at,updated_at')
         .eq('source','telegram').eq('keyai_company_id',ctx.companyId).order('created_at',{ascending:false}).limit(limit);
       if(result.error)throw new Error(`KeyBot Inbox: ${errorText(result.error)}`);
-      let telegram=await telegramWebhookStatus(k.url);
-      if(ctx.isOwner&&telegram.configured&&!telegram.connected){
-        telegram=await ensureTelegramWebhook(k.url);
-      }
       return json({
         ok:true,
         items:Array.isArray(result.data)?result.data:[],
         migration,
         catchup,
-        telegram:{
-          connected:!!telegram.connected,
-          configured:!!telegram.configured,
-          url:(telegram as any).url||null,
-          expected:(telegram as any).expected||null,
-          error:(telegram as any).error||(telegram as any).last_error_message||null,
-          pending_update_count:Number((telegram as any).pending_update_count||0)
-        }
+        feed:{verified:true,source:'keysuite_company_inbox',company_scoped:true}
       });
     }
 
