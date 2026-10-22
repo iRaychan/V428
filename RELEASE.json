@@ -1,17 +1,18 @@
 {
-  "version": "4.29.19",
+  "version": "4.29.20",
   "baseline": "4.29.18",
   "upgrade_supported_from": "4.29.18",
   "changes": [
-    "unifies current and archived secure quotation history with reference-level deduplication",
-    "preserves owner company-wide visibility and creator-only visibility for non-owner accounts",
-    "separates browser backup quota failures from Supabase connection failures",
-    "blocks quotation saves when secure synchronization is unavailable",
-    "repairs ambiguous quotation counter registration SQL",
+    "allocates the shared running number inside the successful first-save transaction",
+    "preserves the logical quotation ID, reference and creator on later saves",
+    "removes browser-local history from Supabase preview numbering",
+    "stops automatic upload of legacy browser-only quotations",
+    "stores a bounded compact backup without embedded images",
+    "preserves owner company-wide and non-owner creator-only history visibility",
     "rotates the service-worker cache and cache-busts the corrected application runtime",
-    "visible version is V4.29.19"
+    "visible version is V4.29.20"
   ],
   "new_database_migration_required": true,
   "edge_function_deploy_required": false,
-  "notes": "Install the files in UPGRADE_FILE_MANIFEST_V42919.txt and apply the included V4.29.19 Supabase migration. No Edge Function deployment is required."
+  "notes": "Install the files in UPGRADE_FILE_MANIFEST_V42920.txt and apply the included V4.29.19 and V4.29.20 Supabase migrations in order. No Edge Function deployment is required."
 }

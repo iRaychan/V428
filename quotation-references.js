@@ -24,13 +24,16 @@
   async function savePrefix(){throw new Error('Quotation prefixes are assigned by the Owner under Key → Role.')}
   async function previewNext(){
     const prefix=state.prefix||await getPrefix();if(!prefix)throw new Error('No quotation prefix has been assigned. Please contact the Owner.');
-    const now=new Date(),yy=String(now.getFullYear()).slice(-2),mm=String(now.getMonth()+1).padStart(2,'0'),floor=scanRunningFloor(prefix,now);
+    const now=new Date(),yy=String(now.getFullYear()).slice(-2),mm=String(now.getMonth()+1).padStart(2,'0');
     const supabase=client();
     if(supabase){
-      const {data,error}=await supabase.rpc('keysuite_preview_quotation_reference_v42910',{p_requested_at:now.toISOString(),p_minimum_last_number:floor});
+      // Supabase is authoritative. Browser-only history must never advance the
+      // company sequence or make two accounts preview different numbers.
+      const {data,error}=await supabase.rpc('keysuite_preview_quotation_reference_v42910',{p_requested_at:now.toISOString(),p_minimum_last_number:0});
       if(!error){const result=row(data);if(result.quotation_reference)return result.quotation_reference}
       else console.warn('Company-wide quotation reference preview failed; using the loaded quotation floor.',error);
     }
+    const floor=scanRunningFloor(prefix,now);
     return `${prefix}-${yy}${mm}-${String(floor+1).padStart(4,'0')}`;
   }
   async function allocateNext(){return previewNext()}

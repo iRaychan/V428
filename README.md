@@ -1,4 +1,8 @@
-# KeySuite V4.29.19 Full
+# KeySuite V4.29.20 Full
+
+## V4.29.20 - Atomic save allocation and compact browser backup
+
+Quotation previews are non-consuming and database-authoritative, first saves allocate the company-wide number atomically, later saves retain the same record and number, and the Safari fallback cache is now bounded and image-free. See `README_UPGRADE_V42920.md` and `ROOT_CAUSE_V42920.md`.
 
 ## V4.29.19 - Unified secure quotation history
 

@@ -344,15 +344,49 @@ function remoteQuotePayload(q={}){
  return {...clean,items:normalizeQuoteItemQuantities(clean.items),createdByEmail:creator,createdByName:creatorName,updatedByEmail:currentEmail(),updatedAt:new Date().toISOString()}
 }
 function visibleQuotationRows(rows=[]){return canManageQuotationHistory()?rows:rows.filter(q=>quoteCreatorEmail(q)===currentEmail())}
+const QUOTATION_BACKUP_KEY='ks_quotes_backup_v42920',QUOTATION_BACKUP_MAX_CHARS=500000,QUOTATION_BACKUP_MAX_ROWS=100;
+function compactQuotationBackupValue(value,depth=0){
+ if(depth>12)return null;
+ if(typeof value==='string'){
+  if(/^data:/i.test(value)||value.length>16000)return '';
+  return value
+ }
+ if(Array.isArray(value))return value.slice(0,250).map(item=>compactQuotationBackupValue(item,depth+1));
+ if(value&&typeof value==='object'){
+  const clean={};
+  Object.entries(value).forEach(([key,item])=>{
+   if(['signatureImage','signature_image','logoData','logo_data'].includes(key))return;
+   clean[key]=compactQuotationBackupValue(item,depth+1)
+  });
+  return clean
+ }
+ return value
+}
+function compactQuotationBackup(rows=[]){
+ const backup=[];
+ for(const quote of (Array.isArray(rows)?rows:[]).slice(0,QUOTATION_BACKUP_MAX_ROWS)){
+  const compact=compactQuotationBackupValue(quote),candidate=[...backup,compact];
+  if(JSON.stringify(candidate).length>QUOTATION_BACKUP_MAX_CHARS)break;
+  backup.push(compact)
+ }
+ return backup
+}
 function cacheSecureQuotes(rows){
  const deduped=dedupeQuotationRows(rows);secureQuotes=visibleQuotationRows(deduped.rows);
- try{store.set('ks_quotes_backup_v236',secureQuotes);quotationCacheError=''}catch(error){quotationCacheError=String(error?.message||error);console.warn('Secure quotation history is live, but the browser backup could not be updated.',error)}
+ try{
+  const backup=compactQuotationBackup(secureQuotes);
+  localStorage.removeItem('ks_quotes_backup_v236');
+  store.set(QUOTATION_BACKUP_KEY,backup);quotationCacheError=''
+ }catch(error){quotationCacheError=String(error?.message||error);console.warn('Secure quotation history is live, but the compact browser backup could not be updated.',error)}
  return secureQuotes
 }
 function isMissingRpc(error,name){const text=String(error?.message||error||'').toLowerCase();return text.includes(String(name||'').toLowerCase())&&(text.includes('not found')||text.includes('does not exist')||text.includes('schema cache'))}
 async function rpcSaveQuotation(client,payload){
  const companyId=currentCompanyId();
- let result=await client.rpc('keysuite_save_quotation_v42916',{p_company_id:companyId,p_quotation:payload});
+ let result=await client.rpc('keysuite_save_quotation_v42920',{p_company_id:companyId,p_quotation:payload});
+ if(result.error&&isMissingRpc(result.error,'keysuite_save_quotation_v42920')){
+  result=await client.rpc('keysuite_save_quotation_v42916',{p_company_id:companyId,p_quotation:payload});
+ }
  if(result.error&&isMissingRpc(result.error,'keysuite_save_quotation_v42916')){
   result=await client.rpc('keysuite_save_quotation_v42915',{p_company_id:companyId,p_quotation:payload});
  }
@@ -370,18 +404,18 @@ async function saveQuoteRemote(q,{quiet=false}={}){
  const client=quotationClient();
  if(!client||quotationSyncMode!=='supabase'){const error=new Error('Secure quotation sync is unavailable. Retry the connection before saving this quotation.');error.code='quotation_sync_required';throw error}
  let payload=remoteQuotePayload(q),result=await rpcSaveQuotation(client,payload);if(result.error)throw result.error;
- let response=Array.isArray(result.data)?result.data[0]:result.data,numberAdjustedFrom='';
+ let response=Array.isArray(result.data)?result.data[0]:result.data,numberAdjustedFrom=firstQuoteText(response?.number_adjusted_from,response?.numberAdjustedFrom);
  if(response?.status==='conflict'){
   numberAdjustedFrom=payload.no;payload={...payload,no:response.next_reference};result=await rpcSaveQuotation(client,payload);if(result.error)throw result.error;response=Array.isArray(result.data)?result.data[0]:result.data;
   if(response?.status==='conflict'){const error=new Error('Quotation number has already been used.');error.code='quotation_number_conflict';error.attemptedReference=numberAdjustedFrom;error.nextReference=response.next_reference||'';throw error}
  }
- const savedPayload=response?.status==='saved'?(response.saved||payload):(response||payload);
- let saved={...normalizeRemoteQuote(savedPayload),id:payload.id,no:payload.no,saveOperation:response?.operation||'',numberAdjustedFrom};
+ const savedPayload=response?.status==='saved'?(response.saved||payload):(response||payload),savedNo=canonicalQuotationNumber(savedPayload?.no)||canonicalQuotationNumber(payload.no);
+ let saved={...normalizeRemoteQuote(savedPayload),id:payload.id,no:savedNo,saveOperation:response?.operation||'',numberAdjustedFrom};
  // Re-read secure history after a save so remoteStorageId is taken from the actual database row,
  // while the logical quotation ID remains the exact ID of the version that was saved.
  try{
   const refreshed=await listRemoteQuotes(client),remote=(refreshed.data||[]).map(normalizeRemoteQuote);
-  const exact=remote.find(item=>String(item.id)===String(payload.id))||remote.find(item=>canonicalQuotationNumber(item.no)===canonicalQuotationNumber(payload.no));
+  const exact=remote.find(item=>String(item.id)===String(payload.id))||remote.find(item=>canonicalQuotationNumber(item.no)===savedNo);
   if(exact)saved={...exact,saveOperation:saved.saveOperation,numberAdjustedFrom:saved.numberAdjustedFrom};cacheSecureQuotes(remote.length?remote:[saved,...quotes().filter(item=>String(item.id)!==String(saved.id))]);
  }catch(error){
   if(!quiet)console.warn('Quotation saved but secure history refresh was deferred.',error);
@@ -391,9 +425,9 @@ async function saveQuoteRemote(q,{quiet=false}={}){
 }
 function purgeDeletedQuoteCaches(id,no=''){
  const logical=String(id||''),canonicalNo=canonicalQuotationNumber(no),keep=q=>String(q?.id||'')!==logical&&(!canonicalNo||canonicalQuotationNumber(q?.no)!==canonicalNo);
- const local=store.get('ks_quotes',[]),backup=store.get('ks_quotes_backup_v236',[]);
+ const local=store.get('ks_quotes',[]),backup=store.get(QUOTATION_BACKUP_KEY,[]);
  if(Array.isArray(local))store.set('ks_quotes',local.filter(keep));
- if(Array.isArray(backup))store.set('ks_quotes_backup_v236',backup.filter(keep));
+ if(Array.isArray(backup))store.set(QUOTATION_BACKUP_KEY,backup.filter(keep));
  if(Array.isArray(secureQuotes))secureQuotes=secureQuotes.filter(keep);
  return keep
 }
@@ -426,10 +460,6 @@ async function cleanupRemoteQuotationDuplicates(client,rows=[]){
  for(const q of duplicates){const remoteId=q.remoteStorageId||q.id;if(!remoteId)continue;const result=await client.rpc('keysuite_delete_quotation_v42502',{p_company_id:currentCompanyId(),p_logical_id:String(q.id||''),p_legacy_id:String(remoteId),p_quotation_no:canonicalQuotationNumber(q.no)});if(result.error){console.warn('Duplicate quotation cleanup skipped',q.no,result.error);continue}removed++}
  return removed
 }
-async function importLocalQuotes(client,remoteRows){
- const local=store.get('ks_quotes',[]),knownIds=new Set((remoteRows||[]).map(row=>String(row.id))),knownNos=new Set((remoteRows||[]).map(row=>canonicalQuotationNumber(row.no)).filter(Boolean));
- for(const quote of local){const no=canonicalQuotationNumber(quote?.no);if(!quote?.id||knownIds.has(String(quote.id))||(no&&knownNos.has(no)))continue;const payload=remoteQuotePayload({...quote,createdByEmail:quoteCreatorEmail(quote)||currentEmail(),createdByName:quote.createdByName||currentProfile().display_name||currentEmail()});const result=await rpcSaveQuotation(client,payload);if(result.error){console.warn('Local quotation could not be imported',quote.no,result.error);continue}knownIds.add(String(quote.id));if(no)knownNos.add(no)}
-}
 async function listRemoteQuotes(client){
  const companyId=currentCompanyId();
  const v42919=await client.rpc('keysuite_list_quotations_v42919',{p_company_id:companyId});
@@ -447,13 +477,13 @@ async function listRemoteQuotes(client){
  if(!legacy.error)return legacy;
  const error=new Error(`V4.09 history: ${v409.error?.message||'company-bound RPC unavailable'}; V4.08: ${modern.error?.message||'compatibility RPC unavailable'}; legacy: ${legacy.error?.message||'quotation RPC unavailable'}`);error.v409=v409.error;error.modern=modern.error;error.legacy=legacy.error;throw error
 }
-function cachedQuotationRows(){const backup=store.get('ks_quotes_backup_v236',[]),local=store.get('ks_quotes',[]),rows=[...(Array.isArray(backup)?backup:[]),...(Array.isArray(local)?local:[])];return dedupeQuotationRows(rows).rows}
+function cachedQuotationRows(){const backup=store.get(QUOTATION_BACKUP_KEY,[]),legacyBackup=store.get('ks_quotes_backup_v236',[]),local=store.get('ks_quotes',[]),rows=[...(Array.isArray(backup)?backup:[]),...(Array.isArray(legacyBackup)?legacyBackup:[]),...(Array.isArray(local)?local:[])];return dedupeQuotationRows(rows).rows}
 async function loadSecureQuotes(){
  const client=quotationClient();quotationHistoryLoading=true;renderQuotationHistoryNotice();
  if(!client){quotationSyncMode='local';quotationSyncError='Secure quotation connection is unavailable. Showing the latest saved quotation cache.';cacheSecureQuotes(cachedQuotationRows());quotationHistoryLoading=false;renderQuotationHistoryNotice();refreshQuotes();refreshNewQuotationReference();return secureQuotes}
  try{
   const result=await listRemoteQuotes(client);
-  await importLocalQuotes(client,(result.data||[]).map(normalizeRemoteQuote));let refreshed=await listRemoteQuotes(client),remote=(refreshed.data||[]).map(normalizeRemoteQuote);
+  let refreshed=result,remote=(refreshed.data||[]).map(normalizeRemoteQuote);
   const removed=await cleanupRemoteQuotationDuplicates(client,remote);if(removed){refreshed=await listRemoteQuotes(client);remote=(refreshed.data||[]).map(normalizeRemoteQuote);console.info(`[KeySuite V4.08.05] Removed ${removed} duplicate quotation record${removed===1?'':'s'}.`)}
   quotationSyncMode='supabase';quotationSyncError='';cacheSecureQuotes(remote);quotationHistoryLoading=false;renderQuotationHistoryNotice();refreshQuotes();refreshNewQuotationReference();return secureQuotes
  }catch(error){console.error('Secure quotations unavailable',error);quotationSyncMode='error';quotationSyncError=String(error?.message||error);cacheSecureQuotes(cachedQuotationRows());quotationHistoryLoading=false;renderQuotationHistoryNotice();refreshQuotes();refreshNewQuotationReference();return secureQuotes}
@@ -1327,7 +1357,7 @@ async function saveQuote(options={}){
  const committed={...q,...remoteSaved,items:normalizeQuoteItemQuantities(remoteSaved?.items?.length?remoteSaved.items:q.items)};
  let arr=quotes().slice(),i=arr.findIndex(x=>String(x.id)===String(committed.id));if(i>=0)arr[i]=committed;else{arr=arr.filter(x=>canonicalQuotationNumber(x.no)!==canonicalQuotationNumber(committed.no));arr.unshift(committed)}if(Array.isArray(secureQuotes))cacheSecureQuotes(arr);else store.set('ks_quotes',arr);
  // The V4.29.15 save RPC claims the number atomically. This call also keeps older installations synchronized during a staged deployment.
- if(isFirstSave)window.KeySuiteQuotationReferences?.registerUsed?.(quotationNo).catch(error=>console.warn('Quotation running number could not be synchronized.',error));
+ if(isFirstSave)window.KeySuiteQuotationReferences?.registerUsed?.(committed.no).catch(error=>console.warn('Quotation running number could not be synchronized.',error));
  editingQuoteId=committed.id;quotationStatus=committed.status||'saved';quotationPricingCustomerId=committed.pricingCustomerId;quotationPricingCustomerSnapshot=customerSnapshot(committed.pricingCustomerSnapshot);setQuoteNoValue(committed.no);refreshAll();updateQuotationStateUi();
  if(!options.silent){const operation=committed.saveOperation||(isFirstSave?'created':'updated'),adjusted=committed.numberAdjustedFrom?`\nConcurrent number ${committed.numberAdjustedFrom} was already taken; KeySuite assigned ${committed.no}.`:'';alert(`${committed.documentType} ${committed.no} ${operation==='inserted'||operation==='created'?'created':'updated'} successfully.${adjusted}`)}return true
 }
