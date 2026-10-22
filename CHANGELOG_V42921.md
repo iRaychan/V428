@@ -14,7 +14,10 @@
 - Changed floor selection to a large Sims-style cutaway workspace with character-like agents instead of a transparent stacked-floor diagram.
 - Re-rendered the original Keylargo artwork as deep-blue outlined neon tubing with a narrow cool-white core, mounted directly to the upper façade without a signboard. Its perspective now rotates with the building.
 - Replaced line-drawn agent limbs with filled chibi characters including hair, faces, jackets, hands, legs and shoes.
-- Added internal asset revision `42921r4` and a fresh service-worker cache to prevent Safari from retaining earlier V4.29.21 KeyHQ scenes.
+- Locked agent size to the same world scale as desks and rooms so zooming preserves believable office proportions.
+- Added movement-aware front, side and back character views that respond to walking direction and building rotation.
+- Rebuilt the rooftop recreation deck as a complete basketball court with keys, circles, arcs, backboards and hoops.
+- Added internal asset revision `42921r5` and a fresh service-worker cache to prevent Safari from retaining earlier V4.29.21 KeyHQ scenes.
 - Retired the obsolete KeyAI-project inbox dependency: KeySuite Supabase is now the only enquiry source of record.
 - Made the KeyBot projector verify the company-scoped KeySuite inbox directly; it never substitutes demo content for a failed live feed.
 - Preserved the V4.29.20 quotation save, numbering, history, backup and role-scope behavior.

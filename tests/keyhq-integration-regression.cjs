@@ -11,10 +11,10 @@ const keyHQIndex = html.indexOf('id="keyhqNavButton"');
 if (keyBotIndex < 0 || keyHQIndex < 0 || keyHQIndex <= keyBotIndex) {
   throw new Error('KeyHQ must appear immediately after KeyBot in the sidebar source.');
 }
-if (!/src="keyhq-launcher\.js\?v=42921r4"/.test(html)) {
+if (!/src="keyhq-launcher\.js\?v=42921r5"/.test(html)) {
   throw new Error('KeyHQ launcher is not loaded by KeySuite.');
 }
-if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=42921r4'")) {
+if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=42921r5'")) {
   throw new Error('KeyHQ launcher does not target the embedded HQ page.');
 }
 if (!launcher.includes("event.data?.type==='KEYHQ_CLOSE'")) {
