@@ -155,7 +155,7 @@ let quotationStatus='new',quotationRevisionOf='',quotationRevisionRootId='',quot
 let lockedQuotePrefix='',quoteNumberSuffix='';
 let quotationSessionId=newUuid();
 let secureCustomers=[],customerSyncMode='local',customerSyncError='';
-let secureQuotes=null,quotationSyncMode='local',quotationSyncError='',quotationHistoryLoading=false;
+let secureQuotes=null,quotationSyncMode='local',quotationSyncError='',quotationCacheError='',quotationHistoryLoading=false;
 
 document.querySelectorAll('nav button[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 document.querySelectorAll('[data-nav-toggle]').forEach(button=>button.addEventListener('click',()=>{const group=document.querySelector(`[data-nav-group="${button.dataset.navToggle}"]`);group?.classList.toggle('open')}));
@@ -344,7 +344,11 @@ function remoteQuotePayload(q={}){
  return {...clean,items:normalizeQuoteItemQuantities(clean.items),createdByEmail:creator,createdByName:creatorName,updatedByEmail:currentEmail(),updatedAt:new Date().toISOString()}
 }
 function visibleQuotationRows(rows=[]){return canManageQuotationHistory()?rows:rows.filter(q=>quoteCreatorEmail(q)===currentEmail())}
-function cacheSecureQuotes(rows){const deduped=dedupeQuotationRows(rows);secureQuotes=visibleQuotationRows(deduped.rows);store.set('ks_quotes_backup_v236',secureQuotes);return secureQuotes}
+function cacheSecureQuotes(rows){
+ const deduped=dedupeQuotationRows(rows);secureQuotes=visibleQuotationRows(deduped.rows);
+ try{store.set('ks_quotes_backup_v236',secureQuotes);quotationCacheError=''}catch(error){quotationCacheError=String(error?.message||error);console.warn('Secure quotation history is live, but the browser backup could not be updated.',error)}
+ return secureQuotes
+}
 function isMissingRpc(error,name){const text=String(error?.message||error||'').toLowerCase();return text.includes(String(name||'').toLowerCase())&&(text.includes('not found')||text.includes('does not exist')||text.includes('schema cache'))}
 async function rpcSaveQuotation(client,payload){
  const companyId=currentCompanyId();
@@ -363,7 +367,8 @@ async function rpcSaveQuotation(client,payload){
  return result
 }
 async function saveQuoteRemote(q,{quiet=false}={}){
- const client=quotationClient();if(!client||quotationSyncMode!=='supabase')return q;
+ const client=quotationClient();
+ if(!client||quotationSyncMode!=='supabase'){const error=new Error('Secure quotation sync is unavailable. Retry the connection before saving this quotation.');error.code='quotation_sync_required';throw error}
  let payload=remoteQuotePayload(q),result=await rpcSaveQuotation(client,payload);if(result.error)throw result.error;
  let response=Array.isArray(result.data)?result.data[0]:result.data,numberAdjustedFrom='';
  if(response?.status==='conflict'){
@@ -427,6 +432,9 @@ async function importLocalQuotes(client,remoteRows){
 }
 async function listRemoteQuotes(client){
  const companyId=currentCompanyId();
+ const v42919=await client.rpc('keysuite_list_quotations_v42919',{p_company_id:companyId});
+ if(!v42919.error)return v42919;
+ if(!isMissingRpc(v42919.error,'keysuite_list_quotations_v42919'))throw v42919.error;
  const v42916=await client.rpc('keysuite_list_quotations_v42916',{p_company_id:companyId});
  if(!v42916.error)return v42916;
  if(!isMissingRpc(v42916.error,'keysuite_list_quotations_v42916'))throw v42916.error;
@@ -454,6 +462,7 @@ function renderQuotationHistoryNotice(){
  const node=$('quotationHistoryNotice');if(!node)return;
  if(quotationHistoryLoading){node.textContent='Loading Supabase quotation history…';node.className='auth-message show info';return}
  if(quotationSyncError){node.innerHTML=`<span>Quotation History: Supabase sync unavailable — local backup shown. ${esc(quotationSyncError)}</span> <button type="button" class="btn secondary sync-retry-button" id="retryQuotationHistorySync">Retry</button>`;node.className='auth-message show';$('retryQuotationHistorySync')?.addEventListener('click',()=>loadSecureQuotes());return}
+ if(quotationCacheError){node.textContent=`Quotation History is live from Supabase. This browser could not update its local backup: ${quotationCacheError}`;node.className='auth-message show info';return}
  node.textContent='';node.className='auth-message'
 }
 const HISTORY_MONTHS=[['01','January'],['02','February'],['03','March'],['04','April'],['05','May'],['06','June'],['07','July'],['08','August'],['09','September'],['10','October'],['11','November'],['12','December']];

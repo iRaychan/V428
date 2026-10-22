@@ -1,4 +1,13 @@
-# KeySuite V4.29.18 FULL CLEAN
+# KeySuite V4.29.19 Full
+
+## V4.29.19 - Unified secure quotation history
+
+- Lists valid current-only quotations together with archived quotation versions, with reference-level deduplication.
+- Preserves full company quotation visibility for owners and creator-only visibility for other accounts.
+- Keeps live Supabase history available when the browser cannot update its local backup because storage is full.
+- Blocks quotation saves while secure synchronization is unavailable, preventing local-only records from being reported as securely saved.
+- Repairs the legacy quotation-counter registration SQL ambiguity.
+- Requires the included Supabase migration. No Edge Function deployment is required.
 
 ## V4.29.18 - Safari post-authentication freeze correction
 

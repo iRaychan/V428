@@ -1,17 +1,17 @@
 {
-  "version": "4.29.18",
-  "baseline": "4.29.17",
-  "upgrade_supported_from": "4.29.17",
+  "version": "4.29.19",
+  "baseline": "4.29.18",
+  "upgrade_supported_from": "4.29.18",
   "changes": [
-    "fixes a self-triggering version-label MutationObserver loop that starved Safari timers and promise callbacks after Supabase authentication",
-    "makes all version-label writes idempotent and coalesces observer work to one animation frame",
-    "adds finite deadlines to protected-data, permissions, profile, template, reference, customer, note and quotation-history initialization",
-    "bounds cleanup sign-out so an error can always return the UI to login",
-    "rotates the service-worker cache and cache-busts the corrected Auth and version-lock runtimes",
-    "preserves V4.29.17 authentication hardening, V4.29.16 quotation corrections, integrated KeyHQ and all other modules",
-    "visible version is V4.29.18"
+    "unifies current and archived secure quotation history with reference-level deduplication",
+    "preserves owner company-wide visibility and creator-only visibility for non-owner accounts",
+    "separates browser backup quota failures from Supabase connection failures",
+    "blocks quotation saves when secure synchronization is unavailable",
+    "repairs ambiguous quotation counter registration SQL",
+    "rotates the service-worker cache and cache-busts the corrected application runtime",
+    "visible version is V4.29.19"
   ],
-  "new_database_migration_required": false,
+  "new_database_migration_required": true,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade from V4.29.17 by replacing every file in UPGRADE_FILE_MANIFEST_V42918.txt. No Supabase database migration or Edge Function deployment is required."
+  "notes": "Install the files in UPGRADE_FILE_MANIFEST_V42919.txt and apply the included V4.29.19 Supabase migration. No Edge Function deployment is required."
 }
