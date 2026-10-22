@@ -14,7 +14,7 @@ if (keyBotIndex < 0 || keyHQIndex < 0 || keyHQIndex <= keyBotIndex) {
 if (!/src="keyhq-launcher\.js\?v=42921"/.test(html)) {
   throw new Error('KeyHQ launcher is not loaded by KeySuite.');
 }
-if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=42921'")) {
+if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=42921r3'")) {
   throw new Error('KeyHQ launcher does not target the embedded HQ page.');
 }
 if (!launcher.includes("event.data?.type==='KEYHQ_CLOSE'")) {
