@@ -1,4 +1,8 @@
-# KeySuite V4.29.20 Full
+# KeySuite V4.29.21 Full
+
+## V4.29.21 - Truthful, company-scoped KeyHQ
+
+KeyHQ now distinguishes live, connected-empty, demo, locked and unavailable sources; displays evidence-backed agent signals instead of simulated progress; securely scopes projector enquiries to the signed-in company; supports saved Owner/Admin floor expansion; and restores the original Keylargo logo to the headquarters itself. All V4.29.20 quotation corrections are preserved. See `README_UPGRADE_V42921.md` and `CHANGELOG_V42921.md`.
 
 ## V4.29.20 - Atomic save allocation and compact browser backup
 

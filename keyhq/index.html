@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07101d">
-  <title>KeyHQ · KeySuite V4.29.16</title>
-  <link rel="stylesheet" href="styles.css?v=42916">
+  <title>KeyHQ · KeySuite V4.29.21</title>
+  <link rel="stylesheet" href="styles.css?v=42921">
 </head>
 <body data-theme="night">
   <div class="app-shell">
@@ -20,27 +20,26 @@
     </aside>
     <main>
       <header class="topbar">
-        <div class="brand"><span>KEYSUITE</span><b>/</b> KEYHQ <em>V4.29.16</em></div>
+        <div class="brand"><span>KEYSUITE</span><b>/</b> KEYHQ <em>V4.29.21</em></div>
         <div class="theme-preview" aria-label="Lighting preview"><button data-theme-mode="auto" class="active">Auto</button><button data-theme-mode="day">Day</button><button data-theme-mode="night">Night</button></div>
-        <div class="status"><i></i><span id="eventMode">Demo Telegram events</span><time id="clock">--:-- MYT</time></div>
+        <div class="status"><i></i><span id="eventMode">Checking connected sources…</span><time id="clock">--:-- MYT</time></div>
       </header>
       <section class="stage" id="stage">
-        <canvas id="hqCanvas" aria-label="Interactive Sims-style eight-floor KeyHQ with rooftop facilities"></canvas>
+        <canvas id="hqCanvas" aria-label="Interactive Sims-style expandable KeyHQ with departmental rooms and rooftop facilities"></canvas>
         <div class="skyline" aria-hidden="true"></div>
-        <div class="stage-title"><small>LIVE EXPANDABLE BUILDING</small><h1>KeyHQ Tower</h1><p id="floorSummary">Eight connected floors plus rooftop recreation.</p></div>
-        <img class="tower-logo" src="../keylargo-logo.png" alt="Keylargo">
+        <div class="stage-title"><small>CONNECTED EXPANDABLE HEADQUARTERS</small><h1>KeyHQ</h1><p id="floorSummary">Eight connected floors plus rooftop recreation.</p></div>
         <div class="floor-selector" id="floorSelector" aria-label="Choose a floor"></div>
         <div class="camera-controls" aria-label="Camera controls"><button id="rotateLeft" aria-label="Rotate left">↶</button><button id="zoomIn" aria-label="Zoom in">＋</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="resetCamera" aria-label="Full tower">⌂</button></div>
         <div class="hint"><span>↔</span> Drag to orbit · Scroll to zoom · Select a floor</div>
         <aside class="team-panel glass"><div class="panel-heading"><div><small>TEAM PULSE</small><h2>KeyHQ workforce</h2></div><b id="teamCount">8</b></div><div id="teamList" class="team-list"></div></aside>
-        <aside class="agent-card glass hidden" id="agentCard" aria-live="polite"><button id="closeCard" class="close" aria-label="Close employee details">×</button><div class="agent-header"><div class="portrait" id="cardPortrait"></div><div><span id="cardStatus"></span><h2 id="cardName"></h2><p id="cardRole"></p></div></div><div class="location-line"><span>LOCATION</span><b id="cardLocation"></b></div><div class="assignment"><small>CURRENT ACTIVITY</small><strong id="cardTask"></strong><div class="progress"><i id="cardProgress"></i></div><div class="progress-meta"><span id="cardProgressText"></span><span id="cardEta"></span></div></div><button class="assign-button" id="elevatorButton">Send to another floor ↑</button></aside>
-        <aside class="projector glass" id="projector"><div class="projector-head"><div><small>LEVEL 3 · KEYBOT DESK</small><h2>Enquiry projector</h2></div><span id="projectorAccess">LOCKED</span></div><div id="projectorMessage" class="projector-message">Waiting for an authorized KeyBot message.</div><div class="projector-meta"><span id="projectorSource">Demo feed</span><button id="nextMessage" type="button">Next</button></div></aside>
+        <aside class="agent-card glass hidden" id="agentCard" aria-live="polite"><button id="closeCard" class="close" aria-label="Close agent details">×</button><div class="agent-header"><div class="portrait" id="cardPortrait"></div><div><span id="cardStatus"></span><h2 id="cardName"></h2><p id="cardRole"></p></div></div><div class="location-line"><span>LOCATION</span><b id="cardLocation"></b></div><div class="assignment"><small>CONNECTED SIGNAL</small><strong id="cardTask"></strong><div class="source-line"><span>SOURCE</span><b id="cardSource"></b></div><div class="progress-meta"><span id="cardUpdated"></span><span id="cardMode"></span></div></div><button class="assign-button" id="elevatorButton">Preview another floor ↑</button></aside>
+        <aside class="projector glass" id="projector"><div class="projector-head"><div><small>LEVEL 3 · KEYBOT DESK</small><h2>Enquiry projector</h2></div><span id="projectorAccess">LOCKED</span></div><div id="projectorMessage" class="projector-message">Waiting for an authorized KeyBot message.</div><div class="projector-meta"><span id="projectorSource">Checking source</span><button id="nextMessage" type="button">Next</button></div></aside>
         <aside class="elevator-panel glass"><div class="elevator-visual"><div class="elevator-track"><i id="elevatorCar"></i></div><span>↕</span></div><div><small>ELEVATOR</small><strong id="elevatorStatus">Car at Lobby</strong><p id="elevatorPassenger">Ready</p></div></aside>
-        <div class="activity glass" id="activity"><span class="activity-icon">♢</span><div><small>SIMS ACTIVITY</small><p><b>Atlas</b> is getting coffee</p></div></div>
+        <div class="activity glass" id="activity"><span class="activity-icon">♢</span><div><small>KEYHQ SIGNAL</small><p><b>System</b> is waiting for connected activity</p></div></div>
         <div id="toast" class="toast"></div>
       </section>
     </main>
   </div>
-  <script src="app.js?v=42916"></script>
+  <script src="app.js?v=42921"></script>
 </body>
 </html>

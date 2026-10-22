@@ -76,9 +76,15 @@ async function ensureTelegramWebhook(url:string){
   if(!token||!secret)return {configured:false,connected:false,error:'Set TELEGRAM_BOT_TOKEN and TELEGRAM_WEBHOOK_SECRET in the KeySuite Supabase project.'};
   const webhookUrl=`${url.replace(/\/$/,'')}/functions/v1/telegram-webhook`;
   try{
-    const r=await fetch(`https://api.telegram.org/bot${token}/setWebhook`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:webhookUrl,secret_token:secret,allowed_updates:['message','edited_message','callback_query'],drop_pending_updates:false})});
+    const r=await fetch(`https://api.telegram.org/bot${token}/setWebhook`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:webhookUrl,secret_token:secret,allowed_updates:['message','edited_message'],drop_pending_updates:false})});
     const d=await r.json().catch(()=>({}));
-    if(!r.ok||!d?.ok)return {configured:true,connected:false,error:String(d?.description||`Telegram HTTP ${r.status}`)};
+    if(!r.ok||!d?.ok){
+      const error=String(d?.description||`Telegram HTTP ${r.status}`);
+      console.warn('Telegram webhook registration failed:',error);
+      return {configured:true,connected:false,error};
+    }
+    const me=await fetch(`https://api.telegram.org/bot${token}/getMe`).then(response=>response.json()).catch(()=>({}));
+    console.log('Telegram webhook connected:',String(me?.result?.id||''),String(me?.result?.username||''),webhookUrl);
     return {...await telegramWebhookStatus(url),repointed:true};
   }catch(e){return {configured:true,connected:false,error:e instanceof Error?e.message:String(e)}}
 }
@@ -308,7 +314,7 @@ Deno.serve(async(req)=>{
       const limit=Math.max(1,Math.min(200,Math.trunc(Number(body?.limit)||100)));
       const result=await service.from('ks_keyai_enquiries')
         .select('id,source,sender_username,sender_name,raw_message,status,ai_enabled,ai_model,ai_summary,ai_result,ai_error,clarification_question,clarification_questions,conversation_id,parent_enquiry_id,external_message_id,external_update_id,created_at,updated_at')
-        .eq('source','telegram').order('created_at',{ascending:false}).limit(limit);
+        .eq('source','telegram').eq('keyai_company_id',ctx.companyId).order('created_at',{ascending:false}).limit(limit);
       if(result.error)throw new Error(`KeyBot Inbox: ${errorText(result.error)}`);
       let telegram=await telegramWebhookStatus(k.url);
       if(ctx.isOwner&&telegram.configured&&!telegram.connected){
@@ -338,7 +344,7 @@ Deno.serve(async(req)=>{
       const usageResult=await service.from('ks_keyai_usage').select('input_tokens,output_tokens,estimated_cost_usd,created_at').gte('created_at',start.toISOString()).order('created_at',{ascending:false}).limit(1000);
       const usageWarning=usageResult.error?`Usage data unavailable: ${errorText(usageResult.error)}`:'';
       const usage:any[]=usageResult.error?[]:(Array.isArray(usageResult.data)?usageResult.data:[]);
-      const activityResult=await service.from('ks_keyai_enquiries').select('created_at,updated_at').eq('source','telegram').order('updated_at',{ascending:false}).limit(1).maybeSingle();
+      const activityResult=await service.from('ks_keyai_enquiries').select('created_at,updated_at').eq('source','telegram').eq('keyai_company_id',ctx.companyId).order('updated_at',{ascending:false}).limit(1).maybeSingle();
       const activityWarning=activityResult.error?`KeyBot activity unavailable: ${errorText(activityResult.error)}`:'';
       const activity:any=activityResult.error?null:activityResult.data;
       const s:any=settingsResult.data||{};

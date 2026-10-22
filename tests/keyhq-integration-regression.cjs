@@ -11,18 +11,21 @@ const keyHQIndex = html.indexOf('id="keyhqNavButton"');
 if (keyBotIndex < 0 || keyHQIndex < 0 || keyHQIndex <= keyBotIndex) {
   throw new Error('KeyHQ must appear immediately after KeyBot in the sidebar source.');
 }
-if (!/src="keyhq-launcher\.js\?v=42916"/.test(html)) {
+if (!/src="keyhq-launcher\.js\?v=42921"/.test(html)) {
   throw new Error('KeyHQ launcher is not loaded by KeySuite.');
 }
-if (!launcher.includes("frame.src='keyhq/index.html?embedded=1'")) {
+if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=42921'")) {
   throw new Error('KeyHQ launcher does not target the embedded HQ page.');
 }
 if (!launcher.includes("event.data?.type==='KEYHQ_CLOSE'")) {
   throw new Error('KeyHQ return-to-KeySuite message handler is missing.');
 }
-if (!keyhq.includes('Interactive Sims-style eight-floor KeyHQ')) {
-  throw new Error('The eight-floor KeyHQ application is missing.');
+if (!keyhq.includes('Interactive Sims-style expandable KeyHQ')) {
+  throw new Error('The expandable KeyHQ application is missing.');
 }
 if (!launcher.includes('KEYHQ_CONTEXT') || !launcher.includes('telegram_connected')) throw new Error('Shared KeySuite context or Telegram mode detection is missing.');
+if (!launcher.includes("context.eventMode=context.events.length?'live':'empty'")) throw new Error('Live and connected-empty Telegram modes are not separated.');
+if (/progress:\d+|eta:'/.test(fs.readFileSync(path.join(root, 'keyhq', 'app.js'), 'utf8'))) throw new Error('KeyHQ still contains fabricated agent progress or ETA values.');
+if (!launcher.includes("event.origin!==location.origin")) throw new Error('Same-origin KeyHQ messaging guard is missing.');
 
 console.log('KeyHQ integration regression: PASS');

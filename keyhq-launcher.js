@@ -3,6 +3,14 @@
   if(window.__KEYSUITE_KEYHQ_LAUNCHER__)return;
   window.__KEYSUITE_KEYHQ_LAUNCHER__=true;
 
+  const REFRESH_MS=20000;
+  let refreshTimer=0,contextRequest=0;
+  const demoEvents=[
+    {id:'demo-1',sender:'Demo · Acme Engineering',message:'Need 2 duty + 1 standby booster pumps, 180 m³/hr at 48 m head.',status:'demo',createdAt:'',isDemo:true},
+    {id:'demo-2',sender:'Demo · KL Contractor',message:'Please recommend a transfer pump for a 12-storey building.',status:'demo',createdAt:'',isDemo:true},
+    {id:'demo-3',sender:'Demo · Service Team',message:'Customer asks for CHC SS316 availability and quotation.',status:'demo',createdAt:'',isDemo:true}
+  ];
+
   function installStyles(){
     if(document.getElementById('keyhqLauncherStyle'))return;
     const style=document.createElement('style');
@@ -23,69 +31,75 @@
   function overlay(){
     let node=document.getElementById('keyhqOverlay');
     if(node)return node;
-    node=document.createElement('div');
-    node.id='keyhqOverlay';
-    node.setAttribute('role','region');
-    node.setAttribute('aria-label','KeyHQ virtual headquarters');
-    node.innerHTML='<iframe id="keyhqFrame" title="KeyHQ virtual headquarters" loading="lazy"></iframe>';
-    document.body.appendChild(node);
-    return node;
+    node=document.createElement('div');node.id='keyhqOverlay';node.setAttribute('role','region');node.setAttribute('aria-label','KeyHQ virtual headquarters');
+    node.innerHTML='<iframe id="keyhqFrame" title="KeyHQ virtual headquarters" loading="lazy"></iframe>';document.body.appendChild(node);return node;
   }
 
-  const demoEvents=[
-    {sender:'Demo · Acme Engineering',message:'Need 2 duty + 1 standby booster pumps, 180 m³/hr at 48 m head.'},
-    {sender:'Demo · KL Contractor',message:'Please recommend a transfer pump for a 12-storey building.'}
-  ];
+  function role(){return String(window.KEYSUITE_ACCESS?.role||'').toLowerCase()}
+  function canProjector(){return role()==='owner'||role()==='admin'||Boolean(window.KeySuitePermissions?.can?.('keyai_access',role()))}
+  function canConfigure(){return role()==='owner'||role()==='admin'}
+  function metric(id){return String(document.getElementById(id)?.textContent||'').trim()}
+  function customersCount(){try{return Number(window.KeySuiteApp?.getCustomers?.().length||metric('mCustomers')||0)}catch(_){return Number(metric('mCustomers')||0)}}
+  function signal(state,label,detail,source,updatedAt=''){return {state,label,detail,source,updatedAt}}
 
-  function canProjector(){
-    const role=String(window.KEYSUITE_ACCESS?.role||'').toLowerCase();
-    return role==='owner'||role==='admin'||Boolean(window.KeySuitePermissions?.can?.('keyai_access',role));
+  function agentSignals(context){
+    const customerCount=customersCount(),quoteCount=Number(metric('mQuotes')||0),quoteMode=String(window.KeySuiteQuotationStore?.getMode?.()||'unknown');
+    const enquiryCount=context.events.length,latest=context.events[0],keybot=context.eventMode==='live'
+      ?signal('live','LIVE',`${enquiryCount} company Telegram enquir${enquiryCount===1?'y':'ies'} available`,'KeyBot Telegram inbox',latest?.createdAt||'')
+      :context.eventMode==='empty'
+        ?signal('connected','CONNECTED','Telegram is connected; no company enquiries are available.','KeyBot Telegram inbox')
+        :context.eventMode==='demo'
+          ?signal('demo','DEMO','Demonstration messages only; no live enquiry is being shown.','KeyHQ demonstration data')
+          :context.eventMode==='locked'
+            ?signal('locked','LOCKED','This role is not authorized to receive enquiry content.','KeySuite role permissions')
+            :signal('error','UNAVAILABLE','KeyBot feed could not be verified.','KeyBot Telegram inbox');
+    return {
+      sage:signal('connected','CONNECTED','Signed-in KeySuite session and role permissions synchronized.','KeySuite identity and authority'),keybot,
+      atlas:signal('connected','AVAILABLE','Engineering and product-selection modules are available. No active engineering task is reported.','KeySuite engineering modules'),
+      scout:signal(customerCount?'connected':'standby',customerCount?'CONNECTED':'STANDBY',customerCount?`${customerCount} customer record${customerCount===1?'':'s'} in the permitted scope.`:'No customer workload signal is available.','KeySuite customer store'),
+      pixel:signal('standby','STANDBY','No content-production workflow is connected.','No live source connected'),
+      ledger:signal(quoteMode==='supabase'?'connected':'standby',quoteMode==='supabase'?'CONNECTED':'STANDBY',quoteMode==='supabase'?`${quoteCount} quotation record${quoteCount===1?'':'s'} visible in secure history.`:'Secure quotation history is not currently reporting live state.','KeySuite quotation store'),
+      nova:signal('standby','STANDBY','No strategy or planning workflow is connected.','No live source connected'),
+      echo:signal(context.eventMode==='live'?'connected':'standby',context.eventMode==='live'?'CONNECTED':'STANDBY',context.eventMode==='live'?`${enquiryCount} customer enquiry signal${enquiryCount===1?'':'s'} available.`:'No live customer-success workload is connected.','KeyBot company enquiry feed')
+    };
+  }
+
+  async function loadFloorConfig(client,companyId){
+    if(!client||!companyId)return [];
+    try{const result=await client.rpc('keysuite_get_keyhq_config_v42921',{p_company_id:companyId});if(result.error)return [];const value=Array.isArray(result.data)?result.data[0]?.floors:result.data?.floors;return Array.isArray(value)?value:[]}catch(_){return []}
   }
 
   async function keyhqContext(){
-    const access=window.KEYSUITE_ACCESS||{},profile=window.KEYSUITE_PROFILE||{},context={name:profile.display_name||access.display_name||profile.email||access.email||'Keylargo User',email:profile.email||access.email||'',role:access.role||'user',companyId:access.company_id||profile.company_id||'',canProjector:canProjector(),liveTelegram:false,events:demoEvents};
-    const client=window.KeySuiteAuth?.getClient?.();if(!client)return context;
+    const access=window.KEYSUITE_ACCESS||{},profile=window.KEYSUITE_PROFILE||{},companyId=String(access.company_id||profile.company_id||'');
+    const context={name:profile.display_name||access.display_name||profile.email||access.email||'Keylargo User',email:profile.email||access.email||'',role:access.role||'user',companyId,canProjector:canProjector(),canConfigure:canConfigure(),eventMode:canProjector()?'demo':'locked',events:canProjector()?demoEvents:[],floorConfig:[],refreshedAt:new Date().toISOString(),agents:{}};
+    const client=window.KeySuiteAuth?.getClient?.();context.floorConfig=await loadFloorConfig(client,companyId);
+    if(!client||!context.canProjector){context.agents=agentSignals(context);return context}
     try{
       const settings=await client.functions.invoke('keysuite-keyai',{body:{action:'get_settings'}}),row=Array.isArray(settings.data?.settings)?settings.data.settings[0]:settings.data?.settings||{};
-      if(settings.error||!row.telegram_connected)return context;
-      const inbox=await client.functions.invoke('keysuite-keyai',{body:{action:'list_inbox',limit:8}}),items=Array.isArray(inbox.data?.items)?inbox.data.items:[];
-      const events=items.map(item=>({sender:item.sender_name||item.sender_username||item.sender_id||'Telegram enquiry',message:item.raw_message||item.ai_summary||'New KeyBot enquiry'})).filter(item=>item.message);
-      return {...context,liveTelegram:true,events:events.length?events:demoEvents};
-    }catch(error){console.warn('KeyHQ is using demo Telegram events.',error);return context}
+      if(settings.error)throw settings.error;
+      if(!row.telegram_connected){context.eventMode='demo';context.events=demoEvents;context.agents=agentSignals(context);return context}
+      const inbox=await client.functions.invoke('keysuite-keyai',{body:{action:'list_inbox',limit:100}});if(inbox.error)throw inbox.error;
+      const items=Array.isArray(inbox.data?.items)?inbox.data.items:[];
+      context.events=items.map(item=>({id:String(item.id||''),sender:item.sender_name||item.sender_username||item.sender_id||'Telegram enquiry',message:item.raw_message||item.ai_summary||'New KeyBot enquiry',status:String(item.status||'received'),createdAt:String(item.created_at||''),isDemo:false})).filter(item=>item.id&&item.message);
+      context.eventMode=context.events.length?'live':'empty';
+    }catch(error){console.warn('KeyHQ could not verify the company KeyBot feed.',error);context.eventMode='error';context.events=[]}
+    context.agents=agentSignals(context);return context;
   }
 
-  async function sendContext(){
-    const frame=document.getElementById('keyhqFrame');if(!frame?.contentWindow)return;
-    frame.contentWindow.postMessage({type:'KEYHQ_CONTEXT',context:await keyhqContext()},'*');
+  async function sendContext(){const request=++contextRequest,frame=document.getElementById('keyhqFrame');if(!frame?.contentWindow)return;const context=await keyhqContext();if(request!==contextRequest)return;frame.contentWindow.postMessage({type:'KEYHQ_CONTEXT',context},location.origin)}
+  async function saveFloorConfig(floors){
+    const frame=document.getElementById('keyhqFrame'),companyId=String(window.KEYSUITE_ACCESS?.company_id||'');
+    if(!canConfigure())return frame?.contentWindow?.postMessage({type:'KEYHQ_CONFIG_RESULT',ok:false,error:'Only an Owner or Admin can configure KeyHQ floors.'},location.origin);
+    const client=window.KeySuiteAuth?.getClient?.();if(!client||!companyId)return frame?.contentWindow?.postMessage({type:'KEYHQ_CONFIG_RESULT',ok:false,error:'The secure KeySuite connection is unavailable.'},location.origin);
+    try{const result=await client.rpc('keysuite_save_keyhq_config_v42921',{p_company_id:companyId,p_floors:Array.isArray(floors)?floors:[]});if(result.error)throw result.error;frame?.contentWindow?.postMessage({type:'KEYHQ_CONFIG_RESULT',ok:true,floors:Array.isArray(floors)?floors:[]},location.origin)}catch(error){frame?.contentWindow?.postMessage({type:'KEYHQ_CONFIG_RESULT',ok:false,error:String(error?.message||error)},location.origin)}
   }
 
-  function open(){
-    const node=overlay(),frame=node.querySelector('#keyhqFrame');
-    if(!frame.getAttribute('src'))frame.src='keyhq/index.html?embedded=1';
-    node.classList.add('keyhq-open');
-    document.body.classList.add('keyhq-active');
-    document.getElementById('keyhqNavButton')?.classList.add('active');
-    if(frame.contentDocument?.readyState==='complete')sendContext();
-  }
+  function startRefresh(){clearInterval(refreshTimer);refreshTimer=window.setInterval(()=>{if(document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))sendContext()},REFRESH_MS)}
+  function stopRefresh(){clearInterval(refreshTimer);refreshTimer=0}
+  function open(){const node=overlay(),frame=node.querySelector('#keyhqFrame');if(!frame.getAttribute('src'))frame.src='keyhq/index.html?embedded=1&v=42921';node.classList.add('keyhq-open');document.body.classList.add('keyhq-active');document.getElementById('keyhqNavButton')?.classList.add('active');if(frame.contentDocument?.readyState==='complete')sendContext();startRefresh()}
+  function close(){document.getElementById('keyhqOverlay')?.classList.remove('keyhq-open');document.body.classList.remove('keyhq-active');document.getElementById('keyhqNavButton')?.classList.remove('active');stopRefresh()}
+  function boot(){installStyles();document.getElementById('keyhqNavButton')?.addEventListener('click',open);window.addEventListener('message',event=>{const frame=document.getElementById('keyhqFrame');if(event.origin!==location.origin||event.source!==frame?.contentWindow)return;if(event.data?.type==='KEYHQ_CLOSE')close();if(event.data?.type==='KEYHQ_READY'||event.data?.type==='KEYHQ_REFRESH')sendContext();if(event.data?.type==='KEYHQ_SAVE_CONFIG')saveFloorConfig(event.data.floors)});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))close()})}
 
-  function close(){
-    document.getElementById('keyhqOverlay')?.classList.remove('keyhq-open');
-    document.body.classList.remove('keyhq-active');
-    document.getElementById('keyhqNavButton')?.classList.remove('active');
-  }
-
-  function boot(){
-    installStyles();
-    document.getElementById('keyhqNavButton')?.addEventListener('click',open);
-    window.addEventListener('message',event=>{
-      const frame=document.getElementById('keyhqFrame');
-      if(event.source!==frame?.contentWindow)return;
-      if(event.data?.type==='KEYHQ_CLOSE')close();
-      if(event.data?.type==='KEYHQ_READY')sendContext();
-    });
-    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))close()});
-  }
-
-  window.KeySuiteKeyHQ={open,close};
+  window.KeySuiteKeyHQ={open,close,refresh:sendContext};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
