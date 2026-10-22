@@ -1,4 +1,12 @@
-# KeySuite V4.29.17 FULL CLEAN
+# KeySuite V4.29.18 FULL CLEAN
+
+## V4.29.18 - Safari post-authentication freeze correction
+
+- Fixes the self-triggering version-label observer that starved Safari's JavaScript task queue after Supabase had already accepted a login.
+- Makes late version updates idempotent and coalesces repeated mutations to one animation frame.
+- Adds deadlines to all awaited protected-data and module initialization stages.
+- Rotates the service-worker cache so Safari cannot reuse the defective V4.29.17 startup runtime.
+- Preserves all KeyHQ, quotation, pricing and selector functions.
 
 ## V4.29.17 - Safari authentication startup recovery
 

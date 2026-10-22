@@ -1,8 +1,9 @@
-/* KeySuite V4.29.17 — guarded late-module display lock. */
+/* V4.29.18 compatibility shim for a cached V4.29.17 shell. */
 (()=>{
   'use strict';
-  const V='4.29.17';let applying=false;
-  function apply(){if(applying)return;applying=true;try{const title=String(window.__KEYSUITE_LOCKED_QUOTATION_PDF_TITLE__||'').trim()||`KeySuite V${V}`;if(document.title!==title)document.title=title;document.documentElement.setAttribute('data-keysuite-version',V);document.querySelectorAll('.suite-version').forEach(x=>x.textContent=`KeySuite V${V}`);document.querySelectorAll('.brand small,.auth-brand small').forEach(x=>{if(/(?:full suite|keysuite|v\d)/i.test(x.textContent||''))x.textContent=x.closest('.auth-brand')?`V${V}`:`Full Suite V${V}`})}finally{applying=false}}
-  function start(){apply();new MutationObserver(apply).observe(document.documentElement,{subtree:true,childList:true,characterData:true});window.addEventListener('pageshow',apply);window.addEventListener('beforeprint',apply)}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+  if(window.__KEYSUITE_V42918_VERSION_LOCK__)return;
+  const script=document.createElement('script');
+  script.src='./v42918-version-lock.js?v=42918&compat=42917';
+  script.async=false;
+  (document.head||document.documentElement).appendChild(script);
 })();

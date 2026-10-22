@@ -1,28 +1,17 @@
 {
-  "version": "4.29.17",
-  "baseline": "4.29.16",
-  "upgrade_supported_from": "4.29.16",
+  "version": "4.29.18",
+  "baseline": "4.29.17",
+  "upgrade_supported_from": "4.29.17",
   "changes": [
-    "prevents Safari from waiting indefinitely while checking a persisted session",
-    "pins the Supabase browser SDK to 2.118.0",
-    "uses Supabase 2.118.0 lockless Auth coordination and defers the auth-state subscription until the initial session check settles",
-    "actively aborts stalled Auth requests after six seconds and bounds startup at eight seconds",
-    "disposes and replaces a timed-out Auth client before enabling sign-in",
-    "prevents duplicate Auth clients while Safari activates the new service-worker shell",
-    "automatically resolves one concurrent quotation-number collision during save",
-    "distinguishes quotation inserts from updates and confirms the committed action and number",
-    "normalizes quotation qty and quantity fields across browser and database round-trips",
-    "limits non-owner quotation history and updates to the signed-in user's own records while Owners retain company-wide access",
-    "integrates KeyHQ as a lazy-loaded native KeySuite module with shared identity and roles",
-    "adds an eight-floor expandable Sims-style HQ, rooftop basketball and futsal, and toilet, pantry and game facilities on every floor",
-    "adds Level 3 KeyBot enquiry desk animation and a role-authorized message projector",
-    "uses demo Telegram events unless the live KeyBot Telegram connection reports connected",
-    "adds Asia/Kuala_Lumpur Auto lighting plus Day and Night manual preview",
-    "uses the unchanged Keylargo logo asset with runtime neon illumination",
-    "preserves all V4.29.16 quotation corrections and integrated KeyHQ functions",
-    "visible version is V4.29.17"
+    "fixes a self-triggering version-label MutationObserver loop that starved Safari timers and promise callbacks after Supabase authentication",
+    "makes all version-label writes idempotent and coalesces observer work to one animation frame",
+    "adds finite deadlines to protected-data, permissions, profile, template, reference, customer, note and quotation-history initialization",
+    "bounds cleanup sign-out so an error can always return the UI to login",
+    "rotates the service-worker cache and cache-busts the corrected Auth and version-lock runtimes",
+    "preserves V4.29.17 authentication hardening, V4.29.16 quotation corrections, integrated KeyHQ and all other modules",
+    "visible version is V4.29.18"
   ],
   "new_database_migration_required": false,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade from V4.29.16 by replacing the files in UPGRADE_FILE_MANIFEST_V42917.txt. No new database migration or Edge Function deployment is required for V4.29.17."
+  "notes": "Upgrade from V4.29.17 by replacing every file in UPGRADE_FILE_MANIFEST_V42918.txt. No Supabase database migration or Edge Function deployment is required."
 }

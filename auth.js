@@ -1,8 +1,8 @@
 (() => {
   'use strict';
-  if(window.__KEYSUITE_AUTH_V42917_ACTIVE__)return;
-  window.__KEYSUITE_AUTH_V42917_ACTIVE__=true;
-  // A just-activated service worker can briefly expose a cached pre-V4.29.17
+  if(window.__KEYSUITE_AUTH_V42918_ACTIVE__)return;
+  window.__KEYSUITE_AUTH_V42918_ACTIVE__=true;
+  // A just-activated service worker can briefly expose a cached pre-V4.29.18
   // shell. Retire its client before this cache-busted Auth runtime takes over.
   try{window.KeySuiteAuth?.getClient?.()?.auth?.dispose?.()}catch(_){}
   const el=id=>document.getElementById(id);
@@ -14,6 +14,8 @@
   let removeSignatureRequested=false;
   const AUTH_REQUEST_TIMEOUT_MS=6000;
   const AUTH_STARTUP_TIMEOUT_MS=8000;
+  const SECURE_DATA_TIMEOUT_MS=20000;
+  const MODULE_INIT_TIMEOUT_MS=12000;
   let authSubscription=null;
 
   function timeoutError(label='Authentication'){
@@ -305,19 +307,19 @@
       const userAccess=await verify(s?.user?.email||'');
       if(!userAccess){await client.auth.signOut({scope:'local'});showLogin('This account is valid, but it is not approved for KeySuite.');return}
       showLoading('Loading protected company and pricing data…');
-      const data=await loadData(userAccess);if(!data.companies.length)throw new Error('No company data was returned. Check the database and RLS policies.');
-      session=s;access=userAccess;window.KEYSUITE_ACCESS=access;await loadRolePermissions();await window.KeySuiteAuthority?.init?.(access);const savedProfile=await loadUserProfile(s?.user?.email||'');profile=buildProfile(s,access,data,savedProfile);
+      const data=await withDeadline(loadData(userAccess),'Secure data loading',SECURE_DATA_TIMEOUT_MS);if(!data.companies.length)throw new Error('No company data was returned. Check the database and RLS policies.');
+      session=s;access=userAccess;window.KEYSUITE_ACCESS=access;await withDeadline(loadRolePermissions(),'Permission loading',MODULE_INIT_TIMEOUT_MS);await withDeadline(window.KeySuiteAuthority?.init?.(access),'Authority initialization',MODULE_INIT_TIMEOUT_MS);const savedProfile=await withDeadline(loadUserProfile(s?.user?.email||''),'Profile loading',MODULE_INIT_TIMEOUT_MS);profile=buildProfile(s,access,data,savedProfile);
       window.KEYSUITE_SECURE_DATA=data;window.KeySuiteKeyLab?.applyData?.(data);applyProfile(profile);
       try{window.dispatchEvent(new CustomEvent('KEYSUITE_AUTH_CONTEXT_READY',{detail:{company_id:profile?.company_id||userAccess?.company_id||'',email:profile?.email||'',role:profile?.role||''}}))}catch(_){}
-      window.KeySuitePricing?.init(data,access);window.KeySuiteCategories?.init(data,access);window.KeySuiteCompanySettings?.init(data,access);window.KeySuitePriceList?.init(data,access);window.KeySuiteCRPriceList?.init(data,access);window.KeySuiteBFI?.init?.(data,access);window.KeySuiteManifold?.init(data,access);window.KeySuiteMotor?.init(data,access);window.KeySuiteCoupling?.init(data,access);window.KeySuiteBaseplate?.init(data,access);window.KeySuiteRoles?.init(access);window.KeySuiteKeyAI?.init?.(access);await window.KeySuiteTemplates?.init?.(access);await window.KeySuiteQuotationReferences?.init?.(profile);window.KeySuiteApp?.refreshNewQuotationReference?.();unlockSelector();
+      window.KeySuitePricing?.init(data,access);window.KeySuiteCategories?.init(data,access);window.KeySuiteCompanySettings?.init(data,access);window.KeySuitePriceList?.init(data,access);window.KeySuiteCRPriceList?.init(data,access);window.KeySuiteBFI?.init?.(data,access);window.KeySuiteManifold?.init(data,access);window.KeySuiteMotor?.init(data,access);window.KeySuiteCoupling?.init(data,access);window.KeySuiteBaseplate?.init(data,access);window.KeySuiteRoles?.init(access);window.KeySuiteKeyAI?.init?.(access);await withDeadline(window.KeySuiteTemplates?.init?.(access),'Quotation template initialization',MODULE_INIT_TIMEOUT_MS);await withDeadline(window.KeySuiteQuotationReferences?.init?.(profile),'Quotation reference initialization',MODULE_INIT_TIMEOUT_MS);window.KeySuiteApp?.refreshNewQuotationReference?.();unlockSelector();
       showLoading('Loading your customer access…');
-      try{await window.KeySuiteCustomerStore?.load?.()}catch(error){console.warn('Customer load warning',error)}
-      try{await window.KeySuiteNoteStore?.load?.()}catch(error){console.warn('Global Note load warning',error)}
+      try{await withDeadline(window.KeySuiteCustomerStore?.load?.(),'Customer loading',MODULE_INIT_TIMEOUT_MS)}catch(error){console.warn('Customer load warning',error)}
+      try{await withDeadline(window.KeySuiteNoteStore?.load?.(),'Global Note loading',MODULE_INIT_TIMEOUT_MS)}catch(error){console.warn('Global Note load warning',error)}
       showLoading('Loading secure quotation history…');
-      try{await window.KeySuiteQuotationStore?.load?.()}catch(error){console.warn('Quotation history load warning',error)}
+      try{await withDeadline(window.KeySuiteQuotationStore?.load?.(),'Quotation history loading',MODULE_INIT_TIMEOUT_MS)}catch(error){console.warn('Quotation history load warning',error)}
       refreshAll();setView('app');
       if(inviteFlowPending||recoveryFlowPending)setTimeout(openInvitePassword,250);
-    }catch(error){console.error(error);try{await client.auth.signOut({scope:'local'})}catch(_){ }showLogin(`Secure data could not be loaded: ${error.message}`)}
+    }catch(error){console.error(error);try{await withDeadline(client.auth.signOut({scope:'local'}),'Local sign-out',2000)}catch(_){ }showLogin(`Secure data could not be loaded: ${error.message}`)}
   }
   async function signIn(event){
     event.preventDefault();message('');if(!client){message('Supabase is not configured. Keep your working config.js in the repository.','info');return}
@@ -518,7 +520,7 @@
       else if(recoveryFlowPending)showLogin('This password reset link is invalid or has expired. Use Forgot Password to request a new link.','error');
       else showLogin();
     }catch(error){
-      console.error('[KeySuite V4.29.17] Initial session check failed.',error);
+      console.error('[KeySuite V4.29.18] Initial session check failed.',error);
       // Do not keep a timed-out auth instance: its initialization promise may remain
       // unresolved and would make the next sign-in hang on the same client.
       if(error?.code==='KEYSUITE_AUTH_TIMEOUT'){
