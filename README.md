@@ -1,4 +1,8 @@
-# KeySuite V4.29.21 Full
+# KeySuite V4.29.22 Full
+
+## V4.29.22 - Manufacturer-correct tyre coupling selection
+
+Tyre coupling selection now evaluates both valid F/H flange orientations using motor torque, operating speed, shaft diameters, Taper-Lock bush capacity and the coupling manufacturer's flange-specific bore limits. ES 32-13 with a 40 HP 4-pole motor therefore selects F80 with pump H/2012 and motor F/2517, without a pump-model exception. Pricing, BOM construction, layouts and all V4.29.21 features are preserved. See `README_UPGRADE_V42922.md`, `CHANGELOG_V42922.md` and `VERIFICATION_V42922.md`.
 
 ## V4.29.21 - Truthful, company-scoped KeyHQ
 

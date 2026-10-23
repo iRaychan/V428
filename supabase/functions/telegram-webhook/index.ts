@@ -1953,6 +1953,7 @@ const KEYBOT_TYRE_COUPLINGS=[
   {model:'F200',torque:9325,maxSpeed:1300,f:'4535',h:'4535'},{model:'F220',torque:11600,maxSpeed:1100,f:'5040',h:'5040'}
 ];
 const KEYBOT_BUSH_MAX:any={'1008':24,'1210':32,'1610':42,'2012':50,'2517':65,'3020':75,'3525':90,'4030':100,'4535':110,'5040':125};
+const KEYBOT_TYRE_FLANGE_MAX:any={F40:{f:25,h:25},F50:{f:32,h:32},F60:{f:42,h:42},F70:{f:50,h:42},F80:{f:60,h:50},F90:{f:60,h:60},F100:{f:75,h:60},F110:{f:75,h:75},F120:{f:100,h:75},F140:{f:100,h:100},F160:{f:115,h:115},F180:{f:125,h:125},F200:{f:125,h:125},F220:{f:125,h:125}};
 const KEYBOT_MOTOR_SHAFT:any={'63':11,'71':14,'80':19,'90S':24,'90L':24,'100L':28,'112M':28,'132S':38,'132M':38,'160M':42,'160L':42,'180M':48,'180L':48,'200L':55,'225S':60,'225M':60,'250M':65,'280S':75,'280M':75,'315S':80,'315M':80,'315L':80,'355M':95,'355L':95,'400M':110,'400L':110};
 
 function keybotBaseplateChannel(value:any){
@@ -1962,14 +1963,15 @@ function keybotBaseplateChannel(value:any){
   const a=m[1].replace('.5','½'),b=m[2].replace('.5','½');return `${a}" x ${b}"`;
 }
 function keybotMotorShaft(frame:any){const base=String(frame||'').replace(/-\d+\s*$/,'').trim();return Number(KEYBOT_MOTOR_SHAFT[base]||0)}
+function keybotTyreFlangeMax(model:any,type:any,bush:any){const bushLimit=Number(KEYBOT_BUSH_MAX[String(bush||'')]||0),flangeLimit=Number(KEYBOT_TYRE_FLANGE_MAX[String(model||'').toUpperCase()]?.[String(type||'').toLowerCase()]||0);return bushLimit>0&&flangeLimit>0?Math.min(bushLimit,flangeLimit):bushLimit||flangeLimit}
 function keybotEsAutoCoupling(pumpShaft:any,motorFrame:any,motorKw:any,motorRpm:any){
   const ps=Number(pumpShaft||0),ms=keybotMotorShaft(motorFrame),kw=Number(motorKw||0),rpm=Number(motorRpm||0),torque=kw>0&&rpm>0?kw*9550/rpm:0;
   const pin=KEYBOT_PIN_COUPLINGS.find((x:any)=>ps<=x.maxShaft&&ms<=x.maxShaft&&torque<=x.torque&&rpm<=x.maxSpeed);
   if(pin)return {mode:'flexible',type:'pin_bush',model:pin.model,bushes:[],pump_shaft_mm:ps,motor_shaft_mm:ms,required_torque_nm:torque,rpm};
   for(const x of KEYBOT_TYRE_COUPLINGS){
     if(torque>x.torque||rpm>x.maxSpeed)continue;
-    const arrangements=ps>24?[{pump:x.h,motor:x.f},{pump:x.f,motor:x.h}]:[{pump:x.f,motor:x.h}];
-    const ok=arrangements.find((a:any)=>ps<=Number(KEYBOT_BUSH_MAX[a.pump]||0)&&ms<=Number(KEYBOT_BUSH_MAX[a.motor]||0));
+    const arrangements=[{pump:x.h,pumpType:'h',motor:x.f,motorType:'f'},{pump:x.f,pumpType:'f',motor:x.h,motorType:'h'}];
+    const ok=arrangements.find((a:any)=>ps<=keybotTyreFlangeMax(x.model,a.pumpType,a.pump)&&ms<=keybotTyreFlangeMax(x.model,a.motorType,a.motor));
     if(ok)return {mode:'flexible',type:'tyre',model:x.model,bushes:[ok.pump,ok.motor],pump_shaft_mm:ps,motor_shaft_mm:ms,required_torque_nm:torque,rpm};
   }
   return {mode:'flexible',type:'',model:'No suitable coupling',bushes:[],pump_shaft_mm:ps,motor_shaft_mm:ms,required_torque_nm:torque,rpm,warning:'No suitable coupling model was resolved automatically.'};
@@ -1983,7 +1985,7 @@ async function keybotEsCouplingChoices(service:any,type:any,bom:any){
   let activeSet:Set<string>|null=null;try{const r=await service.from('ks_products_coupling').select('model,component_type').eq('active',true).eq('component_type',normalized).limit(1000);if(!r.error)activeSet=new Set((r.data||[]).map((x:any)=>String(x.model||'').toUpperCase()))}catch(_){}
   const active=(model:any)=>!activeSet||!activeSet.size||activeSet.has(String(model||'').toUpperCase());
   if(normalized==='pin_bush')return KEYBOT_PIN_COUPLINGS.filter((x:any)=>active(x.model)&&ps<=Number(x.maxShaft||0)&&ms<=Number(x.maxShaft||0)&&torque<=Number(x.torque||0)&&rpm<=Number(x.maxSpeed||0)).map((x:any)=>({type:'pin_bush',model:x.model,bushes:[],pump_shaft_mm:ps,motor_shaft_mm:ms,required_torque_nm:torque,rpm}));
-  const out:any[]=[];for(const x of KEYBOT_TYRE_COUPLINGS){if(!active(x.model)||torque>Number(x.torque||0)||rpm>Number(x.maxSpeed||0))continue;const arrangements=ps>24?[{pump:x.h,motor:x.f},{pump:x.f,motor:x.h}]:[{pump:x.f,motor:x.h},{pump:x.h,motor:x.f}];const ok=arrangements.find((a:any)=>ps<=Number(KEYBOT_BUSH_MAX[a.pump]||0)&&ms<=Number(KEYBOT_BUSH_MAX[a.motor]||0));if(ok)out.push({type:'tyre',model:x.model,bushes:[ok.pump,ok.motor],pump_shaft_mm:ps,motor_shaft_mm:ms,required_torque_nm:torque,rpm})}return out;
+  const out:any[]=[];for(const x of KEYBOT_TYRE_COUPLINGS){if(!active(x.model)||torque>Number(x.torque||0)||rpm>Number(x.maxSpeed||0))continue;const arrangements=[{pump:x.h,pumpType:'h',motor:x.f,motorType:'f'},{pump:x.f,pumpType:'f',motor:x.h,motorType:'h'}];const ok=arrangements.find((a:any)=>ps<=keybotTyreFlangeMax(x.model,a.pumpType,a.pump)&&ms<=keybotTyreFlangeMax(x.model,a.motorType,a.motor));if(ok)out.push({type:'tyre',model:x.model,bushes:[ok.pump,ok.motor],pump_shaft_mm:ps,motor_shaft_mm:ms,required_torque_nm:torque,rpm})}return out;
 }
 function keybotEsManualCouplingSelection(coupling:any){if(!coupling||coupling.auto!==false)return null;return {type:String(coupling.type||(/^FCL\b/i.test(String(coupling.model||''))?'pin_bush':'tyre')),model:String(coupling.model||''),bushes:Array.isArray(coupling.bushes)?coupling.bushes:[],pump_shaft_mm:Number(coupling.pump_shaft_mm||0),motor_shaft_mm:Number(coupling.motor_shaft_mm||0),required_torque_nm:Number(coupling.required_torque_nm||0),rpm:Number(coupling.rpm||0)} }
 function keybotEsMotorInput(text:any,bom:any){

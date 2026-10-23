@@ -1,19 +1,16 @@
 {
-  "version": "4.29.21",
-  "baseline": "4.29.20",
-  "upgrade_supported_from": "4.29.20",
+  "version": "4.29.22",
+  "baseline": "4.29.21",
+  "upgrade_supported_from": "4.29.21",
   "changes": [
-    "preserves every V4.29.20 quotation and KeySuite correction",
-    "separates live, connected-empty, demo, locked and unavailable KeyHQ states",
-    "removes fabricated agent progress, ETA and random task claims",
-    "scopes KeyBot projector enquiries and activity to the signed-in company",
-    "refreshes the authorized KeyBot projector every twenty seconds without presenting demo records as live",
-    "adds persistent Owner/Admin company floor expansion through secured RPCs",
-    "adds differentiated departmental rooms, circulation walls and original Keylargo logo placement",
-    "hardens KeyHQ frame messaging to same-origin communication",
-    "visible version is V4.29.21"
+    "preserves every V4.29.21 feature, layout, pricing rule and BOM behavior",
+    "evaluates both valid F/H tyre-flange orientations for every pump and motor shaft combination",
+    "checks motor torque, running speed, bush capacity and manufacturer flange-specific bore limits",
+    "selects F80 for ES 32-13 with a 40 HP 4-pole motor using pump H/2012 and motor F/2517",
+    "applies the same general selection rules to the KeyBot Telegram workflow",
+    "visible version is V4.29.22"
   ],
-  "new_database_migration_required": true,
+  "new_database_migration_required": false,
   "edge_function_deploy_required": true,
-  "notes": "Upgrade from V4.29.20. Apply the two V4.29.21 migrations, deploy the updated keysuite-keyai Edge Function, then upload the files listed in UPGRADE_FILE_MANIFEST_V42921.txt."
+  "notes": "Upgrade from V4.29.21. No database migration is required. Upload the files listed in UPGRADE_FILE_MANIFEST_V42922.txt and deploy the updated telegram-webhook Edge Function to keep KeyBot coupling selection aligned with the web app."
 }
