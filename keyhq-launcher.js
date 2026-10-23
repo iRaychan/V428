@@ -72,13 +72,15 @@
 
   function fallbackPerson(row,index){
     const palette=['#62f1dc','#89ddff','#a998ff','#ffc766','#ff8db2','#c8ff66'];
-    return {email:String(row.email||'').toLowerCase(),name:row.display_name||String(row.email||'').split('@')[0]||'KeySuite user',role:String(row.role||'user').toLowerCase(),deskNo:Number(row.desk_no||index+1),gender:row.avatar_gender||((index%2)?'male':'female'),accent:row.avatar_accent||palette[index%palette.length],accountState:row.account_state||'enabled',presence:String(row.presence_state||'offline').toLowerCase(),presenceUpdatedAt:String(row.presence_updated_at||'')};
+    return {email:String(row.email||'').toLowerCase(),name:row.display_name||String(row.email||'').split('@')[0]||'KeySuite user',role:String(row.role||'user').toLowerCase(),deskNo:Number(row.desk_no||index+1),gender:row.avatar_gender||((index%2)?'male':'female'),accent:row.avatar_accent||palette[index%palette.length],skinTone:row.avatar_skin_tone,bodyShape:row.avatar_body_shape,hairStyle:row.avatar_hair_style,hairColor:row.avatar_hair_color,facialFeatures:row.avatar_facial_features,moustache:row.avatar_moustache,beard:row.avatar_beard,glasses:row.avatar_glasses,clothing:row.avatar_clothing,accountState:row.account_state||'enabled',presence:String(row.presence_state||'offline').toLowerCase(),presenceUpdatedAt:String(row.presence_updated_at||'')};
   }
 
   async function loadPeople(client,companyId){
     if(!client||!companyId)return {people:[],mode:'unavailable',error:'Secure KeySuite connection unavailable.'};
     try{
-      let result=await client.rpc('keysuite_list_keyhq_people_v42922_v04',{p_company_id:companyId});
+      let result=await client.rpc('keysuite_list_keyhq_people_v42923',{p_company_id:companyId});
+      if(!result.error)return {people:(result.data||[]).map(fallbackPerson),mode:'live',error:''};
+      result=await client.rpc('keysuite_list_keyhq_people_v42922_v04',{p_company_id:companyId});
       if(!result.error)return {people:(result.data||[]).map(fallbackPerson),mode:'live',error:''};
       result=await client.rpc('keysuite_list_keyhq_people_v42922',{p_company_id:companyId});
       if(!result.error)return {people:(result.data||[]).map(fallbackPerson),mode:'migration-required',error:'Apply the prepared KeyHQ V0.4 presence migration for shared login/logout locations.'};
@@ -129,7 +131,13 @@
     if(!canConfigurePeople())return frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:false,error:'Only an enabled Owner can configure KeyOffice desks and avatars.'},location.origin);
     const client=window.KeySuiteAuth?.getClient?.();if(!client||!companyId)return frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:false,error:'The secure KeySuite connection is unavailable.'},location.origin);
     const payload=(Array.isArray(people)?people:[]).map(person=>({email:String(person.email||'').toLowerCase(),desk_no:Number(person.deskNo),avatar_gender:person.gender,avatar_accent:person.accent}));
-    try{let result=await client.rpc('keysuite_save_keyhq_people_v42922_v04',{p_company_id:companyId,p_people:payload});if(result.error)result=await client.rpc('keysuite_save_keyhq_people_v42922',{p_company_id:companyId,p_people:payload});if(result.error)throw result.error;frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:true},location.origin);sendContext()}catch(error){frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:false,error:String(error?.message||error)},location.origin)}
+    try{let result=await client.rpc('keysuite_save_keyhq_people_v42923',{p_company_id:companyId,p_people:payload});if(result.error)result=await client.rpc('keysuite_save_keyhq_people_v42922_v04',{p_company_id:companyId,p_people:payload});if(result.error)result=await client.rpc('keysuite_save_keyhq_people_v42922',{p_company_id:companyId,p_people:payload});if(result.error)throw result.error;frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:true},location.origin);sendContext()}catch(error){frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:false,error:String(error?.message||error)},location.origin)}
+  }
+
+  async function saveAvatar(avatar){
+    const frame=document.getElementById('keyhqFrame'),companyId=String(window.KEYSUITE_ACCESS?.company_id||'');
+    const client=window.KeySuiteAuth?.getClient?.();if(!client||!companyId)return frame?.contentWindow?.postMessage({type:'KEYHQ_AVATAR_RESULT',ok:false,error:'The secure KeySuite connection is unavailable.'},location.origin);
+    try{const result=await client.rpc('keysuite_save_my_keyhq_avatar_v42923',{p_company_id:companyId,p_avatar:avatar||{}});if(result.error)throw result.error;frame?.contentWindow?.postMessage({type:'KEYHQ_AVATAR_RESULT',ok:true},location.origin);sendContext()}catch(error){frame?.contentWindow?.postMessage({type:'KEYHQ_AVATAR_RESULT',ok:false,error:String(error?.message||error)},location.origin)}
   }
 
   async function setPresence(state='online'){
@@ -141,14 +149,14 @@
   function openQuotationPdf(id){
     const rows=window.KeySuiteQuotationStore?.getQuotes?.()||[],allowed=rows.some(row=>String(row.id)===String(id));
     if(!allowed)return;
-    close();window.KeySuiteQuotationStore?.openHistoryPdf?.(id);
+    window.KeySuiteQuotationStore?.openHistoryPdfModal?.(id);
   }
 
   function startRefresh(){clearInterval(refreshTimer);refreshTimer=window.setInterval(()=>{if(document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))sendContext()},REFRESH_MS)}
   function stopRefresh(){clearInterval(refreshTimer);refreshTimer=0}
-  function open(){const node=overlay(),frame=node.querySelector('#keyhqFrame');if(!frame.getAttribute('src'))frame.src='keyhq/index.html?embedded=1&v=keyhq04';node.classList.add('keyhq-open');document.body.classList.add('keyhq-active');document.getElementById('keyhqNavButton')?.classList.add('active');setPresence('online').finally(()=>sendContext());startRefresh()}
+  function open(){const node=overlay(),frame=node.querySelector('#keyhqFrame');if(!frame.getAttribute('src'))frame.src='keyhq/index.html?embedded=1&v=keyhq05';node.classList.add('keyhq-open');document.body.classList.add('keyhq-active');document.getElementById('keyhqNavButton')?.classList.add('active');setPresence('online').finally(()=>sendContext());startRefresh()}
   function close(){document.getElementById('keyhqOverlay')?.classList.remove('keyhq-open');document.body.classList.remove('keyhq-active');document.getElementById('keyhqNavButton')?.classList.remove('active');stopRefresh()}
-  function boot(){installStyles();document.getElementById('keyhqNavButton')?.addEventListener('click',open);window.addEventListener('message',event=>{const frame=document.getElementById('keyhqFrame');if(event.origin!==location.origin||event.source!==frame?.contentWindow)return;if(event.data?.type==='KEYHQ_CLOSE')close();if(event.data?.type==='KEYHQ_READY'||event.data?.type==='KEYHQ_REFRESH')sendContext();if(event.data?.type==='KEYHQ_SAVE_CONFIG')saveFloorConfig(event.data.floors);if(event.data?.type==='KEYHQ_SAVE_PEOPLE')savePeople(event.data.people);if(event.data?.type==='KEYHQ_OPEN_PDF')openQuotationPdf(event.data.id)});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))close()})}
+  function boot(){installStyles();document.getElementById('keyhqNavButton')?.addEventListener('click',open);window.addEventListener('message',event=>{const frame=document.getElementById('keyhqFrame');if(event.origin!==location.origin||event.source!==frame?.contentWindow)return;if(event.data?.type==='KEYHQ_CLOSE')close();if(event.data?.type==='KEYHQ_READY'||event.data?.type==='KEYHQ_REFRESH')sendContext();if(event.data?.type==='KEYHQ_SAVE_CONFIG')saveFloorConfig(event.data.floors);if(event.data?.type==='KEYHQ_SAVE_PEOPLE')savePeople(event.data.people);if(event.data?.type==='KEYHQ_SAVE_AVATAR')saveAvatar(event.data.avatar);if(event.data?.type==='KEYHQ_OPEN_PDF')openQuotationPdf(event.data.id)});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))close()})}
 
   window.KeySuiteKeyHQ={open,close,refresh:sendContext,setPresence};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();

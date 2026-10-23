@@ -1,16 +1,17 @@
 {
-  "version": "4.29.22",
-  "baseline": "4.29.21",
-  "upgrade_supported_from": "4.29.21",
+  "version": "4.29.23",
+  "baseline": "4.29.22",
+  "upgrade_supported_from": "4.29.22",
   "changes": [
-    "preserves every V4.29.21 feature, layout, pricing rule and BOM behavior",
-    "evaluates both valid F/H tyre-flange orientations for every pump and motor shaft combination",
-    "checks motor torque, running speed, bush capacity and manufacturer flange-specific bore limits",
-    "selects F80 for ES 32-13 with a 40 HP 4-pole motor using pump H/2012 and motor F/2517",
-    "applies the same general selection rules to the KeyBot Telegram workflow",
-    "visible version is V4.29.22"
+    "preserves every V4.29.22 KeySuite pricing, BOM and product-selection behavior",
+    "rebuilds KeyHQ Level 6 as an architectural office with connected four-person desks, glass meeting room, pantry, cabinets, plants and lighting",
+    "removes every staircase and provides elevator-only travel with an enclosed toilet on every floor",
+    "adds stable monitor hit targets, contextual desk labels, Center Screen and automatic recentering",
+    "renders authorized sealed quotation pages inside KeyHQ with real PDF download and explicit print",
+    "adds persisted self-service avatar profiles and animated leisure actions",
+    "visible version is V4.29.23"
   ],
-  "new_database_migration_required": false,
-  "edge_function_deploy_required": true,
-  "notes": "Upgrade from V4.29.21. No database migration is required. Upload the files listed in UPGRADE_FILE_MANIFEST_V42922.txt and deploy the updated telegram-webhook Edge Function to keep KeyBot coupling selection aligned with the web app."
+  "new_database_migration_required": true,
+  "edge_function_deploy_required": false,
+  "notes": "Upgrade from V4.29.22. Upload the files listed in UPGRADE_FILE_MANIFEST_V42923.txt. Apply the separately supplied additive avatar profile migration after review; no existing desk, presence, assignment or RLS data is replaced."
 }

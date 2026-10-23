@@ -5,10 +5,10 @@ const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const hq=read('keyhq/app.js'),html=read('keyhq/index.html'),css=read('keyhq/styles.css'),launcher=read('keyhq-launcher.js'),migration=read('supabase/migrations/20261023204500_keyhq_level6_people.sql'),main=read('app.js');
 
-assert.match(html,/V0\.4 LIVING OFFICE/);
+assert.match(html,/V0\.5 ARCHITECTURAL OFFICE/);
 assert.match(html,/id="quotationDialog"/);
 assert.match(html,/id="peopleDialog"/);
-assert.match(launcher,/keyhq\/index\.html\?embedded=1&v=keyhq04/);
+assert.match(launcher,/keyhq\/index\.html\?embedded=1&v=keyhq05/);
 assert.match(launcher,/keysuite_list_keyhq_people_v42922/);
 assert.match(launcher,/KeySuiteQuotationStore/);
 assert.match(launcher,/originalPdfAvailable:String/);

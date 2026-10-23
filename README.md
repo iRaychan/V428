@@ -1,4 +1,8 @@
-# KeySuite V4.29.22 Full
+# KeySuite V4.29.23 Full
+
+## V4.29.23 - KeyHQ architectural office
+
+Built strictly from the V4.29.22 full package. This release adds the completed KeyHQ V0.5 architectural office, elevator-only floors with enclosed toilets, readable contextual desk labels, stable single-click monitors, in-KeyHQ original quotation PDF viewing/download/print, camera recentering, persisted self-service avatar customization and animated leisure activities. Apply the supplied V4.29.23 avatar migration separately after review.
 
 ## KeyHQ V0.2 - Living Headquarters visual redesign
 

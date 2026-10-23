@@ -16,9 +16,9 @@ for (const label of requiredFloorLabels) {
 
 for (const feature of [
   'RECEPTION · FRONT', 'KEYLAB · CENTER', 'WAREHOUSE · REAR', 'PRODUCT SHOWROOM',
-  'CANTEEN', 'GYM', 'GAMING', 'SHOWER', 'SAUNA', 'GROUPS OF 4 · CLICK A PC',
+  'CANTEEN', 'GYM', 'GAMING', 'SHOWER', 'SAUNA', 'CONNECTED GROUPS OF 4',
   '18 SEATS · 9 PER SIDE', 'OWNER ROOM · PRIVATE STRATEGY',
-  '50% BASKETBALL', '50% SOCIAL · VIEW DECK', 'LIFT', 'STAIR'
+  '50% BASKETBALL', '50% SOCIAL · VIEW DECK', 'ELEVATOR'
 ]) {
   if (!app.includes(feature)) throw new Error(`Missing KeyHQ V0.1 structural feature: ${feature}`);
 }
@@ -27,10 +27,10 @@ if (!app.includes('PODIUM_H=1.95') || !app.includes('function floorZ(level)')) {
   throw new Error('The combined tall Levels 1–2 podium geometry is missing.');
 }
 if (!app.includes("logoImage.src='../keylargo-logo.png'")) throw new Error('Original Keylargo logo is not retained.');
-if (!html.includes('V0.4 LIVING OFFICE') || !html.includes('data-theme-mode="sunset"')) {
+if (!html.includes('V0.5 ARCHITECTURAL OFFICE') || !html.includes('data-theme-mode="sunset"')) {
   throw new Error('Current KeyHQ identity or sunset control is missing.');
 }
-if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=keyhq04'")) {
+if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=keyhq05'")) {
   throw new Error('KeySuite does not launch the current KeyHQ cache identifier.');
 }
 if (!launcher.includes("event.origin!==location.origin") || !launcher.includes("action:'list_inbox'")) {
