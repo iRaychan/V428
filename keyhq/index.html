@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07101d">
-  <title>KeyHQ V0.5 Architectural Office · KeySuite V4.29.23</title>
-  <link rel="stylesheet" href="styles.css?v=keyhq05">
+  <title>KeyHQ V0.6 Architectural Office · KeySuite V4.29.24</title>
+  <link rel="stylesheet" href="styles.css?v=keyhq06">
   <style>
     body[data-theme="sunset"]{--bg:#2b1834;--panel:#1a1731e8;--edge:#6c4569;--sky1:#482650;--sky2:#df754f}
     body[data-theme="sunset"] .skyline{opacity:.48}
@@ -25,16 +25,17 @@
     </aside>
     <main>
       <header class="topbar">
-        <div class="brand"><span>KEYSUITE V4.29.23</span><b>/</b> KEYHQ <em>V0.5 ARCHITECTURAL OFFICE</em></div>
+        <div class="brand"><span>KEYSUITE V4.29.24</span><b>/</b> KEYHQ <em>V0.6 · AVATAR PROTOTYPE</em></div>
         <div class="theme-preview" aria-label="Lighting preview"><button data-theme-mode="auto" class="active">Auto</button><button data-theme-mode="sunset">Sunset</button><button data-theme-mode="night">Night</button></div>
         <div class="status"><i></i><span id="eventMode">Checking connected sources…</span><time id="clock">--:-- MYT</time></div>
       </header>
       <section class="stage" id="stage">
-        <canvas id="hqCanvas" aria-label="Interactive eight-level KeyHQ V0.5 headquarters with architectural Level 6 office and elevator-only travel"></canvas>
+        <canvas id="hqCanvas" aria-label="Interactive eight-level KeyHQ V0.6 headquarters with architectural Level 6 office and elevator-only travel"></canvas>
         <div id="monitorTargets" class="monitor-targets" aria-label="Interactive KeyOffice monitors"></div>
         <div class="skyline" aria-hidden="true"></div>
-        <div class="stage-title"><small>V0.5 · ARCHITECTURAL OFFICE</small><h1>KeyHQ</h1><p id="floorSummary">Eight connected levels, one secure workplace.</p></div>
+        <div class="stage-title"><small>V0.6 · AVATAR PROTOTYPE</small><h1>KeyHQ</h1><p id="floorSummary">Eight connected levels, one secure workplace.</p></div>
         <div class="floor-selector" id="floorSelector" aria-label="Choose a floor"></div>
+        <button id="startPrototype" class="prototype-launch" type="button">Start Phase 1 · 3D avatars</button>
         <div class="camera-controls" aria-label="Camera controls"><button id="rotateLeft" aria-label="Rotate left">↶</button><button id="zoomIn" aria-label="Zoom in">＋</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="centerCamera" class="center-camera" aria-label="Center the selected view">Center Screen</button><button id="resetCamera" aria-label="Full tower">⌂</button></div>
         <div class="hint"><span>↔</span> Drag to orbit · Scroll to zoom · Select a floor</div>
         <aside class="team-panel glass"><div class="panel-heading"><div><small>ENABLED ACCOUNTS</small><h2>KeyOffice workforce</h2></div><div class="team-actions"><button id="customizeAvatar" type="button" aria-label="Customize my avatar">Avatar</button><button id="configurePeople" type="button" hidden aria-label="Configure desks and avatars">⚙</button><b id="teamCount">0</b></div></div><div id="teamList" class="team-list"></div><div id="teamSource" class="team-source">Connecting to KeySuite…</div></aside>
@@ -67,6 +68,7 @@
       </section>
     </main>
   </div>
-  <script src="app.js?v=keyhq05"></script>
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+  <script src="app.js?v=keyhq06"></script>
 </body>
 </html>
