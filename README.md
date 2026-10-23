@@ -1,5 +1,9 @@
 # KeySuite V4.29.22 Full
 
+## KeyHQ V0.2 - Living Headquarters visual redesign
+
+KeyHQ now presents a distinctive Sims-style isometric headquarters instead of a repetitive glass tower. The eight-level program and true Levels 1–2 podium remain intact, while stepped upper volumes, a warm vertical spine, planted terraces, richer landscape, destination rooftop and upgraded day/sunset/night lighting give the building a coherent identity. Level 5 is now a detailed KeyBot Telegram AI operations center with seven workstations, a three-screen operations wall, server equipment and a refined human avatar. The original `keylargo-logo.png` is drawn without recoloring. Existing KeySuite session, role, live company inbox, floor configuration, quotation, pricing and selector behavior is unchanged. See `README_UPGRADE_KEYHQ_V0.2.md` and `VERIFICATION_KEYHQ_V0.2.md`.
+
 ## KeyHQ V0.1 - Master Building structural shell
 
 KeyHQ now presents the approved eight-level Master Building: a taller shared Levels 1–2 podium for reception, KeyLab and warehouse; dedicated showroom, wellness/social, KeyBot, 28-desk KeyOffice, 38-seat conference and owner levels; aligned lift/stairs; and an equal basketball/social rooftop split. Sunset/night views and the original Keylargo logo are retained. This is a presentation-layer upgrade only: existing KeySuite and Supabase behavior is unchanged. See `README_UPGRADE_KEYHQ_V0.1.md` and `VERIFICATION_KEYHQ_V0.1.md`.

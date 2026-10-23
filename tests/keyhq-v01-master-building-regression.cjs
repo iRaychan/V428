@@ -27,15 +27,15 @@ if (!app.includes('PODIUM_H=1.95') || !app.includes('function floorZ(level)')) {
   throw new Error('The combined tall Levels 1–2 podium geometry is missing.');
 }
 if (!app.includes("logoImage.src='../keylargo-logo.png'")) throw new Error('Original Keylargo logo is not retained.');
-if (!html.includes('V0.1 MASTER BUILDING') || !html.includes('data-theme-mode="sunset"')) {
-  throw new Error('KeyHQ V0.1 identity or sunset control is missing.');
+if (!html.includes('V0.2 LIVING HEADQUARTERS') || !html.includes('data-theme-mode="sunset"')) {
+  throw new Error('Current KeyHQ identity or sunset control is missing.');
 }
-if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=keyhq01'")) {
-  throw new Error('KeySuite does not launch the KeyHQ V0.1 cache identifier.');
+if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=keyhq02'")) {
+  throw new Error('KeySuite does not launch the current KeyHQ cache identifier.');
 }
 if (!launcher.includes("event.origin!==location.origin") || !launcher.includes("action:'list_inbox'")) {
   throw new Error('Existing same-origin or live KeyBot integration guard was lost.');
 }
 if (/progress:\d+|eta:'/.test(app)) throw new Error('Fabricated live progress data was introduced.');
 
-console.log('KeyHQ V0.1 Master Building regression: PASS');
+console.log('KeyHQ structural continuity regression: PASS');
