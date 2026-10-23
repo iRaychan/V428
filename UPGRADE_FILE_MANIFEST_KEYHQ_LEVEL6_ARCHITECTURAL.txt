@@ -1,0 +1,7 @@
+README_UPGRADE_KEYHQ_LEVEL6_ARCHITECTURAL.md
+UPGRADE_FILE_MANIFEST_KEYHQ_LEVEL6_ARCHITECTURAL.txt
+VERIFICATION_KEYHQ_LEVEL6_ARCHITECTURAL.md
+keyhq/app.js
+keyhq/index.html
+keyhq/styles.css
+tests/keyhq-v04-living-office-regression.cjs
