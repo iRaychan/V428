@@ -14,13 +14,13 @@ if (keyBotIndex < 0 || keyHQIndex < 0 || keyHQIndex <= keyBotIndex) {
 if (!/src="keyhq-launcher\.js\?v=42922"/.test(html)) {
   throw new Error('KeyHQ launcher is not loaded by KeySuite.');
 }
-if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=42921r5'")) {
+if (!launcher.includes("frame.src='keyhq/index.html?embedded=1&v=keyhq01'")) {
   throw new Error('KeyHQ launcher does not target the embedded HQ page.');
 }
 if (!launcher.includes("event.data?.type==='KEYHQ_CLOSE'")) {
   throw new Error('KeyHQ return-to-KeySuite message handler is missing.');
 }
-if (!keyhq.includes('Interactive Sims-style expandable KeyHQ')) {
+if (!keyhq.includes('Interactive eight-level KeyHQ V0.1 Master Building')) {
   throw new Error('The expandable KeyHQ application is missing.');
 }
 if (!launcher.includes('KEYHQ_CONTEXT') || !launcher.includes("action:'list_inbox'")) throw new Error('Shared KeySuite context or company inbox connection is missing.');

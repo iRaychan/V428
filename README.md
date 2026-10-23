@@ -1,5 +1,9 @@
 # KeySuite V4.29.22 Full
 
+## KeyHQ V0.1 - Master Building structural shell
+
+KeyHQ now presents the approved eight-level Master Building: a taller shared Levels 1–2 podium for reception, KeyLab and warehouse; dedicated showroom, wellness/social, KeyBot, 28-desk KeyOffice, 38-seat conference and owner levels; aligned lift/stairs; and an equal basketball/social rooftop split. Sunset/night views and the original Keylargo logo are retained. This is a presentation-layer upgrade only: existing KeySuite and Supabase behavior is unchanged. See `README_UPGRADE_KEYHQ_V0.1.md` and `VERIFICATION_KEYHQ_V0.1.md`.
+
 ## V4.29.22 - Manufacturer-correct tyre coupling selection
 
 Tyre coupling selection now evaluates both valid F/H flange orientations using motor torque, operating speed, shaft diameters, Taper-Lock bush capacity and the coupling manufacturer's flange-specific bore limits. ES 32-13 with a 40 HP 4-pole motor therefore selects F80 with pump H/2012 and motor F/2517, without a pump-model exception. Pricing, BOM construction, layouts and all V4.29.21 features are preserved. See `README_UPGRADE_V42922.md`, `CHANGELOG_V42922.md` and `VERIFICATION_V42922.md`.
