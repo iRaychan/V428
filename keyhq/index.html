@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07101d">
-  <title>KeyHQ V0.2 Living Headquarters · KeySuite V4.29.22</title>
-  <link rel="stylesheet" href="styles.css?v=keyhq02">
+  <title>KeyHQ V0.3 KeyOffice · KeySuite V4.29.22</title>
+  <link rel="stylesheet" href="styles.css?v=keyhq03">
   <style>
     body[data-theme="sunset"]{--bg:#2b1834;--panel:#1a1731e8;--edge:#6c4569;--sky1:#482650;--sky2:#df754f}
     body[data-theme="sunset"] .skyline{opacity:.48}
@@ -25,26 +25,44 @@
     </aside>
     <main>
       <header class="topbar">
-        <div class="brand"><span>KEYSUITE V4.29.22</span><b>/</b> KEYHQ <em>V0.2 LIVING HEADQUARTERS</em></div>
+        <div class="brand"><span>KEYSUITE V4.29.22</span><b>/</b> KEYHQ <em>V0.3 KEYOFFICE</em></div>
         <div class="theme-preview" aria-label="Lighting preview"><button data-theme-mode="auto" class="active">Auto</button><button data-theme-mode="sunset">Sunset</button><button data-theme-mode="night">Night</button></div>
         <div class="status"><i></i><span id="eventMode">Checking connected sources…</span><time id="clock">--:-- MYT</time></div>
       </header>
       <section class="stage" id="stage">
-        <canvas id="hqCanvas" aria-label="Interactive eight-level KeyHQ V0.2 Living Headquarters with aligned lift, stairs and split rooftop"></canvas>
+        <canvas id="hqCanvas" aria-label="Interactive eight-level KeyHQ V0.3 headquarters with a 28-desk KeyOffice on Level 6"></canvas>
+        <div id="monitorTargets" class="monitor-targets" aria-label="Interactive KeyOffice monitors"></div>
         <div class="skyline" aria-hidden="true"></div>
-        <div class="stage-title"><small>V0.2 · LIVING ISOMETRIC HEADQUARTERS</small><h1>KeyHQ</h1><p id="floorSummary">Eight connected levels, one living workplace.</p></div>
+        <div class="stage-title"><small>V0.3 · KEYOFFICE UPGRADE</small><h1>KeyHQ</h1><p id="floorSummary">Eight connected levels, one secure workplace.</p></div>
         <div class="floor-selector" id="floorSelector" aria-label="Choose a floor"></div>
         <div class="camera-controls" aria-label="Camera controls"><button id="rotateLeft" aria-label="Rotate left">↶</button><button id="zoomIn" aria-label="Zoom in">＋</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="resetCamera" aria-label="Full tower">⌂</button></div>
         <div class="hint"><span>↔</span> Drag to orbit · Scroll to zoom · Select a floor</div>
-        <aside class="team-panel glass"><div class="panel-heading"><div><small>TEAM PULSE</small><h2>KeyHQ workforce</h2></div><b id="teamCount">8</b></div><div id="teamList" class="team-list"></div></aside>
+        <aside class="team-panel glass"><div class="panel-heading"><div><small>ENABLED ACCOUNTS</small><h2>KeyOffice workforce</h2></div><div class="team-actions"><button id="configurePeople" type="button" hidden aria-label="Configure desks and avatars">⚙</button><b id="teamCount">0</b></div></div><div id="teamList" class="team-list"></div><div id="teamSource" class="team-source">Connecting to KeySuite…</div></aside>
         <aside class="agent-card glass hidden" id="agentCard" aria-live="polite"><button id="closeCard" class="close" aria-label="Close agent details">×</button><div class="agent-header"><div class="portrait" id="cardPortrait"></div><div><span id="cardStatus"></span><h2 id="cardName"></h2><p id="cardRole"></p></div></div><div class="location-line"><span>LOCATION</span><b id="cardLocation"></b></div><div class="assignment"><small>CONNECTED SIGNAL</small><strong id="cardTask"></strong><div class="source-line"><span>SOURCE</span><b id="cardSource"></b></div><div class="progress-meta"><span id="cardUpdated"></span><span id="cardMode"></span></div></div><button class="assign-button" id="elevatorButton">Preview another floor ↑</button></aside>
         <aside class="projector glass" id="projector"><div class="projector-head"><div><small>LEVEL 5 · KEYBOT STUDIO</small><h2>Enquiry projector</h2></div><span id="projectorAccess">LOCKED</span></div><div id="projectorMessage" class="projector-message">Waiting for an authorized KeyBot message.</div><div class="projector-meta"><span id="projectorSource">Checking source</span><button id="nextMessage" type="button">Next</button></div></aside>
         <aside class="elevator-panel glass"><div class="elevator-visual"><div class="elevator-track"><i id="elevatorCar"></i></div><span>↕</span></div><div><small>ELEVATOR</small><strong id="elevatorStatus">Car at Lobby</strong><p id="elevatorPassenger">Ready</p></div></aside>
         <div class="activity glass" id="activity"><span class="activity-icon">♢</span><div><small>KEYHQ SIGNAL</small><p><b>System</b> is waiting for connected activity</p></div></div>
         <div id="toast" class="toast"></div>
+        <dialog id="quotationDialog" class="keyoffice-dialog">
+          <button class="dialog-close" id="closeQuotationDialog" type="button" aria-label="Close quotation history">×</button>
+          <header><div><small>LEVEL 6 · MONITOR</small><h2 id="quotationEmployee">Employee quotations</h2><p id="quotationAccess"></p></div><span id="quotationCount">0 records</span></header>
+          <div class="quotation-workspace">
+            <section class="quotation-list-panel"><div id="quotationList" class="quotation-list"></div></section>
+            <section class="quotation-preview-panel">
+              <div class="preview-toolbar"><button id="previewPrev" type="button">← Page</button><b id="previewPage">Page 1 / 1</b><button id="previewNext" type="button">Page →</button><button id="previewZoomOut" type="button">−</button><span id="previewZoom">100%</span><button id="previewZoomIn" type="button">＋</button><button id="openPdfWorkflow" type="button">PDF / Print</button></div>
+              <div id="quotationPreview" class="quotation-preview"><div class="preview-empty">Select a real quotation record to preview its saved snapshot.</div></div>
+            </section>
+          </div>
+        </dialog>
+        <dialog id="peopleDialog" class="people-dialog">
+          <button class="dialog-close" id="closePeopleDialog" type="button" aria-label="Close desk configuration">×</button>
+          <header><div><small>OWNER CONTROL</small><h2>Level 6 desks &amp; avatars</h2><p>Assign each enabled KeySuite account to one unique desk from 1–28.</p></div></header>
+          <div id="peopleEditor" class="people-editor"></div>
+          <footer><span id="peopleSaveState"></span><button id="savePeople" type="button">Save secure assignments</button></footer>
+        </dialog>
       </section>
     </main>
   </div>
-  <script src="app.js?v=keyhq02"></script>
+  <script src="app.js?v=keyhq03"></script>
 </body>
 </html>

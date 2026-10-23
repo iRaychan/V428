@@ -2058,7 +2058,15 @@ $('closeRecentQuotes')?.addEventListener('click',()=>$('recentQuotesDialog')?.cl
 $('closeRecentQuotesBottom')?.addEventListener('click',()=>$('recentQuotesDialog')?.close());
 
 window.KeySuiteCustomerStore={load:loadSecureCustomers,getMode:()=>customerSyncMode,getError:()=>customerSyncError};
-window.KeySuiteQuotationStore={load:loadSecureQuotes,getMode:()=>quotationSyncMode,getError:()=>quotationSyncError,save:saveQuoteRemote,remove:deleteQuoteRemote};
+window.KeySuiteQuotationStore={
+ load:loadSecureQuotes,
+ getMode:()=>quotationSyncMode,
+ getError:()=>quotationSyncError,
+ getQuotes:()=>quotes().map(row=>({...row,items:Array.isArray(row.items)?row.items.map(item=>({...item})):[]})),
+ openHistoryPdf:openHistoryQuotationPdf,
+ save:saveQuoteRemote,
+ remove:deleteQuoteRemote
+};
 window.KeySuiteNoteStore={load:loadGlobalNote,save:saveGlobalNote,getPages:()=>globalNotePages.map(page=>({...page})),getMode:()=>globalNoteSyncMode,getError:()=>globalNoteSyncError};
 window.KeySuiteApp={
  getSelectedCustomer(){return customers().find(x=>x.id===$('qCustomer')?.value)||null},
