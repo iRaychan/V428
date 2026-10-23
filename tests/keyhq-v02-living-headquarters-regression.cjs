@@ -20,8 +20,8 @@ if ((app.match(/opsConsole\(/g) || []).length < 2 || !app.includes('[-2.55,-1.25
 if (!app.includes("logoImage.src='../keylargo-logo.png'") || !app.includes('drawFacadeLogo')) {
   throw new Error('The unchanged Keylargo logo asset is not wired into the building.');
 }
-if (!html.includes('V0.2 LIVING HEADQUARTERS') || !launcher.includes('v=keyhq02')) {
-  throw new Error('V0.2 identity/cache wiring is incomplete.');
+if (!html.includes('V0.4 LIVING OFFICE') || !launcher.includes('v=keyhq04')) {
+  throw new Error('Current KeyHQ identity/cache wiring is incomplete.');
 }
 if (!css.includes('body[data-theme="sunset"]') || !css.includes('body[data-theme="day"]')) {
   throw new Error('The designed lighting modes are missing.');

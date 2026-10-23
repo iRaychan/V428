@@ -72,23 +72,25 @@
 
   function fallbackPerson(row,index){
     const palette=['#62f1dc','#89ddff','#a998ff','#ffc766','#ff8db2','#c8ff66'];
-    return {email:String(row.email||'').toLowerCase(),name:row.display_name||String(row.email||'').split('@')[0]||'KeySuite user',role:String(row.role||'user').toLowerCase(),deskNo:Number(row.desk_no||index+1),gender:row.avatar_gender||((index%2)?'male':'female'),accent:row.avatar_accent||palette[index%palette.length],accountState:row.account_state||'enabled'};
+    return {email:String(row.email||'').toLowerCase(),name:row.display_name||String(row.email||'').split('@')[0]||'KeySuite user',role:String(row.role||'user').toLowerCase(),deskNo:Number(row.desk_no||index+1),gender:row.avatar_gender||((index%2)?'male':'female'),accent:row.avatar_accent||palette[index%palette.length],accountState:row.account_state||'enabled',presence:String(row.presence_state||'offline').toLowerCase(),presenceUpdatedAt:String(row.presence_updated_at||'')};
   }
 
   async function loadPeople(client,companyId){
     if(!client||!companyId)return {people:[],mode:'unavailable',error:'Secure KeySuite connection unavailable.'};
     try{
-      let result=await client.rpc('keysuite_list_keyhq_people_v42922',{p_company_id:companyId});
+      let result=await client.rpc('keysuite_list_keyhq_people_v42922_v04',{p_company_id:companyId});
       if(!result.error)return {people:(result.data||[]).map(fallbackPerson),mode:'live',error:''};
+      result=await client.rpc('keysuite_list_keyhq_people_v42922',{p_company_id:companyId});
+      if(!result.error)return {people:(result.data||[]).map(fallbackPerson),mode:'migration-required',error:'Apply the prepared KeyHQ V0.4 presence migration for shared login/logout locations.'};
       const fallback=await client.from('ks_user_access').select('email,display_name,role,active,company_id').eq('company_id',companyId).eq('active',true).order('email');
       if(fallback.error)throw result.error;
-      return {people:(fallback.data||[]).map(fallbackPerson),mode:'migration-required',error:'Apply the prepared KeyHQ V0.3 migration to load the complete company roster and persist assignments.'};
+      return {people:(fallback.data||[]).map(fallbackPerson),mode:'migration-required',error:'Apply the prepared KeyHQ migrations to persist assignments and shared presence.'};
     }catch(error){return {people:[],mode:'unavailable',error:String(error?.message||error)}}
   }
 
   function quoteCreator(row={}){return String(row.createdByEmail||row.created_by_email||row.createdBy||'').trim().toLowerCase()}
   function quotationSummary(row={}){
-    return {id:String(row.id||''),reference:String(row.no||row.quotation_no||''),customer:String(row.printedCompany||row.customerName||row.customer_name||''),project:String(row.project||row.project2||''),amount:Number(row.total||0),currency:String(row.currency||row.pricingCurrency||'MYR').toUpperCase(),date:String(row.date||row.quotation_date||row.createdAt||'').slice(0,10),status:String(row.status||'saved'),createdByEmail:quoteCreator(row),documentType:String(row.documentType||'Quotation'),items:Array.isArray(row.items)?row.items.map(item=>({model:String(item.model||''),description:String(item.description||''),qty:Number(item.qty||0),unit:String(item.unit||'unit'),unitPrice:Number(item.unitPrice||0)})):[],delivery:String(row.delivery||''),delivery2:String(row.delivery2||''),payment:String(row.payment||''),validity:String(row.validity||''),remarks:String(row.remarks||''),preparedBy:String(row.preparedBy||row.createdByName||''),originalPdfAvailable:false};
+    return {id:String(row.id||''),reference:String(row.no||row.quotation_no||''),customer:String(row.printedCompany||row.customerName||row.customer_name||''),project:String(row.project||row.project2||''),amount:Number(row.total||0),currency:String(row.currency||row.pricingCurrency||'MYR').toUpperCase(),date:String(row.date||row.quotation_date||row.createdAt||'').slice(0,10),status:String(row.status||'saved'),createdByEmail:quoteCreator(row),documentType:String(row.documentType||'Quotation'),originalPdfAvailable:String(row.status||'').toLowerCase()==='sealed'};
   }
 
   async function loadQuotations(){
@@ -127,7 +129,13 @@
     if(!canConfigurePeople())return frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:false,error:'Only an enabled Owner can configure KeyOffice desks and avatars.'},location.origin);
     const client=window.KeySuiteAuth?.getClient?.();if(!client||!companyId)return frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:false,error:'The secure KeySuite connection is unavailable.'},location.origin);
     const payload=(Array.isArray(people)?people:[]).map(person=>({email:String(person.email||'').toLowerCase(),desk_no:Number(person.deskNo),avatar_gender:person.gender,avatar_accent:person.accent}));
-    try{const result=await client.rpc('keysuite_save_keyhq_people_v42922',{p_company_id:companyId,p_people:payload});if(result.error)throw result.error;frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:true},location.origin);sendContext()}catch(error){frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:false,error:String(error?.message||error)},location.origin)}
+    try{let result=await client.rpc('keysuite_save_keyhq_people_v42922_v04',{p_company_id:companyId,p_people:payload});if(result.error)result=await client.rpc('keysuite_save_keyhq_people_v42922',{p_company_id:companyId,p_people:payload});if(result.error)throw result.error;frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:true},location.origin);sendContext()}catch(error){frame?.contentWindow?.postMessage({type:'KEYHQ_PEOPLE_RESULT',ok:false,error:String(error?.message||error)},location.origin)}
+  }
+
+  async function setPresence(state='online'){
+    const client=window.KeySuiteAuth?.getClient?.(),companyId=String(window.KEYSUITE_ACCESS?.company_id||''),value=state==='offline'?'offline':'online';
+    if(!client||!companyId)return false;
+    try{const result=await client.rpc('keysuite_set_keyhq_presence_v42922_v04',{p_company_id:companyId,p_presence:value});if(result.error)throw result.error;return true}catch(error){console.warn('KeyHQ presence migration is not available yet.',error);return false}
   }
 
   function openQuotationPdf(id){
@@ -138,10 +146,10 @@
 
   function startRefresh(){clearInterval(refreshTimer);refreshTimer=window.setInterval(()=>{if(document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))sendContext()},REFRESH_MS)}
   function stopRefresh(){clearInterval(refreshTimer);refreshTimer=0}
-  function open(){const node=overlay(),frame=node.querySelector('#keyhqFrame');if(!frame.getAttribute('src'))frame.src='keyhq/index.html?embedded=1&v=keyhq03';node.classList.add('keyhq-open');document.body.classList.add('keyhq-active');document.getElementById('keyhqNavButton')?.classList.add('active');if(frame.contentDocument?.readyState==='complete')sendContext();startRefresh()}
+  function open(){const node=overlay(),frame=node.querySelector('#keyhqFrame');if(!frame.getAttribute('src'))frame.src='keyhq/index.html?embedded=1&v=keyhq04';node.classList.add('keyhq-open');document.body.classList.add('keyhq-active');document.getElementById('keyhqNavButton')?.classList.add('active');setPresence('online').finally(()=>sendContext());startRefresh()}
   function close(){document.getElementById('keyhqOverlay')?.classList.remove('keyhq-open');document.body.classList.remove('keyhq-active');document.getElementById('keyhqNavButton')?.classList.remove('active');stopRefresh()}
   function boot(){installStyles();document.getElementById('keyhqNavButton')?.addEventListener('click',open);window.addEventListener('message',event=>{const frame=document.getElementById('keyhqFrame');if(event.origin!==location.origin||event.source!==frame?.contentWindow)return;if(event.data?.type==='KEYHQ_CLOSE')close();if(event.data?.type==='KEYHQ_READY'||event.data?.type==='KEYHQ_REFRESH')sendContext();if(event.data?.type==='KEYHQ_SAVE_CONFIG')saveFloorConfig(event.data.floors);if(event.data?.type==='KEYHQ_SAVE_PEOPLE')savePeople(event.data.people);if(event.data?.type==='KEYHQ_OPEN_PDF')openQuotationPdf(event.data.id)});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))close()})}
 
-  window.KeySuiteKeyHQ={open,close,refresh:sendContext};
+  window.KeySuiteKeyHQ={open,close,refresh:sendContext,setPresence};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

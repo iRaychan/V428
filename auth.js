@@ -309,7 +309,7 @@
       showLoading('Loading protected company and pricing data…');
       const data=await withDeadline(loadData(userAccess),'Secure data loading',SECURE_DATA_TIMEOUT_MS);if(!data.companies.length)throw new Error('No company data was returned. Check the database and RLS policies.');
       session=s;access=userAccess;window.KEYSUITE_ACCESS=access;await withDeadline(loadRolePermissions(),'Permission loading',MODULE_INIT_TIMEOUT_MS);await withDeadline(window.KeySuiteAuthority?.init?.(access),'Authority initialization',MODULE_INIT_TIMEOUT_MS);const savedProfile=await withDeadline(loadUserProfile(s?.user?.email||''),'Profile loading',MODULE_INIT_TIMEOUT_MS);profile=buildProfile(s,access,data,savedProfile);
-      window.KEYSUITE_SECURE_DATA=data;window.KeySuiteKeyLab?.applyData?.(data);applyProfile(profile);
+      window.KEYSUITE_SECURE_DATA=data;window.KeySuiteKeyLab?.applyData?.(data);applyProfile(profile);await window.KeySuiteKeyHQ?.setPresence?.('online');
       try{window.dispatchEvent(new CustomEvent('KEYSUITE_AUTH_CONTEXT_READY',{detail:{company_id:profile?.company_id||userAccess?.company_id||'',email:profile?.email||'',role:profile?.role||''}}))}catch(_){}
       window.KeySuitePricing?.init(data,access);window.KeySuiteCategories?.init(data,access);window.KeySuiteCompanySettings?.init(data,access);window.KeySuitePriceList?.init(data,access);window.KeySuiteCRPriceList?.init(data,access);window.KeySuiteBFI?.init?.(data,access);window.KeySuiteManifold?.init(data,access);window.KeySuiteMotor?.init(data,access);window.KeySuiteCoupling?.init(data,access);window.KeySuiteBaseplate?.init(data,access);window.KeySuiteRoles?.init(access);window.KeySuiteKeyAI?.init?.(access);await withDeadline(window.KeySuiteTemplates?.init?.(access),'Quotation template initialization',MODULE_INIT_TIMEOUT_MS);await withDeadline(window.KeySuiteQuotationReferences?.init?.(profile),'Quotation reference initialization',MODULE_INIT_TIMEOUT_MS);window.KeySuiteApp?.refreshNewQuotationReference?.();unlockSelector();
       showLoading('Loading your customer access…');
@@ -328,7 +328,7 @@
     try{const {data,error}=await client.auth.signInWithPassword({email,password});if(error||!data?.session){busy(false);message(friendly(error));return}await enter(data.session)}
     catch(error){busy(false);message(friendly(error))}
   }
-  async function signOut(){el('logoutButton').disabled=true;try{await client?.auth.signOut()}catch(error){console.warn(error)}session=null;access=null;profile=null;window.KEYSUITE_SECURE_DATA=null;window.KEYSUITE_ACCESS=null;window.KEYSUITE_PROFILE=null;window.KeySuitePermissions?.setMatrix?.(window.KeySuitePermissions?.DEFAULTS||{});window.KeySuiteAuthority?.reset?.();el('logoutButton').disabled=false;showLogin('You have signed out.','info')}
+  async function signOut(){el('logoutButton').disabled=true;try{await window.KeySuiteKeyHQ?.setPresence?.('offline');await client?.auth.signOut()}catch(error){console.warn(error)}session=null;access=null;profile=null;window.KEYSUITE_SECURE_DATA=null;window.KEYSUITE_ACCESS=null;window.KEYSUITE_PROFILE=null;window.KeySuitePermissions?.setMatrix?.(window.KeySuitePermissions?.DEFAULTS||{});window.KeySuiteAuthority?.reset?.();el('logoutButton').disabled=false;showLogin('You have signed out.','info')}
   async function refreshSecure(){if(!session)return;await enter(session)}
 
   function invitePasswordMessage(text,type='error'){
