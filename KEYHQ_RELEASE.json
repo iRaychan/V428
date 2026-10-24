@@ -1,14 +1,15 @@
 {
-  "keysuite_version": "4.29.24",
-  "keyhq_version": "0.6",
-  "release_name": "Phase 1 avatar prototype and visual corrections",
+  "keysuite_version": "4.29.25",
+  "keyhq_version": "0.7",
+  "release_name": "Shared user avatars and organized sidebar",
   "built_on": "2026-10-24",
-  "baseline_full_zip": "KeySuite_V4.29.23_FULL_CLEAN_GitHub.zip",
-  "avatar_scope": "two local prototype characters on existing Level 6",
-  "avatar_storage": "browser localStorage",
-  "new_supabase_changes_required": false,
-  "existing_employee_avatar_rpc": "keysuite_save_my_keyhq_avatar_v42923 (unchanged)",
+  "baseline_full_zip": "KeySuite_V4.29.24_FULL_CLEAN_GitHub.zip",
+  "avatar_scope": "existing enabled workforce on the currently viewed floor; original Maya and Adam optional demo",
+  "avatar_storage": "Supabase appearance profiles linked to auth.users.id; demo remains localStorage",
+  "new_supabase_changes_required": true,
+  "migration": "supabase/migrations/20261024030000_keyhq_user_avatar_profiles_v42925.sql",
   "production_deployed": false,
+  "production_database_modified": false,
   "github_pushed": false,
-  "building_renderer": "original Canvas projection plus lazy Three.js avatar overlay"
+  "building_renderer": "preserved Canvas building with shared lazy Three.js GLB avatar overlay"
 }

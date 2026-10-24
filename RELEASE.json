@@ -1,17 +1,15 @@
 {
-  "version": "4.29.23",
-  "baseline": "4.29.22",
-  "upgrade_supported_from": "4.29.22",
+  "version": "4.29.25",
+  "baseline": "4.29.24",
+  "upgrade_supported_from": "4.29.24",
   "changes": [
-    "preserves every V4.29.22 KeySuite pricing, BOM and product-selection behavior",
-    "rebuilds KeyHQ Level 6 as an architectural office with connected four-person desks, glass meeting room, pantry, cabinets, plants and lighting",
-    "removes every staircase and provides elevator-only travel with an enclosed toilet on every floor",
-    "adds stable monitor hit targets, contextual desk labels, Center Screen and automatic recentering",
-    "renders authorized sealed quotation pages inside KeyHQ with real PDF download and explicit print",
-    "adds persisted self-service avatar profiles and animated leisure actions",
-    "visible version is V4.29.23"
+    "shared 3D avatars for existing enabled workforce",
+    "self-only Auth UUID appearance profiles and Realtime refresh",
+    "single responsive workforce/location sidebar",
+    "preserved original building, logo, PDF and business modules"
   ],
   "new_database_migration_required": true,
   "edge_function_deploy_required": false,
-  "notes": "Upgrade from V4.29.22. Upload the files listed in UPGRADE_FILE_MANIFEST_V42923.txt. Apply the separately supplied additive avatar profile migration after review; no existing desk, presence, assignment or RLS data is replaced."
+  "production_deployed": false,
+  "notes": "Apply only the V4.29.25 migration after separate approval and staging acceptance. See README_UPGRADE_V42925.md."
 }

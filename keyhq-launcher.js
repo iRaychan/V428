@@ -4,6 +4,7 @@
   window.__KEYSUITE_KEYHQ_LAUNCHER__=true;
 
   const REFRESH_MS=20000;
+  const avatarProfiles=new window.KeyHQAvatarProfiles(snapshot=>{if(!snapshot.userId&&!snapshot.companyId)contextRequest++;const frame=document.getElementById('keyhqFrame');if(frame?.contentWindow&&document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))frame.contentWindow.postMessage(!snapshot.userId&&!snapshot.companyId?{type:'KEYHQ_SESSION_CLEARED'}:{type:'KEYHQ_AVATAR_PROFILES',profiles:snapshot},location.origin)});
   let refreshTimer=0,contextRequest=0;
   const demoEvents=[
     {id:'demo-1',sender:'Demo · Acme Engineering',message:'Need 2 duty + 1 standby booster pumps, 180 m³/hr at 48 m head.',status:'demo',createdAt:'',isDemo:true},
@@ -72,7 +73,7 @@
 
   function fallbackPerson(row,index){
     const palette=['#62f1dc','#89ddff','#a998ff','#ffc766','#ff8db2','#c8ff66'];
-    return {email:String(row.email||'').toLowerCase(),name:row.display_name||String(row.email||'').split('@')[0]||'KeySuite user',role:String(row.role||'user').toLowerCase(),deskNo:Number(row.desk_no||index+1),gender:row.avatar_gender||((index%2)?'male':'female'),accent:row.avatar_accent||palette[index%palette.length],skinTone:row.avatar_skin_tone,bodyShape:row.avatar_body_shape,hairStyle:row.avatar_hair_style,hairColor:row.avatar_hair_color,facialFeatures:row.avatar_facial_features,moustache:row.avatar_moustache,beard:row.avatar_beard,glasses:row.avatar_glasses,clothing:row.avatar_clothing,accountState:row.account_state||'enabled',presence:String(row.presence_state||'offline').toLowerCase(),presenceUpdatedAt:String(row.presence_updated_at||'')};
+    return {kind:row.employee_kind==='ai'?'ai':'human',email:String(row.email||'').toLowerCase(),name:row.display_name||String(row.email||'').split('@')[0]||'KeySuite user',role:String(row.role||'user').toLowerCase(),deskNo:Number(row.desk_no||index+1),gender:row.avatar_gender||((index%2)?'male':'female'),accent:row.avatar_accent||palette[index%palette.length],skinTone:row.avatar_skin_tone,bodyShape:row.avatar_body_shape,hairStyle:row.avatar_hair_style,hairColor:row.avatar_hair_color,facialFeatures:row.avatar_facial_features,moustache:row.avatar_moustache,beard:row.avatar_beard,glasses:row.avatar_glasses,clothing:row.avatar_clothing,accountState:row.account_state||'enabled',presence:String(row.presence_state||'offline').toLowerCase(),presenceUpdatedAt:String(row.presence_updated_at||'')};
   }
 
   async function loadPeople(client,companyId){
@@ -106,6 +107,7 @@
     const context={name:profile.display_name||access.display_name||profile.email||access.email||'Keylargo User',email:profile.email||access.email||'',role:access.role||'user',companyId,canProjector:canProjector(),canConfigure:canConfigure(),canConfigurePeople:canConfigurePeople(),canAccessOwnerRoom:role()==='owner',eventMode:canProjector()?'demo':'locked',events:canProjector()?demoEvents:[],floorConfig:[],people:[],peopleMode:'unavailable',peopleError:'',quotations:[],quotationMode:'unavailable',quotationError:'',refreshedAt:new Date().toISOString(),agents:{}};
     const client=window.KeySuiteAuth?.getClient?.();
     const [floorConfig,peopleResult,quotationResult]=await Promise.all([loadFloorConfig(client,companyId),loadPeople(client,companyId),loadQuotations()]);
+    await avatarProfiles.connect(client,companyId);const profiles=await avatarProfiles.refresh();context.avatarProfiles=profiles;context.userId=profiles.userId;
     context.floorConfig=floorConfig;context.people=peopleResult.people;context.peopleMode=peopleResult.mode;context.peopleError=peopleResult.error;context.quotations=quotationResult.quotations;context.quotationMode=quotationResult.mode;context.quotationError=quotationResult.error;
     if(!client||!context.canProjector){context.agents=agentSignals(context);return context}
     try{
@@ -137,7 +139,7 @@
   async function saveAvatar(avatar){
     const frame=document.getElementById('keyhqFrame'),companyId=String(window.KEYSUITE_ACCESS?.company_id||'');
     const client=window.KeySuiteAuth?.getClient?.();if(!client||!companyId)return frame?.contentWindow?.postMessage({type:'KEYHQ_AVATAR_RESULT',ok:false,error:'The secure KeySuite connection is unavailable.'},location.origin);
-    try{const result=await client.rpc('keysuite_save_my_keyhq_avatar_v42923',{p_company_id:companyId,p_avatar:avatar||{}});if(result.error)throw result.error;frame?.contentWindow?.postMessage({type:'KEYHQ_AVATAR_RESULT',ok:true},location.origin);sendContext()}catch(error){frame?.contentWindow?.postMessage({type:'KEYHQ_AVATAR_RESULT',ok:false,error:String(error?.message||error)},location.origin)}
+    try{await avatarProfiles.connect(client,companyId);const result=await avatarProfiles.save(avatar||{});frame?.contentWindow?.postMessage({type:'KEYHQ_AVATAR_RESULT',ok:true,appearance:result.appearance},location.origin)}catch(error){frame?.contentWindow?.postMessage({type:'KEYHQ_AVATAR_RESULT',ok:false,error:String(error?.message||error)},location.origin)}
   }
 
   async function setPresence(state='online'){
@@ -153,9 +155,9 @@
   }
 
   function startRefresh(){clearInterval(refreshTimer);refreshTimer=window.setInterval(()=>{if(document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))sendContext()},REFRESH_MS)}
-  function stopRefresh(){clearInterval(refreshTimer);refreshTimer=0}
-  function open(){const node=overlay(),frame=node.querySelector('#keyhqFrame');if(!frame.getAttribute('src'))frame.src='keyhq/index.html?embedded=1&v=keyhq06';node.classList.add('keyhq-open');document.body.classList.add('keyhq-active');document.getElementById('keyhqNavButton')?.classList.add('active');setPresence('online').finally(()=>sendContext());startRefresh()}
-  function close(){document.getElementById('keyhqOverlay')?.classList.remove('keyhq-open');document.body.classList.remove('keyhq-active');document.getElementById('keyhqNavButton')?.classList.remove('active');stopRefresh()}
+  function stopRefresh(){clearInterval(refreshTimer);refreshTimer=0;contextRequest++;avatarProfiles.disconnect()}
+  function open(){const node=overlay(),frame=node.querySelector('#keyhqFrame');if(!frame.getAttribute('src'))frame.src='keyhq/index.html?embedded=1&v=keyhq07';node.classList.add('keyhq-open');frame.contentWindow?.postMessage({type:'KEYHQ_VISIBILITY',visible:true},location.origin);document.body.classList.add('keyhq-active');document.getElementById('keyhqNavButton')?.classList.add('active');setPresence('online').finally(()=>sendContext());startRefresh()}
+  function close(){document.getElementById('keyhqFrame')?.contentWindow?.postMessage({type:'KEYHQ_VISIBILITY',visible:false},location.origin);document.getElementById('keyhqOverlay')?.classList.remove('keyhq-open');document.body.classList.remove('keyhq-active');document.getElementById('keyhqNavButton')?.classList.remove('active');stopRefresh()}
   function boot(){installStyles();document.getElementById('keyhqNavButton')?.addEventListener('click',open);window.addEventListener('message',event=>{const frame=document.getElementById('keyhqFrame');if(event.origin!==location.origin||event.source!==frame?.contentWindow)return;if(event.data?.type==='KEYHQ_CLOSE')close();if(event.data?.type==='KEYHQ_READY'||event.data?.type==='KEYHQ_REFRESH')sendContext();if(event.data?.type==='KEYHQ_SAVE_CONFIG')saveFloorConfig(event.data.floors);if(event.data?.type==='KEYHQ_SAVE_PEOPLE')savePeople(event.data.people);if(event.data?.type==='KEYHQ_SAVE_AVATAR')saveAvatar(event.data.avatar);if(event.data?.type==='KEYHQ_OPEN_PDF')openQuotationPdf(event.data.id)});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('keyhqOverlay')?.classList.contains('keyhq-open'))close()})}
 
   window.KeySuiteKeyHQ={open,close,refresh:sendContext,setPresence};

@@ -1,4 +1,10 @@
-# KeySuite V4.29.23 Full
+# KeySuite V4.29.25 Full
+
+Continues from V4.29.24. All enabled workforce characters now reuse Maya and Adam's original shared 3D rig. Adds self-only account appearance profiles, Realtime appearance refresh and one responsive Workforce/Location sidebar. The eight-floor building, original logo, business modules, quotation PDFs and existing permissions are preserved.
+
+Start with [upgrade and database instructions](README_UPGRADE_V42925.md) and [test results](VERIFICATION_V42925.md). The supplied migration has not been applied to production. The FULL archive is the complete project; the UPGRADE archive contains only the changed/new files. Historical release notes below are retained for reference and are not current deployment instructions.
+
+## Historical V4.29.23 release
 
 ## V4.29.23 - KeyHQ architectural office
 
