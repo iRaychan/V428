@@ -1,77 +1,19 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#07101d">
-  <title>KeyHQ V0.7 Architectural Office · KeySuite V4.29.25</title>
-  <link rel="stylesheet" href="styles.css?v=keyhq07">
-  <style>
-    body[data-theme="sunset"]{--bg:#2b1834;--panel:#1a1731e8;--edge:#6c4569;--sky1:#482650;--sky2:#df754f}
-    body[data-theme="sunset"] .skyline{opacity:.48}
-    body[data-theme="sunset"] .stage:before{content:"";position:absolute;right:12%;top:13%;width:78px;height:78px;border-radius:50%;background:#ffbd78;box-shadow:0 0 70px #ff8e5d;opacity:.75;z-index:0}
-  </style>
-</head>
-<body data-theme="night">
-  <div class="app-shell">
-    <aside class="rail">
-      <a class="suite-brand" href="#keysuite" id="keySuiteLink" aria-label="Return to KeySuite"><img src="../keylargo-logo.png" alt="Keylargo"><span><strong>KeySuite</strong><small>Shared secure workspace</small></span></a>
-      <div class="product-label">NATIVE MODULES</div>
-      <nav aria-label="KeySuite modules">
-        <a class="product-link" href="#keysuite" data-app="keysuite"><span class="product-icon">⌘</span><span><b>KeySuite</b><small>Command center</small></span></a>
-        <a class="product-link active" href="#keyhq"><span class="product-icon keyhq-icon">HQ</span><span><b>KeyHQ</b><small>Virtual headquarters</small></span><i></i></a>
-      </nav>
-      <div class="rail-bottom"><div class="session-card"><span id="userInitials">KL</span><div><b id="userName">Keylargo User</b><small id="userRole">Secure session</small></div></div><button id="returnButton" class="utility-button" type="button">← Return to KeySuite</button></div>
-    </aside>
-    <main>
-      <header class="topbar">
-        <div class="brand"><span>KEYSUITE V4.29.25</span><b>/</b> KEYHQ <em>V0.7 · USER AVATARS</em></div>
-        <div class="theme-preview" aria-label="Lighting preview"><button data-theme-mode="auto" class="active">Auto</button><button data-theme-mode="sunset">Sunset</button><button data-theme-mode="night">Night</button></div>
-        <div class="status"><i></i><span id="eventMode">Checking connected sources…</span><time id="clock">--:-- MYT</time></div>
-      </header>
-      <section class="stage" id="stage">
-        <canvas id="hqCanvas" aria-label="Interactive eight-level KeyHQ V0.7 headquarters with architectural Level 6 office and elevator-only travel"></canvas>
-        <div id="monitorTargets" class="monitor-targets" aria-label="Interactive KeyOffice monitors"></div>
-        <div class="skyline" aria-hidden="true"></div>
-        <div class="stage-title"><small>V0.7 · USER AVATARS</small><h1>KeyHQ</h1><p id="floorSummary">Eight connected levels, one secure workplace.</p></div>
-        <div class="floor-selector" id="floorSelector" aria-label="Choose a floor"></div>
-        <button id="startPrototype" class="prototype-launch" type="button">Maya &amp; Adam demo</button>
-        <div class="camera-controls" aria-label="Camera controls"><button id="rotateLeft" aria-label="Rotate left">↶</button><button id="zoomIn" aria-label="Zoom in">＋</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="centerCamera" class="center-camera" aria-label="Center the selected view">Center Screen</button><button id="resetCamera" aria-label="Full tower">⌂</button></div>
-        <div id="avatarActions" class="user-avatar-actions" hidden><strong>My avatar</strong><button type="button" data-user-action="idle">Stand</button><button type="button" data-user-action="move">Move</button><button type="button" data-user-action="sit">Sit</button><button type="button" data-user-action="work">Work</button><button type="button" data-user-action="talk">Talk</button><button type="button" data-user-action="wave">Wave</button><button type="button" data-user-action="auto">Auto</button><small id="avatarActionState">Automatic behaviour</small></div>
-        <div class="hint"><span>↔</span> Drag to orbit · Scroll to zoom · Select a floor</div>
-        <aside class="hq-sidebar" aria-label="Workforce and locations">
-        <aside class="team-panel glass"><div class="panel-heading"><div><small>ENABLED ACCOUNTS</small><h2>KeyOffice workforce</h2></div><div class="team-actions"><button id="customizeAvatar" type="button" aria-label="Customize my avatar">Avatar</button><button id="configurePeople" type="button" hidden aria-label="Configure desks and avatars">⚙</button><b id="teamCount">0</b></div></div><div id="teamList" class="team-list"></div><div id="teamSource" class="team-source">Connecting to KeySuite…</div></aside>
-        <aside class="location-tracker glass" id="locationTracker" hidden><div class="panel-heading"><div><small>OWNER · LEVEL 6</small><h2>Location tracker</h2></div><b>LIVE</b></div><div id="locationList" class="location-list"></div></aside>
-<p id="avatarSyncState" class="avatar-sync-state">Account profiles connecting…</p></aside>
-        <aside class="agent-card glass hidden" id="agentCard" aria-live="polite"><button id="closeCard" class="close" aria-label="Close agent details">×</button><div class="agent-header"><div class="portrait" id="cardPortrait"></div><div><span id="cardStatus"></span><h2 id="cardName"></h2><p id="cardRole"></p></div></div><div class="location-line"><span>LOCATION</span><b id="cardLocation"></b></div><div class="assignment"><small>CONNECTED SIGNAL</small><strong id="cardTask"></strong><div class="source-line"><span>SOURCE</span><b id="cardSource"></b></div><div class="progress-meta"><span id="cardUpdated"></span><span id="cardMode"></span></div></div><button class="assign-button" id="elevatorButton">Preview another floor ↑</button></aside>
-        <aside class="projector glass" id="projector"><div class="projector-head"><div><small>LEVEL 5 · KEYBOT STUDIO</small><h2>Enquiry projector</h2></div><span id="projectorAccess">LOCKED</span></div><div id="projectorMessage" class="projector-message">Waiting for an authorized KeyBot message.</div><div class="projector-meta"><span id="projectorSource">Checking source</span><button id="nextMessage" type="button">Next</button></div></aside>
-        <aside class="elevator-panel glass"><div class="elevator-visual"><div class="elevator-track"><i id="elevatorCar"></i></div><span>↕</span></div><div><small>ELEVATOR</small><strong id="elevatorStatus">Car at Lobby</strong><p id="elevatorPassenger">Ready</p></div></aside>
-        <div class="activity glass" id="activity"><span class="activity-icon">♢</span><div><small>KEYHQ SIGNAL</small><p><b>System</b> is waiting for connected activity</p></div></div>
-        <div id="toast" class="toast"></div>
-        <dialog id="quotationDialog" class="keyoffice-dialog">
-          <button class="dialog-close" id="closeQuotationDialog" type="button" aria-label="Close quotation history">×</button>
-          <header><div><small>LEVEL 6 · MONITOR</small><h2 id="quotationEmployee">Employee quotations</h2><p id="quotationAccess"></p></div><span id="quotationCount">0 records</span></header>
-          <div class="quotation-workspace original-pdf-workspace">
-            <section class="quotation-list-panel"><div id="quotationList" class="quotation-list"></div></section>
-            <section class="original-pdf-panel"><div class="original-pdf-mark">PDF</div><h3>Original KeySuite quotation format</h3><p>Select an authorized sealed quotation. KeyHQ renders the original KeySuite document in a modal without opening Safari print preview. Layout, logo, pricing and permission checks remain unchanged; Download PDF and Print are available in the viewer.</p><button id="openPdfWorkflow" type="button" disabled>View original PDF</button><small id="selectedPdfNote">No quotation selected.</small></section>
-          </div>
-        </dialog>
-        <dialog id="peopleDialog" class="people-dialog">
-          <button class="dialog-close" id="closePeopleDialog" type="button" aria-label="Close desk configuration">×</button>
-          <header><div><small>OWNER CONTROL</small><h2>Level 6 desks &amp; avatars</h2><p id="deskCapacityNote">Assign every enabled KeySuite account to one unique desk.</p></div></header>
-          <div id="peopleEditor" class="people-editor"></div>
-          <footer><span id="peopleSaveState"></span><button id="savePeople" type="button">Save secure assignments</button></footer>
-        </dialog>
-        <dialog id="avatarDialog" class="people-dialog avatar-dialog">
-          <button class="dialog-close" id="closeAvatarDialog" type="button" aria-label="Close avatar customization">×</button>
-          <header><div><small>MY KEYSUITE AVATAR</small><h2>Customize avatar</h2><p>Your choices follow your KeySuite account on every device.</p></div></header>
-          <div id="avatarEditor" class="avatar-editor"></div>
-          <footer><span id="avatarSaveState"></span><button id="saveAvatar" type="button">Save my avatar</button></footer>
-        </dialog>
-      </section>
-    </main>
-  </div>
-  <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
-  <script src="app.js?v=keyhq07"></script>
-</body>
-</html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#142f32"><title>KeyHQ · The coastal campus</title><link rel="stylesheet" href="campus/campus.css"><script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script></head>
+<body>
+<div id="scene" aria-label="Interactive three-storey Keylargo campus"></div>
+<header class="topbar"><a class="brand" href="../index.html" id="return"><img src="../keylargo-logo.png" alt="Keylargo original logo"><span><b>KeyHQ</b><small>THE COASTAL CAMPUS</small></span></a><div class="top-center"><i></i><span id="sessionStatus">Local visual preview</span></div><div class="top-actions"><button id="lighting" title="Change lighting">☀ <span>Daylight</span></button><button id="reference">Reference</button><button id="quality" title="Rendering quality">Quality: balanced</button></div></header>
+<section class="intro"><div class="eyebrow">WELCOME TO YOUR HEADQUARTERS</div><h1>A place to<br>do great things.</h1><p id="viewDescription">Work, connect, recharge. All in one place.</p></section>
+<nav class="floors panel" aria-label="Building views"><div class="eyebrow">EXPLORE KEYHQ</div><button data-floor="all" class="active"><span>⌂</span><b>Campus overview</b></button><button data-floor="0"><span>G</span><b>Welcome & discover</b><small>Reception · Showroom · KeyLab</small></button><button data-floor="1"><span>02</span><b>Work & collaborate</b><small>Office · KeyBot · Meeting rooms</small></button><button data-floor="2"><span>03</span><b>Lead & recharge</b><small>Owner Room · Gym · Wellness</small></button><button data-floor="roof"><span>R</span><b>Above it all</b><small>Cinema · BBQ · Rooftop lounge</small></button></nav>
+<aside class="people panel"><div class="panel-head"><div><div class="eyebrow">CAMPUS COMPANIONS</div><h2>Meet your people</h2></div><button id="collapsePeople" aria-label="Collapse people">−</button></div><div id="peopleBody"><p class="muted" id="peopleNote">Adam & Eve · local preview avatars</p><div id="peopleList"></div><button class="wide" id="customize">Customize appearance <span>↗</span></button><div class="actor-controls" id="actorControls"><button data-action="idle">Stand</button><button data-action="walk">Walk here</button><button data-action="sit">Sit</button><button data-action="work">Work</button><button data-action="talk">Chat</button><button data-action="wave">Wave</button><button data-action="auto">Auto</button><button id="follow">Follow</button></div><p class="muted" id="actorStatus">Select a companion to explore together.</p></div></aside>
+<aside class="projector panel" id="projector" hidden><div class="eyebrow">KEYBOT AI STUDIO</div><h2>Enquiry projector</h2><p id="enquirySource">Not connected</p><p id="enquiryText">Open KeyHQ from your authorized KeySuite session to view enquiries.</p><button id="nextEnquiry">Next enquiry →</button></aside>
+<div class="destination-bar panel"><div class="eyebrow">TAKE A MOMENT</div><div id="destinations"></div></div>
+<div class="camera panel"><button id="panMode" class="mode active" aria-pressed="true">Pan</button><button id="orbitMode" class="mode" aria-pressed="false">Orbit</button><button id="orbitLeft" aria-label="Rotate left">↶</button><button id="orbitRight" aria-label="Rotate right">↷</button><span></span><button id="zoomIn" aria-label="Zoom in">＋</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="home" aria-label="Reset camera">⌂</button><button id="cart">Golf cart</button></div>
+<aside class="map panel"><button id="mapToggle"><span>Campus map</span><span>↗</span></button><canvas id="minimap" width="240" height="185" aria-label="Clickable campus map"></canvas><button id="fullMap">Open full map</button></aside>
+<footer><span id="hint">Drag to pan · Orbit to rotate · Pinch or +/− to zoom</span><a href="legacy.html?embedded=1">Office tools ↗</a><span id="renderStatus">Preparing your campus…</span></footer>
+<div id="toast" role="status"></div><div id="labels" aria-hidden="true"></div>
+<div id="loading"><img src="../keylargo-logo.png" alt="Keylargo"><h2>Your campus awaits.</h2><p>Preparing the architecture and gardens…</p><progress></progress></div>
+<dialog id="appearanceDialog"><form id="appearanceForm"><div class="panel-head"><div><div class="eyebrow">MAKE IT YOUR OWN</div><h2 id="appearanceTitle">Appearance</h2></div><button type="button" data-close="appearanceDialog" aria-label="Close">×</button></div><div id="appearanceFields"></div><p id="appearanceMessage" class="muted">Appearance is saved to this browser.</p><button class="primary" type="submit">Save appearance</button></form></dialog>
+<dialog id="referenceDialog"><div class="panel-head"><h2>Approved coastal campus</h2><button data-close="referenceDialog" aria-label="Close">×</button></div><img src="campus/reference.png" alt="Approved three-storey Keylargo corporate campus by the sea"><p>The architectural reference. Promotional panels are not part of the campus.</p></dialog>
+<dialog id="mapDialog"><div class="panel-head"><div><div class="eyebrow">YOUR WORLD, AT A GLANCE</div><h2>Explore the campus</h2></div><button data-close="mapDialog" aria-label="Close">×</button></div><canvas id="bigmap" width="900" height="680" aria-label="Full interactive campus map"></canvas><p>Select a destination to travel instantly.</p></dialog>
+<script type="module" src="campus/main.js"></script></body></html>
