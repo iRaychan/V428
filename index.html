@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#17365d">
-  <title>KeySuite V4.29.25</title>
-  <script>window.KEYSUITE_VERSION='4.29.25';window.KEYSUITE_BUILD='V4.29.25';</script>
+  <title>KeySuite V5.00.18</title>
+  <script>window.KEYSUITE_VERSION='5.00.18';window.KEYSUITE_BUILD='V5.00.18';</script>
   <link rel="manifest" href="manifest.json">
   <style>
     :root{--navy:#17365d;--blue:#2f75b5;--light:#eef3f8;--line:#cbd5e1;--text:#172033;--muted:#64748b;--ok:#15803d}
@@ -99,7 +99,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
   .print-company-email{text-decoration:underline;color:#0645ad}
   .print-customer-address{position:absolute;top:39mm;left:13.8mm;width:100mm;line-height:1.42}
   .print-customer-address>div,.print-date,.print-meta>div,.print-terms>div{display:grid;grid-template-columns:15mm 5mm 1fr;min-height:5mm}
-  .print-date{margin-top:5.5mm;grid-template-columns:11mm 5mm 1fr}
+  .print-date{margin-top:5.5mm;grid-template-columns:22mm 3mm 1fr}.print-date>span{white-space:nowrap}
   .print-revision-date{margin-top:0!important}
   .print-page h1{position:absolute;top:89mm;left:13.8mm;width:180.2mm;text-align:center;text-decoration:underline;text-decoration-thickness:1.1px;text-underline-offset:2px;font-size:23pt;margin:0;font-weight:700}
   .print-meta{position:absolute;top:107mm;left:13.8mm;width:125mm;line-height:1.35}
@@ -126,9 +126,9 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
   .print-items-top{position:absolute;top:38mm;left:139mm;width:66mm;line-height:1.4}
   .print-items-top>div{display:grid;grid-template-columns:max-content 1fr;column-gap:1.5mm;min-height:5mm}
   .print-items-table{position:absolute;top:52mm;left:8mm;width:194mm;border-collapse:collapse;font-size:10.5pt;table-layout:fixed}
-  .print-items-table thead{position:relative}
-  .print-items-table thead::after{content:"";position:absolute;left:-1.67mm;right:-1.67mm;bottom:0;border-bottom:1.2px solid #111}
-  .print-items-table thead th{padding:0 1.5mm 1.8mm;text-align:left;background:#fff;font-weight:700;border-bottom-color:var(--template-primary,#17365d)}
+  .print-items-table thead{position:static}
+  .print-items-table thead::after{content:none;display:none}
+  .print-items-table thead th{padding:0 1.5mm 1.8mm;text-align:left;background:#fff;font-weight:700;border-bottom:1.2px solid var(--template-primary,#17365d)}
   .print-items-table thead th:nth-child(2){font-size:0}
   .print-items-table tbody td{vertical-align:top;padding:5mm 1.5mm 0;border:0}
   .print-items-table th:nth-child(1),.print-items-table td:nth-child(1){width:13mm}
@@ -137,7 +137,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
   .print-items-table th:nth-child(4),.print-items-table td:nth-child(4){width:27mm;text-align:right}
   .print-items-table th:nth-child(5),.print-items-table td:nth-child(5){width:27mm;text-align:right}
   .print-item-model{font-weight:700;margin-bottom:1.5mm}.print-item-desc{font-size:10pt;white-space:pre-wrap;line-height:1.35;tab-size:4;overflow-wrap:normal;word-break:normal}
-  .print-system-item-head td{padding-bottom:0}.print-system-item-head .print-item-model{margin-bottom:0}.print-system-item-desc-row td{padding-top:1.5mm}.print-system-item-desc-row .print-system-desc-cell{width:auto!important;text-align:left!important;white-space:normal!important}.print-system-item-desc-row .print-system-price-spacer,.print-system-item-desc-row .print-system-total-spacer{width:27mm!important}.print-system-item-desc-row .print-item-desc{width:100%}
+  .print-system-item-head td{padding-bottom:0}.print-system-item-head .print-item-model{margin-bottom:0}.print-system-item-desc-row td{padding-top:1.5mm}.print-system-item-desc-row .print-system-desc-cell{width:auto!important;text-align:left!important;white-space:normal!important}.print-system-item-desc-row .print-item-desc{width:100%}
   .print-capacity-item .print-item-model{margin-bottom:.35mm}.print-system-item-desc-row.print-capacity-item td{padding-top:.35mm}
   .print-summary-spacer td{height:5mm;padding:0!important}
   .print-summary-line td{height:0;padding:0!important;border:0!important}
@@ -255,7 +255,8 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 
     .nav-group{margin:5px 0}.nav-toggle{display:flex!important;align-items:center;justify-content:space-between}.nav-toggle .nav-chevron{transition:transform .18s ease}.nav-group.open .nav-chevron{transform:rotate(180deg)}.nav-submenu{display:none;padding-left:12px}.nav-group.open .nav-submenu{display:block}.nav-submenu button{font-size:13px;padding:9px 14px;margin:3px 0;background:rgba(255,255,255,.06)}
     .customer-detail-section.collapsed{display:none}.contact-quote-button.selected{background:#15803d;color:#fff}.quote-contact-cell{width:110px;text-align:right}.customer-item .quote-selected-mark{float:right;color:#15803d;font-weight:800}
-    .category-editor-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:nowrap}.category-editor-title-row>div{min-width:0;flex:1}.category-editor-title-row h2{margin:0}#editCategoryRule{flex:0 0 150px;max-width:48%;min-width:132px;white-space:nowrap;padding:9px 10px;font-size:12px}.category-name-button{width:100%;border:0;background:transparent;text-align:left;padding:10px 8px;font-weight:700;color:var(--text);border-radius:8px}.category-name-button:hover,.category-name-button.active{background:#eef6ff}.category-table th,.category-table td{display:table-cell}.category-layout{grid-template-columns:minmax(190px,260px) minmax(620px,1fr)}.category-form-readonly input{background:#f8fafc;color:#475569}.category-form-readonly .category-actions{display:none}
+    .v391-margin-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}@media(max-width:950px){.v391-margin-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:560px){.v391-margin-grid{grid-template-columns:1fr!important}}
+    .category-editor-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:nowrap}.category-editor-title-row>div{min-width:0;flex:1}.category-editor-title-row h2{margin:0}#editCategoryRule{flex:0 0 150px;max-width:48%;min-width:132px;white-space:nowrap;padding:9px 10px;font-size:12px}.category-list-title-actions{display:flex;align-items:center;gap:8px}.category-list-edit{min-width:116px}.category-list-edit.holding{background:#fff7ed;border-color:#f59e0b;color:#92400e}.category-name-button{width:100%;border:0;background:transparent;text-align:left;padding:10px 8px;font-weight:700;color:var(--text);border-radius:8px}.category-name-button:hover,.category-name-button.active{background:#eef6ff}.category-row-layout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:center}.category-delete-button{display:none;padding:6px 9px!important;font-size:11px!important}.category-list-unlocked .category-delete-button{display:inline-flex}.category-table th,.category-table td{display:table-cell}.category-table thead{display:none}.category-layout{grid-template-columns:minmax(190px,260px) minmax(620px,1fr)}.category-form-readonly input{background:#f8fafc;color:#475569}.category-form-readonly .category-actions{display:none}
     .product-toolbar{display:grid;grid-template-columns:1.05fr 1.25fr 1.35fr .8fr 1fr 1fr;gap:12px;align-items:end}html.macos-safari select:not([multiple]),html.macos-safari input:not([type="checkbox"]):not([type="radio"]){height:38px!important;min-height:38px!important;box-sizing:border-box}html.macos-safari .product-toolbar input[type="checkbox"],html.macos-safari .product-toolbar input[type="radio"]{width:auto!important;height:auto!important;min-height:0!important}.product-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;margin-top:16px}.product-series-list{display:flex;flex-direction:column;gap:6px;max-height:680px;overflow:auto}.product-series-button{border:1px solid #dbe3ec;background:#fff;border-radius:8px;padding:10px 12px;text-align:left;font-weight:700}.product-series-button.active,.product-series-button:hover{background:#eef6ff;border-color:#93c5fd}.product-model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;max-height:680px;overflow:auto;padding-right:4px}.product-model-card{border:1px solid #dbe3ec;border-radius:10px;padding:12px;background:#fff}.product-model-card h3{margin:0 0 10px;font-size:16px}.product-model-actions{display:flex;gap:7px;flex-wrap:wrap}.product-model-actions .btn{padding:7px 10px;font-size:12px}.product-curve-dialog{width:min(1480px,calc(100vw - 20px))!important}.product-curve-dialog iframe{width:100%;height:min(86vh,1040px);border:0;background:#fff}.product-curve-selector-shell{padding:8px!important}.selection-curve-shell{width:100%;min-width:0;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}.selection-curve-shell>iframe{display:block;width:100%!important;min-width:0;border:0!important;background:transparent}.product-curve-selector-head{display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:8px;padding:2px 2px 8px}.product-curve-selector-head #productCurveTitle{margin-right:auto}.product-curve-selector-head strong{font-size:14px;color:var(--muted)}.product-curve-duty{display:grid;grid-template-columns:auto minmax(90px,150px) minmax(88px,120px) auto minmax(90px,150px) minmax(88px,120px) minmax(160px,1fr);gap:7px;align-items:center;margin:0 0 10px;padding:9px 10px;border:1px solid #dbe4ed;border-radius:9px;background:#f8fbfd}.product-curve-duty label{font-weight:800;margin:0}.product-curve-duty input,.product-curve-duty select{width:100%;min-height:36px}.product-curve-duty-status{font-size:11px;color:var(--muted);padding-left:4px}.product-curve-duty-status.error{color:#a52235;font-weight:700}.quick-selection-return{position:fixed;right:24px;bottom:24px;z-index:1200;width:44px;height:44px;min-width:44px!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;border-radius:50%!important;box-shadow:0 8px 24px rgba(15,45,70,.22)}.quick-selection-return[hidden]{display:none!important}.quick-selection-return svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}@media(max-width:800px){.product-curve-duty{grid-template-columns:auto 1fr 105px}.product-curve-duty .head-label{grid-column:1}.product-curve-duty-status{grid-column:1/-1}}.product-empty{padding:28px;text-align:center;color:var(--muted)}
     @media(max-width:1050px){.product-toolbar{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.product-layout{grid-template-columns:1fr}.product-series-list{flex-direction:row;max-height:none;overflow:auto}.product-series-button{white-space:nowrap}.product-toolbar{grid-template-columns:1fr 1fr}}@media(max-width:560px){.product-toolbar{grid-template-columns:1fr}.product-model-grid{grid-template-columns:1fr}.product-model-actions .btn{flex:1}.nav-submenu{padding-left:0}}
 
@@ -605,6 +606,9 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 
     /* V4.14.09 CHC generation Price List */
     .chc-price-controls{display:flex;align-items:end;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+    .kv-selector-toolbar{grid-template-columns:1.4fr .8fr 1fr}
+    .kv-product-toolbar{grid-template-columns:1.1fr 1.4fr .8fr 1fr}
+    .kv-addon-table{max-width:980px}
     .chc-generation-setting{min-width:160px}
     .chc-generation-setting select{font-weight:800}
     .chc-generation-readonly{display:inline-flex;align-items:center;gap:6px;margin:4px 0 0 8px;padding:3px 8px;border-radius:999px;background:#eef3f8;color:#475569;font-size:11px;font-weight:800;vertical-align:middle}
@@ -634,15 +638,15 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 </style>
 
   <style id="v42853-selection-scale">
-    #selectorEs,#selectorCr{width:100%;max-width:100%;min-width:0}
-    #selectorCrFrame{width:100%;max-width:100%;min-width:0}
+    #selectorEs,#selectorCr,#selectorKv,#selectorIso{width:100%;max-width:100%;min-width:0;overflow-x:hidden}
+    #selectorCrFrame,#selectorKvFrame,#selectorIsoFrame{display:block;width:100%;max-width:100%;min-width:0}
     .card.selection-curve-shell{width:100%;min-width:0;padding:0!important;margin-bottom:0!important;border:1px solid var(--line)!important;border-radius:12px!important;background:#fff!important;box-shadow:var(--shadow)!important;overflow:hidden!important}
   </style>
 </head>
 <body>
 <div id="loginView" class="auth-shell">
   <form id="loginForm" class="auth-card" novalidate>
-    <div class="auth-brand">KeySuite<small>V4.29.25</small></div>
+    <div class="auth-brand">KeySuite<small>V5.00.18</small></div>
     <h1>Sign in</h1>
     <p>Only approved Keylargo users can enter KeySuite.</p>
     <div id="loginMessage" class="auth-message"></div>
@@ -658,17 +662,17 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <div id="loadingView" class="loading-screen hidden"><div class="loading-card"><div class="spinner"></div><div id="loadingText">Checking secure access…</div></div></div>
 <div id="appView" class="app hidden">
   <aside>
-    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V4.29.25</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
+    <div class="brand-row"><div class="brand">KeySuite<small>Full Suite V5.00.18</small></div><button id="keyButton" type="button" class="key-button" title="Open Key Dashboard" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l8-8m-2 2l2 2m-5 1l2 2"></path></svg><span>Key</span></button></div>
     <nav>
       <button data-page="dashboard" class="active">Dashboard</button>
       <button data-page="customers">Customers</button>
       <div class="nav-group" data-nav-group="selectorMenu">
         <button type="button" class="nav-toggle" data-nav-toggle="selectorMenu"><span>Selection</span><span class="nav-chevron">⌄</span></button>
-        <div class="nav-submenu"><button data-page="selector" data-generation="G2">CHC C6</button><button data-page="selectorCr">CR</button><button data-page="selectorBfi">BFI</button><button data-page="selectorEs">ES</button></div>
+        <div class="nav-submenu"><button data-page="selector" data-generation="G2">CHC C6</button><button data-page="selectorCr">CR</button><button data-page="selectorKv">KV</button><button data-page="selectorBfi">BFI</button><button data-page="selectorEs">ES</button><button data-page="selectorIso">ISO</button></div>
       </div>
       <div class="nav-group" data-nav-group="productMenu">
         <button type="button" class="nav-toggle" data-nav-toggle="productMenu"><span>Product</span><span class="nav-chevron">⌄</span></button>
-        <div class="nav-submenu"><div class="v391-brand-tree"><details class="v391-direct-brand-root v391-bgreich-root"><summary>B.G.Reich</summary><div class="v391-bgreich-list"><button data-page="productChc" data-generation="G1">CHC C4</button><button data-page="productChc" data-generation="G2">CHC C6</button><button data-page="productCr">CR</button><button data-page="productBfi">BFI</button><button data-page="productEs">End Suction</button><button data-page="productMotor">Motor</button></div></details></div></div>
+        <div class="nav-submenu"><div class="v391-brand-tree"><details class="v391-direct-brand-root v391-bgreich-root"><summary>B.G.Reich</summary><div class="v391-bgreich-list"><button data-page="productChc" data-generation="G1">CHC C4</button><button data-page="productChc" data-generation="G2">CHC C6</button><button data-page="productCr">CR</button><button data-page="productKv">KV</button><button data-page="productBfi">BFI</button><button data-page="productEs">End Suction</button><button data-page="productIso">ISO</button><button data-page="productMotor">Motor</button></div></details></div></div>
       </div>
       <button data-page="keyLab">KeyLab</button>
       <button data-page="quotation">Quotation</button>
@@ -684,7 +688,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       <button id="settingsButton" type="button" class="settings-button">⚙ Settings</button>
       <button id="logoutButton" type="button">Sign out</button>
     </div>
-    <div class="suite-version">KeySuite V4.29.25</div>
+    <div class="suite-version">KeySuite V5.00.18</div>
   </aside>
 
   <main>
@@ -719,6 +723,10 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
           <button id="dashboardNotesButton" class="dashboard-tool-button" type="button" title="Important Note" aria-label="Open Important Note">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>
             <span id="dashboardNotesDot" class="dashboard-tool-dot" hidden></span>
+          </button>
+          <button id="dashboardMessengerButton" class="dashboard-tool-button" type="button" title="KeyHQ Messenger Chat" aria-label="Open KeyHQ Messenger Chat">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path><path d="M8 9h8M8 12h5"></path></svg>
+            <span id="dashboardMessengerCount" class="dashboard-tool-count" hidden>0</span>
           </button>
           <button id="dashboardRecentQuotesButton" class="dashboard-tool-button" type="button" title="Recent Quotation" aria-label="Open Recent Quotation">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"></path><path d="M15 3v4h4M9 11h6M9 15h6"></path></svg>
@@ -877,6 +885,18 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       </div>
     </section>
 
+    <section id="selectorKv" class="page">
+      <div class="page-title-row"><div><h1>Selector · KV</h1><div class="muted">Enter flow and head to select from the 39 complete KV1 models, review the workbook-derived curves, then continue to Assembly or Quote.</div></div></div>
+      <div class="card selector-toolbar kv-selector-toolbar">
+        <div><label>Material</label><select id="kvSealFaces" data-default-value="Carbon V Silicon Carbide (Ca SiC)"><option selected>Carbon V Silicon Carbide (Ca SiC)</option><option>Silicon Carbide V Silicon Carbide (SiC SiC)</option><option>Tungsten V Tungsten (TC TC)</option></select></div>
+        <div><label>O-Ring</label><select id="kvSealElastomer" data-default-value="Viton"><option selected>Viton</option><option>EPDM</option><option>NBR</option></select></div>
+        <div><label>Supply</label><label class="default-choice-control"><input id="kvBareShaft" type="checkbox" data-default-checked="false"> Bare Shaft Pump</label></div>
+      </div>
+      <div class="card selection-curve-shell">
+        <iframe id="selectorKvFrame" src="selector-kv/index.html?v=50018&amp;ks-visible=1" data-src="selector-kv/index.html?v=50018&amp;ks-visible=1" title="KeySelector KV Series" style="width:100%;height:1900px;border:0;display:block"></iframe>
+      </div>
+    </section>
+
     <section id="selectorBfi" class="page">
       <button id="quickSelectionReturnBfi" class="btn secondary quick-selection-return" type="button" hidden title="Return to Quick Selection" aria-label="Return to Quick Selection"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7l-5 5 5 5"></path><path d="M4 12h10a6 6 0 0 1 6 6"></path></svg></button>
       <iframe id="selectorBfiFrame" src="selector-bfi/index.html?v=42872" data-src="selector-bfi/index.html?v=42872" title="KeySelector BFI" style="width:100%;height:1900px;border:0;display:block"></iframe>
@@ -914,6 +934,21 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         <div class="card"><div class="page-title-row" style="margin-bottom:12px"><div><h2 id="crProductSeriesTitle" style="margin:0">CR Models</h2><div id="crProductModelCount" class="muted"></div></div></div><div id="crProductModelGrid" class="product-model-grid"></div></div>
       </div>
       <iframe id="productCrSelectorFrame" src="about:blank" data-src="selector-cr/product.html?product=1&amp;v=42872" title="CR Product Curve" style="display:none"></iframe>
+    </section>
+
+    <section id="productKv" class="page">
+      <div class="page-title-row"><div><h1>Product · KV</h1><div class="muted">B.G.Reich KV vertical multistage pump range. Only complete KV1 models from the approved workbook are shown.</div></div></div>
+      <div class="card product-toolbar kv-product-toolbar">
+        <div><label>Model</label><input id="kvProductModelInput" list="kvProductModelOptions" placeholder="Example: KV 1-20"><datalist id="kvProductModelOptions"></datalist></div>
+        <div><label>Material</label><select id="kvProductSeal" data-default-value="Carbon V Silicon Carbide (Ca SiC)"><option selected>Carbon V Silicon Carbide (Ca SiC)</option><option>Silicon Carbide V Silicon Carbide (SiC SiC)</option><option>Tungsten V Tungsten (TC TC)</option></select></div>
+        <div><label>O-Ring</label><select id="kvProductElastomer" data-default-value="Viton"><option selected>Viton</option><option>EPDM</option><option>NBR</option></select></div>
+        <div><label>Supply</label><label class="default-choice-control"><input id="kvProductBareShaft" type="checkbox" data-default-checked="false"> Bare Shaft Pump</label></div>
+      </div>
+      <div class="product-layout">
+        <div class="card"><h2>KV Series</h2><div class="product-series-list"><button class="active" type="button">KV1</button></div></div>
+        <div class="card"><div class="page-title-row" style="margin-bottom:12px"><div><h2 style="margin:0">KV1 Models</h2><div id="kvProductModelCount" class="muted"></div></div></div><div id="kvProductModelGrid" class="product-model-grid"></div></div>
+      </div>
+      <iframe id="productKvSelectorFrame" src="about:blank" data-src="selector-kv/index.html?product=1&amp;v=50018" title="KV Product Curve" style="display:none"></iframe>
     </section>
 
     <section id="productBfi" class="page">
@@ -1011,6 +1046,33 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
     </section>
 
 
+    <section id="productIso" class="page">
+      <div class="page-title-row"><div><h1>Product · ISO</h1><div class="muted">B.G.Reich ISO bare-shaft pump products.</div></div></div>
+      <div class="card es-product-toolbar iso-product-toolbar"><div><label>Material</label><select id="isoMaterial"></select></div><div><label>Seal Type</label><select id="isoSealType"><option>Mechanical Seal</option><option>Gland Packing</option></select></div><div><label>Seal Material</label><select id="isoSeal"><option value="Carbon Ceramic">Carbon Ceramic</option><option value="Silicon Carbide">Silicon Carbide</option><option value="Tungsten">Tungsten</option><option value="Graphite">Graphite</option></select></div><div><label>Elastomer</label><select id="isoElastomer"><option>Viton</option><option>EPDM</option><option>NBR</option></select></div></div>
+      <div class="page-title-row" style="margin:16px 0 0"><div><h2 style="margin:0">ISO Models</h2></div><div class="price-list-search"><label>Search Model</label><input id="isoSearch" placeholder="Example: ISO 50-32-160"></div></div>
+      <div class="product-layout es-product-layout iso-product-layout"><div class="card"><h2>ISO Series</h2><div id="isoProductSeriesList" class="product-series-list"></div></div><div class="card"><div class="page-title-row" style="margin-bottom:12px"><div><h2 id="isoProductSeriesTitle" style="margin:0">ISO Models</h2><div id="isoProductCount" class="muted"></div></div></div><div id="isoProducts" class="product-model-grid"></div></div></div>
+      <iframe id="productIsoSelectorFrame" src="about:blank" data-src="selector-iso/index.html?product=1&amp;v=50016" title="ISO Product Curve" style="display:none"></iframe>
+    </section>
+    <section id="selectorIso" class="page"><h1>ISO Selection</h1><iframe id="selectorIsoFrame" src="selector-iso/index.html?v=50016" title="ISO Selection" style="width:100%;height:2600px;border:0;display:block"></iframe></section>
+    <section id="isoPriceList" class="page">
+      <div class="key-back-row"><button class="btn secondary" type="button" data-go="priceListDashboard">← Price List</button></div>
+      <div class="page-title-row"><div><h1>ISO Price List</h1><div class="muted">Maintain independent ISO source prices by material, selected currency and rarity.</div></div></div>
+      <div id="isoPriceListMessage" class="auth-message"></div>
+      <details class="card pricelist-currency-panel">
+        <summary>Currency &amp; Multipliers</summary>
+        <div class="pricelist-currency-panel-body">
+          <div class="pricelist-settings">
+            <div class="pricelist-currency-setting"><label>Currency Selection</label><select id="isoPriceCurrency"><option value="USD">USD</option><option value="RMB">RMB</option><option value="MYR">MYR</option></select><div class="multiplier-hold-feedback">&nbsp;</div></div>
+            <div class="pricelist-multiplier-lock locked" id="isoMultiplierLock_USD" data-multiplier-prefix="iso" data-multiplier-currency="USD"><label>USD → MYR</label><input id="isoUsdMultiplier" class="multiplier-hold-input" type="number" min="0.0001" step="0.0001" placeholder="5.8000" readonly><div class="multiplier-hold-feedback">(Hold 3s to edit)</div><div class="multiplier-actions"><button class="btn" type="button" data-multiplier-save>Save</button><button class="btn secondary" type="button" data-multiplier-cancel>Cancel</button></div></div>
+            <div class="pricelist-multiplier-lock locked" id="isoMultiplierLock_RMB" data-multiplier-prefix="iso" data-multiplier-currency="RMB"><label>RMB → MYR</label><input id="isoRmbMultiplier" class="multiplier-hold-input" type="number" min="0.0001" step="0.0001" placeholder="0.6500" readonly><div class="multiplier-hold-feedback">(Hold 3s to edit)</div><div class="multiplier-actions"><button class="btn" type="button" data-multiplier-save>Save</button><button class="btn secondary" type="button" data-multiplier-cancel>Cancel</button></div></div>
+          </div>
+          <div class="pricelist-note" style="margin-top:12px">Select USD, RMB or MYR to edit one source price per material. Each ISO material keeps its own saved price.</div>
+        </div>
+      </details>
+      <div class="card" style="margin-top:16px"><div class="page-title-row"><div><h2 style="margin:0">ISO Models</h2><div id="isoPriceListCount" class="muted"></div></div><div class="price-list-search"><label for="isoPriceSearch">Search Model</label><input id="isoPriceSearch" placeholder="Example: 100-80-160"></div></div>
+        <div class="table-wrap" style="max-height:680px"><table class="pricelist-table"><thead><tr><th>Model</th><th>Rarity</th><th>Material Selection</th><th>Selected Currency Price</th><th></th></tr></thead><tbody id="isoPriceRows"></tbody></table></div>
+      </div>
+    </section>
     <section id="productEs" class="page">
       <div class="page-title-row"><div><h1>Product · End Suction</h1><div class="muted">B.G.Reich ES bare-shaft pump products.</div></div></div>
       <div class="card es-product-toolbar">
@@ -1072,9 +1134,9 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
           </div>
           <div id="assemblyCapacityRow" class="assembly-capacity-row no-print">
             <label class="assembly-capacity-toggle"><input id="assemblyDisplayCapacity" type="checkbox"> Display Capacity</label>
-            <div><label for="assemblyCapacityValue">Capacity</label><div class="capacity-input-pair"><input id="assemblyCapacityValue" type="number" min="0" step="any"><select id="assemblyCapacityUnit"><option selected>m³/hr</option><option>L/s</option><option>L/min</option><option>GPM</option></select></div></div>
+            <div><label for="assemblyCapacityValue">Capacity</label><div class="capacity-input-pair"><input id="assemblyCapacityValue" type="number" min="0" step="any"><select id="assemblyCapacityUnit"><option selected>m³/hr</option><option>US gpm</option><option>Imp gpm</option><option>L/s</option><option>L/min</option></select></div></div>
             <span class="capacity-at">@</span>
-            <div><label for="assemblyHeadValue">Head</label><div class="capacity-input-pair"><input id="assemblyHeadValue" type="number" min="0" step="any"><select id="assemblyHeadUnit"><option>Mtr</option><option>ft</option><option>bar</option></select></div></div>
+            <div><label for="assemblyHeadValue">Head</label><div class="capacity-input-pair"><input id="assemblyHeadValue" type="number" min="0" step="any"><select id="assemblyHeadUnit"><option>Mtr</option><option>bar</option><option>kPa</option><option>psi</option><option>Ft</option></select></div></div>
           </div>
           <div class="form-grid">
             <div class="span-3"><label id="assemblyDescriptionLabel">System Description</label><div id="assemblyDescriptionPreview" class="assembly-description-preview" role="button" tabindex="0" title="Double-click to edit System Description" aria-label="Highlighted System Description. Double-click to edit."></div><textarea id="assemblyDescription" class="assembly-description-source" hidden aria-hidden="true"></textarea></div>
@@ -1170,8 +1232,8 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
           <input id="qPrintedCompany" type="hidden">
           <input id="qPrintedContact" type="hidden">
           <div class="date-rev-row">
-            <div><label>Date</label><input id="qDate" type="date"></div>
-            <div><label>Revision Date</label><input id="qRevisionDate" type="date"></div>
+            <div><label>Original Date</label><input id="qDate" type="date"></div>
+            <div><label>Revised Date</label><input id="qRevisionDate" type="date"></div>
             <label class="revision-date-toggle"><input id="showRevision" type="checkbox"> Revision</label>
           </div>
           <div class="span-3"><label>Contact Details</label><div id="qContactInfo" class="detail-value">-</div></div>
@@ -1188,7 +1250,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         </div>
         <div class="items-toolbar" style="margin-top:20px;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h2>Items <span id="itemCount" class="muted"></span></h2><div class="status-summary"><span class="status-pill" title="Complete"><i class="status-dot green"></i><b id="completeCount">0</b></span><span class="status-pill" title="Warning"><i class="status-dot yellow"></i><b id="warningCount">0</b></span><span class="status-pill" title="Error"><i class="status-dot red"></i><b id="errorCount">0</b></span></div></div>
-          <div class="items-toolbar-actions no-print"><button class="btn secondary" type="button" id="expandAllItems">Expand All</button><button class="btn secondary" type="button" id="collapseAllItems">Collapse All</button><button class="btn secondary" type="button" id="addQuoteItem">+ Add Item</button></div>
+          <div class="items-toolbar-actions no-print"><button class="btn secondary" type="button" id="expandAllItems">Expand All</button><button class="btn secondary" type="button" id="collapseAllItems">Collapse All</button><button class="btn secondary" type="button" id="pasteQuoteItem">Paste Item</button><button class="btn secondary" type="button" id="addQuoteItem">+ Add Manual Item</button></div>
         </div>
         <div id="quoteItems"></div><datalist id="quotationModelItemOptions"></datalist>
         <div class="quote-total" style="margin-top:20px">Total: <span id="quoteTotal">RM 0.00</span></div>
@@ -1311,6 +1373,10 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
           </table>
         </div>
       </div>
+      <div class="card" id="roleArchivedCard" style="margin-top:16px;display:none">
+        <div class="role-toolbar"><div><h2 style="margin-bottom:4px">Archived Users <span class="role-badge" id="roleArchivedCount">0</span></h2><div class="role-note">Owner-only archive. Restoring keeps historical quotations and audit records; a new invitation may be required before login.</div></div></div>
+        <div class="table-wrap" style="margin-top:14px"><table class="role-table"><thead><tr><th>Name</th><th>Email</th><th>Quotation Prefix</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody id="roleArchivedRows"></tbody></table></div>
+      </div>
       <div class="card" style="margin-top:16px">
         <h2>Recent Role Changes</h2>
         <div class="table-wrap"><table><thead><tr><th>Date / Time</th><th>User</th><th>Previous</th><th>New</th><th>Changed By</th></tr></thead><tbody id="roleAuditRows"></tbody></table></div>
@@ -1327,11 +1393,11 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
             <h2 style="margin:0">Categories</h2>
-            <button class="btn secondary" id="categorySortDirection" type="button" title="Category A to Z" aria-label="Sort categories A to Z or Z to A">A→Z</button>
+            <div class="category-list-title-actions"><button class="btn secondary category-list-edit" id="editCategoryList" type="button">Edit</button><button class="btn secondary" id="categorySortDirection" type="button" title="Category A to Z" aria-label="Categories are fixed A to Z">A→Z</button></div>
           </div>
           <div class="table-wrap" style="margin-top:12px">
             <table class="category-table">
-              <thead><tr><th>Category</th></tr></thead>
+              <thead><tr><th></th></tr></thead>
               <tbody id="categoryRows"></tbody>
             </table>
           </div>
@@ -1349,8 +1415,10 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
                   <button class="category-product-button" type="button" data-category-product="CHC_G1">CHC G1</button>
                   <button class="category-product-button active" type="button" data-category-product="CHC_G2">CHC G2</button>
                   <button class="category-product-button" type="button" data-category-product="CR">CR</button>
+                  <button class="category-product-button" type="button" data-category-product="KV">KV</button>
                   <button class="category-product-button" type="button" data-category-product="BFI">BFI</button>
-                  <button class="category-product-button" type="button" data-category-product="ES">ES</button>
+                  <button class="category-product-button" type="button" data-category-product="BGF">BGF</button>
+                  <button class="category-product-button" type="button" data-category-product="ES">ES</button><button class="category-product-button" type="button" data-category-product="ISO">ISO</button>
                   <button class="category-product-button" type="button" data-category-product="GWS">GWS</button>
                   <button class="category-product-button" type="button" data-category-product="KEYPLC">KeyPLC</button>
                   <button class="category-product-button" type="button" data-category-product="MANIFOLD">Manifold</button>
@@ -1386,6 +1454,11 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
                     <div class="category-lock-field locked category-inline-rule" id="categoryLock_rare" data-lock-key="rare" data-lock-label="Rare">
                       <label for="categoryRareInput">Rare</label>
                       <div class="category-inline-input"><input id="categoryRareInput" type="number" min="0" max="99.99" step="0.01" value="0.00" readonly><span>%</span></div>
+                      <span class="category-inline-check" aria-hidden="true"></span>
+                    </div>
+                    <div class="category-lock-field locked category-inline-rule" id="categoryLock_trimming" data-lock-key="trimming" data-lock-label="Trimming" hidden>
+                      <label for="categoryTrimmingInput">Trimming</label>
+                      <div class="category-inline-input"><span>RM</span><input id="categoryTrimmingInput" type="number" min="0" step="0.01" value="0.00" readonly></div>
                       <span class="category-inline-check" aria-hidden="true"></span>
                     </div>
                     <div class="category-lock-field locked category-inline-rule" id="categoryLock_transport" data-lock-key="transport" data-lock-label="Transport">
@@ -1447,9 +1520,19 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
           <span class="module-order">OPEN PRICE LIST</span>
         </button>
 
+        <button type="button" class="key-module-card" data-go="kvPriceList">
+          <span class="module-icon">KV</span><h2>KV</h2>
+          <p>Maintain the 39 complete KV1 model source prices and rarity by currency.</p>
+          <span class="module-order">OPEN PRICE LIST</span>
+        </button>
+
         <button type="button" class="key-module-card" data-go="bfiPriceList">
           <span class="module-icon">BFI</span><h2>BFI / BFIN</h2><p>Maintain separate SS304 and SS316 1 Phase / 3 Phase source prices and rarity by currency.</p><span class="module-order">OPEN PRICE LIST</span>
         </button>
+        <button type="button" class="key-module-card" data-go="bgfPriceList">
+          <span class="module-icon">BGF</span><h2>BGF</h2><p>Maintain BGF 350M, BGF 350E, BGF 400 and BGF 500 source prices from the supplied BGF reference.</p><span class="module-order">OPEN PRICE LIST</span>
+        </button>
+        <button type="button" class="key-module-card" data-go="isoPriceList"><span class="module-icon">ISO</span><h2>ISO End Suction</h2><p>Maintain independent ISO source prices by material, currency and rarity.</p><span class="module-order">OPEN PRICE LIST</span></button>
         <button type="button" class="key-module-card" data-go="esPriceList">
           <span class="module-icon">ES</span><h2>End Suction</h2><p>Maintain B.G.Reich ES source prices by material construction.</p><span class="module-order">OPEN PRICE LIST</span>
         </button>
@@ -1625,7 +1708,36 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         <div class="page-title-row" style="margin-bottom:12px"><div><h2 style="margin:0">CR Models</h2><div id="crPriceListCount" class="muted"></div></div><div class="price-list-search"><label>Search Model</label><input id="crPriceSearch" placeholder="Example: CR 32-4"></div></div>
         <div class="table-wrap" style="max-height:650px"><table class="pricelist-table"><thead><tr><th rowspan="2">Model</th><th class="group-head" colspan="2">CR</th><th class="group-head" colspan="2">CRS</th><th class="group-head" colspan="2">CRN</th><th rowspan="2"></th></tr><tr><th class="sub-head">Price</th><th class="sub-head">Rarity</th><th class="sub-head">Price</th><th class="sub-head">Rarity</th><th class="sub-head">Price</th><th class="sub-head">Rarity</th></tr></thead><tbody id="crPriceRows"></tbody></table></div>
       </div>
-      <div class="card" style="margin-top:16px"><h2>CR Mechanical Seal Add-on</h2><div class="muted" style="margin-bottom:10px">Add-on values in MYR. Owners can edit and save each mechanical-seal row.</div><div class="table-wrap"><table class="pricelist-table seal-price-table"><thead><tr id="crSealHead"></tr></thead><tbody id="crSealRows"></tbody></table></div></div>
+      <div class="card" style="margin-top:16px"><h2>CR Mechanical Seal Add-on</h2><div class="muted" style="margin-bottom:10px">Add-on values in MYR. Ca/SiC remains the existing standard value; SiC/SiC and TC/TiC add-ons are saved by pump size group, including CR 320.</div><div class="table-wrap"><table class="pricelist-table seal-price-table"><thead><tr id="crSealHead"></tr></thead><tbody id="crSealRows"></tbody></table></div></div>
+    </section>
+
+    <section id="kvPriceList" class="page">
+      <div class="key-back-row"><button class="btn secondary" type="button" data-go="priceListDashboard">← Price List</button></div>
+      <div class="page-title-row"><div><h1>KV Price List</h1><div class="muted">B.G.Reich KV1 pricing for the 39 complete workbook models.</div></div></div>
+      <div id="kvPriceListMessage" class="auth-message"></div>
+      <details class="card pricelist-currency-panel">
+        <summary>Currency &amp; Multipliers</summary>
+        <div class="pricelist-currency-panel-body">
+          <div class="pricelist-settings">
+            <div class="pricelist-currency-setting"><label>KV Currency Selection</label><select id="kvPriceCurrency"><option value="USD">USD</option><option value="RMB" selected>RMB</option><option value="MYR">MYR</option></select><div class="multiplier-hold-feedback">&nbsp;</div></div>
+            <div class="pricelist-multiplier-lock locked" id="kvMultiplierLock_USD"><label>KV · USD → MYR</label><input id="kvUsdMultiplier" class="multiplier-hold-input" type="number" min="0.0001" step="0.0001" readonly><div class="multiplier-hold-feedback">Hold 3s to edit</div><div class="multiplier-actions"><button class="btn" type="button" data-multiplier-save>Save</button><button class="btn secondary" type="button" data-multiplier-cancel>Cancel</button></div></div>
+            <div class="pricelist-multiplier-lock locked" id="kvMultiplierLock_RMB"><label>KV · RMB → MYR</label><input id="kvRmbMultiplier" class="multiplier-hold-input" type="number" min="0.0001" step="0.0001" readonly><div class="multiplier-hold-feedback">Hold 3s to edit</div><div class="multiplier-actions"><button class="btn" type="button" data-multiplier-save>Save</button><button class="btn secondary" type="button" data-multiplier-cancel>Cancel</button></div></div>
+          </div>
+          <div class="pricelist-note" style="margin-top:12px">KV keeps independent USD, RMB and MYR prices. Zero values remain unpriced. Hold a locked rate for 3 seconds to edit it.</div>
+        </div>
+      </details>
+      <div class="card" style="margin-top:16px">
+        <div class="page-title-row" style="margin-bottom:12px"><div><h2 style="margin:0">KV1 Models</h2><div id="kvPriceListCount" class="muted"></div></div><div class="price-list-search"><label>Search Model</label><input id="kvPriceSearch" placeholder="Example: KV 1-20"></div></div>
+        <div class="table-wrap" style="max-height:650px"><table class="pricelist-table"><thead><tr><th>Model</th><th>Motor</th><th>Price</th><th>Rarity</th><th></th></tr></thead><tbody id="kvPriceRows"></tbody></table></div>
+      </div>
+      <div class="card kv-addon-table" style="margin-top:16px">
+        <div class="page-title-row" style="margin-bottom:12px"><div><h2 style="margin:0">KV Material Add-On</h2><div class="muted">Workbook Material options. Ca SiC is the standard material at RM 0.00.</div></div></div>
+        <div class="table-wrap"><table class="pricelist-table seal-price-table"><thead><tr><th>KV Series</th><th>Ca SiC</th><th>SiC SiC Add-On</th><th>TC TC Add-On</th><th></th></tr></thead><tbody id="kvMaterialAddonRows"></tbody></table></div>
+      </div>
+      <div class="card kv-addon-table" style="margin-top:16px">
+        <div class="page-title-row" style="margin-bottom:12px"><div><h2 style="margin:0">KV O-Ring Add-On</h2><div class="muted">Workbook O-ring options. Viton is the standard O-ring at RM 0.00.</div></div></div>
+        <div class="table-wrap"><table class="pricelist-table seal-price-table"><thead><tr><th>KV Series</th><th>Viton</th><th>EPDM Add-On</th><th>NBR Add-On</th><th></th></tr></thead><tbody id="kvOringAddonRows"></tbody></table></div>
+      </div>
     </section>
 
 
@@ -1646,6 +1758,22 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       </details>
       <div class="card" style="margin-top:16px"><div class="page-title-row" style="margin-bottom:12px"><div><h2 id="bfiPriceListHeading" style="margin:0">BFI Models · Stainless Steel 304</h2><div id="bfiPriceListCount" class="muted"></div></div><div class="bfi-price-list-tools"><div class="bfi-material-setting"><label for="bfiPriceMaterial">Material</label><select id="bfiPriceMaterial"><option value="SS304">SS304</option><option value="SS316">SS316</option></select></div><div class="price-list-search"><label>Search Model</label><input id="bfiPriceSearch" placeholder="Example: BFI 12-5"></div></div></div>
       <div class="table-wrap" style="max-height:680px"><table class="pricelist-table"><thead><tr><th>Model</th><th>1 Phase · Price / Rarity</th><th>3 Phase · Price / Rarity</th><th></th></tr></thead><tbody id="bfiPriceRows"></tbody></table></div></div>
+    </section>
+
+
+    <section id="productBgf" class="page">
+      <div class="page-title-row"><div><h1>B.G.Reich · BGF</h1><div class="muted">Close-coupled pumps · Supplied catalogue data</div></div></div>
+      <div class="card"><div class="table-wrap"><table class="pricelist-table"><thead><tr><th>Model</th><th>Power</th><th>Drive</th><th>Suction × Discharge</th><th></th></tr></thead><tbody id="bgfProductRows"></tbody></table></div><p id="bgfQuoteMessage" role="status"></p></div>
+    </section>
+    <section id="bgfPriceList" class="page">
+      <div class="key-back-row"><button class="btn secondary" type="button" data-go="priceListDashboard">← Price List</button></div>
+      <div class="page-title-row"><div><h1>BGF Price List</h1><div class="muted">Four approved BGF close-coupled pump models from 004 - BGF - 261026 - V1.0.xlsx.</div></div></div>
+      <div id="bgfPriceListMessage" class="auth-message"></div>
+      <div class="card">
+        <div class="page-title-row" style="margin-bottom:12px"><div><h2 style="margin:0">BGF Models</h2><div id="bgfPriceListCount" class="muted"></div></div><div class="price-list-search"><label for="bgfPriceCurrency">Currency</label><select id="bgfPriceCurrency"><option value="MYR">MYR</option><option value="USD">USD</option><option value="RMB">RMB</option></select></div></div>
+        <div class="pricelist-note" style="margin-bottom:12px">The supplied workbook contains no positive price values. Blank source prices remain 0 and unavailable for quotation until an Owner enters and saves them.</div>
+        <div class="table-wrap" style="max-height:680px"><table class="pricelist-table"><thead><tr><th>Model</th><th>Power</th><th>Drive</th><th>Suction × Discharge</th><th>Stages</th><th>Source Price</th><th>Rarity</th><th></th></tr></thead><tbody id="bgfPriceRows"></tbody></table></div>
+      </div>
     </section>
 
 
@@ -1816,13 +1944,17 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
           <h2>Category Pricing Rule</h2>
           <div><label>Category</label><div class="pricing-category-select-row"><select id="pricingCategorySelect"></select><button class="btn" id="savePricingCategory" type="button">Save Category</button></div><div id="pricingCategoryMessage" class="muted" style="margin-top:7px">The Owner assigns the pricing category to each customer.</div></div>
           <div class="pricing-family-tabs" id="pricingFamilyTabs" role="tablist" aria-label="Product pricing rule">
+            <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="BASEPLATE">Baseplate</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="CHC_G1">CHC G1</button>
             <button class="pricing-family-tab active" type="button" role="tab" aria-selected="true" data-pricing-family="CHC_G2">CHC G2</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="CR">CR</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="BFI">BFI</button>
+            <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="BGF">BGF</button>
+            <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="COUPLING">Coupling</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="ES">ES</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="GWS">GWS</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="KEYPLC">KeyPLC</button>
+            <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="ISO">ISO</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="MANIFOLD">Manifold</button>
             <button class="pricing-family-tab" type="button" role="tab" aria-selected="false" data-pricing-family="MOTOR">Motor</button>
           </div>
@@ -1907,7 +2039,7 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
       <div class="span-2"><label>Display Name *</label><input id="roleUserDisplayName" autocomplete="off" required></div>
       <div><label>Quotation Prefix</label><input id="roleUserQuotationPrefix" class="role-prefix-input" maxlength="8" autocomplete="off" placeholder="Example: R"><div class="role-note" style="margin-top:5px">Owner-assigned. Letters and numbers only; prefixes must be unique.</div></div>
       <div><label>Role</label><select id="roleUserRole"></select></div>
-      <div><label>Status</label><select id="roleUserActive"><option value="true" selected>Active</option><option value="false">Inactive</option></select></div>
+      <input id="roleUserActive" type="hidden" value="true">
     </div>
     <div id="roleSelectionScope" class="role-selection-scope">
       <label>Role Brand Assigned / Series</label>
@@ -2024,8 +2156,8 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
         <div id="pTemplatePhone">Tel&nbsp;&nbsp;&nbsp;&nbsp;: +60 (3) 6094 2099</div>
         <div id="pTemplateFax">Fax&nbsp;&nbsp;&nbsp;: +60 (3) 6094 2033</div>
         <div id="pTemplateEmail">email&nbsp;: <span class="print-company-email">keylargo@keylargo.com.my</span></div>
-        <div class="print-date"><span>Date</span><b>:</b><strong id="pDate"></strong></div>
-        <div id="pRevisionRow" class="print-date print-revision-date"><span>Rev</span><b>:</b><strong id="pRevisionDate"></strong></div>
+        <div class="print-date"><span>Original Date</span><b>:</b><strong id="pDate"></strong></div>
+        <div id="pRevisionRow" class="print-date print-revision-date"><span>Revised Date</span><b>:</b><strong id="pRevisionDate"></strong></div>
       </div>
     </div>
     <h1 id="pDocTitle">Quotation</h1>
@@ -2063,26 +2195,35 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script src="permissions.js?v=42821"></script>
-<script src="v40407-role-authority.js?v=42872"></script>
+<script src="v40407-role-authority.js?v=50013"></script>
 <script src="applications.js?v=409"></script>
-<script src="assembly.js?v=42821"></script>
+<script src="assembly.js?v=50013"></script>
 <script src="bfi-data-v42302.js?v=42821"></script>
 <script src="cr-price-data-v42854.js?v=42854"></script>
 <script src="supabase/functions/shared-cr/cr-data.js?v=42872"></script>
+<script src="supabase/functions/shared-kv/kv-data.js?v=50018"></script>
+<script src="kv-price-data-v50017.js?v=50018"></script>
 <script src="pdf-optimization.js?v=42821"></script>
-<script src="app.js?v=42922"></script>
-<script src="pricing.js?v=42917"></script>
+<script src="app.js?v=50018"></script>
+<script src="iso-products-v50011.js"></script><script src="selector-iso/iso-data.js"></script><script src="iso-v50011.js?v=50016"></script>
+<script src="selector-es/es-data.js"></script>
+<script src="component-prices-v50011.js"></script>
+<script src="manual-price-v50011.js"></script>
+<script src="pricing.js?v=50018"></script>
 <script src="quotation-references.js?v=409"></script>
-<script src="categories.js?v=42824"></script>
+<script src="categories.js?v=50018"></script>
 <script src="chc-g1-price-map-v41409.js?v=42821"></script>
 <script src="pricelist.js?v=42821"></script>
 <script src="cr-pricelist-v42854.js?v=42854"></script>
+<script src="kv-pricelist-v50017.js?v=50018"></script>
 <script src="chc-g1-product-data-v41411.js?v=42872"></script>
 <script src="product.js?v=42821"></script>
-<script src="cr-product.js?v=42872"></script>
+<script src="cr-product.js?v=50016"></script>
+<script src="kv-product-v50017.js?v=50018"></script>
 <script src="bfi-v42302.js?v=42821"></script>
+<script src="bgf-v50006.js?v=50016"></script>
 <script src="manifold.js?v=42821"></script>
-<script src="roles.js?v=42821"></script>
+<script src="roles.js?v=50013"></script>
 <script src="motor.js?v=409"></script>
 <script src="coupling.js?v=42922"></script>
 <script src="baseplate.js?v=42872"></script>
@@ -2144,9 +2285,11 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 <script src="company-settings.js?v=41707"></script>
 <script src="keyai.js?v=41300"></script>
 <script src="keylab.js?v=41406"></script>
-<script src="auth.js?v=42922"></script>
+<script src="auth.js?v=50006"></script>
 <script src="keyhq/avatar-sync.js?v=42925"></script>
-<script src="keyhq-launcher.js?v=42925-keyhq07"></script>
+<script src="keyhq-social.js?v=50001"></script>
+<script src="keyhq-launcher.js?v=50001"></script>
+<script type="module" src="keyhq-messenger.js?v=50006"></script>
 <script src="v388-dashboard-keycore.js?v=42821"></script>
 <script src="universe.js?v=42872"></script>
 <script src="v41223-selection-recovery.js?v=41300"></script>
@@ -2183,9 +2326,9 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
   else setGeneration(generation);
 })();
 </script>
-<script src="v42872-selector-first-open.js?v=42872"></script>
+<script src="v42872-selector-first-open.js?v=50004"></script>
 <script src="v41200-bootstrap.js?v=42922"></script>
-<script src="v42925-version-lock.js?v=42925"></script>
+<script src="v50018-version-lock.js?v=50018"></script>
 
 <script id="v41412-static-product-generation">
 document.addEventListener('click',event=>{
@@ -2201,8 +2344,8 @@ document.addEventListener('click',event=>{
 <script id="v42317-product-action-navigation">
 (()=>{
   'use strict';
-  const ACTION_SECTION_SELECTOR='#selector,#selectorCr,#selectorBfi,#productChc,#productCr,#productBfi';
-  const FRAME_IDS=['selectorFrame','selectorCrFrame','selectorBfiFrame','productSelectorFrame','productCrSelectorFrame','productBfiSelectorFrame'];
+  const ACTION_SECTION_SELECTOR='#selector,#selectorCr,#selectorKv,#selectorBfi,#productChc,#productCr,#productKv,#productBfi';
+  const FRAME_IDS=['selectorFrame','selectorCrFrame','selectorKvFrame','selectorBfiFrame','productSelectorFrame','productCrSelectorFrame','productKvSelectorFrame','productBfiSelectorFrame'];
   let navigationTimer=0;
 
   function actionOfButton(button){
